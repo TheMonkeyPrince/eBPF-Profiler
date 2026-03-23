@@ -1,13 +1,15 @@
-from profiler import load_profiler, listen_for_events
+from profiler import BPFProfiler
 from run_tests import run_tests
+from time import sleep
 
 if __name__ == "__main__":
     
     print("Loading BPF profiler...")
-    profiler_module = load_profiler()
+    bpf_profiler = BPFProfiler()
     
-    # print("Running tests...")
-    # run_tests()
+    print("Running tests...")
+    run_tests()
+
 
     print("Starting event listener...")
-    listen_for_events(profiler_module)
+    bpf_profiler.listen_for_events("test_program")    

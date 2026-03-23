@@ -1,7 +1,7 @@
 import threading
 
-from tests.strlen_count import strlen_count_test
+from tests.some_test import some_test
 
 
 def run_tests():
-	threading.Thread(target=strlen_count_test).start()
+	threading.Thread(target=some_test).start()
