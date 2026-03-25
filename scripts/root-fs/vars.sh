@@ -1,5 +1,5 @@
 IMG=rootfs.img
-SIZE=2G
+SIZE=4G
 DIR=rootfs
 MIRROR=http://deb.debian.org/debian
 RELEASE=stable

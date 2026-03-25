@@ -7,8 +7,8 @@ source "$SCRIPT_DIR/vars.sh"
 ${SCRIPT_DIR}/mount.sh
 
 # copy kernel headers to rootfs
-# sudo mkdir -p "$DIR/lib/modules/7.0.0-rc3-dirty"
-# sudo cp -r linux/headers/include "$DIR/lib/modules/7.0.0-rc3-dirty"
+# sudo mkdir -p "$DIR/lib/modules/headers"
+# sudo cp -r linux/headers/include "$DIR/lib/modules/headers"
 
 # DNS inside chroot, so apt works
 sudo cp "$DIR/etc/resolv.conf" "$DIR/etc/resolv.conf.bak"
@@ -16,7 +16,7 @@ sudo cp /etc/resolv.conf "$DIR/etc/resolv.conf"
 
 # install necessary packages inside chroot
 sudo chroot "$DIR" apt-get update
-sudo chroot "$DIR" apt-get install -y python3 python3-pip isc-dhcp-client curl openssh-server bpfcc-tools python3-bpfcc
+sudo chroot "$DIR" apt-get install -y clang llvm dwarves libelf-dev libssl-dev libbpf-dev python3 python3-pip isc-dhcp-client curl openssh-server bpfcc-tools python3-bpfcc
 
 # enable root autologin on ttyS0
 sudo mkdir -p "$DIR/etc/systemd/system/serial-getty@ttyS0.service.d"
@@ -50,9 +50,12 @@ EOF
 # sudo cp "$DIR/etc/resolv.conf.bak" "$DIR/etc/resolv.conf"
 echo "nameserver 8.8.8.8" | sudo tee $DIR/etc/resolv.conf >/dev/null
 
-# setup shared folder for host-guest communication
-sudo chroot "$DIR" mkdir -p /mnt/shared
-echo "shared /mnt/shared 9p trans=virtio,version=9p2000.L,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
+sudo chroot "$DIR" mkdir -p /mnt/profiler
+echo "profiler /mnt/profiler 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
+
+sudo chroot "$DIR" mkdir -p /mnt/linux
+echo "linux /mnt/linux 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
+
 
 # cleanup to reduce size
 sudo chroot "$DIR" apt-get clean
