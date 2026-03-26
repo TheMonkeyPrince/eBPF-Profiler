@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profiler Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-4">Profiler analysis files</h1>
+    <div id="files" class="bg-white shadow rounded p-4"></div>
+  </div>
+
+  <script>
+    async function loadFiles() {
+      const res = await fetch('/api/files');
+      const files = await res.json();
+      const container = document.getElementById('files');
+      if (!files || files.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-600">No files found in profiler/out/analysis</p>';
+        return;
+      }
+      const list = document.createElement('ul');
+      list.className = 'divide-y';
+      files.forEach(f => {
+        const li = document.createElement('li');
+        li.className = 'py-2 flex justify-between items-center';
+        const a = document.createElement('a');
+        a.href = '/file?name=' + encodeURIComponent(f);
+        a.textContent = f;
+        a.className = 'text-blue-600 hover:underline';
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      container.innerHTML = '';
+      container.appendChild(list);
+    }
+    loadFiles().catch(err => document.getElementById('files').textContent = err.message);
+  </script>
+</body>
+</html>

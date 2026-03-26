@@ -9,12 +9,13 @@ typedef enum {
     FUNC_TIMER_RESULT,
 } event_type_t;
 
-struct event {
+struct __attribute__((packed)) event {
     event_type_t type;
     u64 timestamp;
     char file[64];
     int line;
     u64 duration;
+    u32 insn_idx;
     char func_name[32];    
 };
 
@@ -32,28 +33,32 @@ BPF_PERF_OUTPUT(events);
 
 int verifier_start(struct pt_regs *ctx) {
     struct event e = INIT_EVENT(VERIFIER_START, bpf_ktime_get_ns(), NULL, 0);
-    strcpy(e.func_name, "verifier_start");
+    __builtin_memcpy(e.file, "kernel/bpf/verifier.c", sizeof("kernel/bpf/verifier.c"));
+    __builtin_memcpy(e.func_name, "bpf_check", sizeof("bpf_check"));
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;
 }
 
 int verifier_end(struct pt_regs *ctx) {
     struct event e = INIT_EVENT(VERIFIER_END, bpf_ktime_get_ns(), NULL, 0);
-    strcpy(e.func_name, "verifier_end");
+    __builtin_memcpy(e.file, "kernel/bpf/verifier.c", sizeof("kernel/bpf/verifier.c"));
+    __builtin_memcpy(e.func_name, "bpf_check", sizeof("bpf_check"));
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;
 }
 
-int block_timer_result(struct pt_regs *ctx, const char* file, const int start_line, const u64 duration) {
+int block_timer_result(struct pt_regs *ctx, const char* file, const int start_line, const u64 duration, u32 insn_idx) {
     struct event e = INIT_EVENT(BLOCK_TIMER_RESULT, bpf_ktime_get_ns(), file, start_line);
     e.duration = duration;
+    e.insn_idx = insn_idx;
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;
 }
 
-int func_timer_result(struct pt_regs *ctx, const char* file, const int line, const u64 duration, const char* func_name) {
+int func_timer_result(struct pt_regs *ctx, const char* file, const int line, const u64 duration, u32 insn_idx, const char* func_name) {
     struct event e = INIT_EVENT(FUNC_TIMER_RESULT, bpf_ktime_get_ns(), file, line);
     e.duration = duration;
+    e.insn_idx = insn_idx;
     bpf_probe_read_kernel_str(e.func_name, sizeof(e.func_name), func_name);
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;

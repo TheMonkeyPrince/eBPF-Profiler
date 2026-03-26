@@ -1,11 +1,12 @@
 import os
+import ctypes as ct
 from bcc import BPF
 
 from event import Event
 
 
 class BPFRecorder:
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=False):
         self.started = False
         self.finished = False
 
@@ -24,9 +25,10 @@ class BPFRecorder:
         )
 
         def handle_event(cpu, data, size):
-            e = Event.cast_from_pointer(data)
+            e = Event.from_bytes(ct.string_at(data, size))
             if self.verbose and e.get_event_type():
-                print(f"Received event: {e.get_event_type().name}")
+                # print(f"Received event: {e.get_event_type().name}")
+                print(f"Received event: {e}")
 
             if (
                 not self.started
@@ -60,4 +62,4 @@ class BPFRecorder:
         print("Listening for kernel events...")
         while not self.finished:
             self.bpf.perf_buffer_poll()
-        return list(self.trace)
+        return list(sorted(self.trace, key=lambda e: e.timestamp))

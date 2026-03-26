@@ -2,7 +2,7 @@ from profiler import BPFProfiler
 
 if __name__ == "__main__":
     profiler = BPFProfiler()
-    trace = profiler.profile_program("some_program")
+    trace = profiler.profile_program("dns_matching")
 
-    profiler.analyse_trace("some_program", trace)
-    # profiler.analyse_trace_from_file("some_program")
+    # profiler.analyse_trace("dns_matching", trace)
+    profiler.analyse_trace_from_file("dns_matching")

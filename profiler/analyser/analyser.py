@@ -13,7 +13,7 @@ class TraceAnalyser:
         self.trace = trace
 
     def analyse(self, verbose=True):
-        self.execution_times: dict[tuple[str, int, int], list[int]] = defaultdict(list)
+        self.execution_times: dict[tuple[str, int, int], list[int]] = {}
 
         start_time = time()
 
@@ -28,12 +28,25 @@ class TraceAnalyser:
                 case Event.EVENT_TYPE.BLOCK_TIMER_RESULT:
                     start_line = ev.line
                     end_line = find_block_end(KERNEL_SOURCE_PATH + ev.file.decode(), start_line)
+
                     key = (ev.file.decode(), start_line, end_line)
-                    self.execution_times[key].append(ev.duration)
+
+                    if ev.has_insn_idx():
+                        if self.execution_times.get(key) is None:
+                            self.execution_times[key] = {}
+                        if self.execution_times[key].get(ev.insn_idx) is None:
+                            self.execution_times[key][ev.insn_idx] = []
+                        self.execution_times[key][ev.insn_idx].append(ev.duration)
+                    else:
+                        if self.execution_times.get(key) is None:
+                            self.execution_times[key] = []
+                        self.execution_times[key].append(ev.duration)
                 case Event.EVENT_TYPE.FUNC_TIMER_RESULT:
                     start_line = ev.line
                     end_line = ev.line
                     key = (ev.file.decode(), start_line, end_line)
+                    if self.execution_times.get(key) is None:
+                        self.execution_times[key] = []
                     self.execution_times[key].append(ev.duration)
 
         self.total_duration = trace_end_time - trace_start_time

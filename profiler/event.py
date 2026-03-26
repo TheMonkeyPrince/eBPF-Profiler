@@ -1,14 +1,21 @@
 import ctypes as ct
 from enum import Enum
 
+event_type_t = ct.c_int
+u64 = ct.c_uint64
+u32 = ct.c_uint32
+NO_INSN_IDX = u32(-1).value
+
 
 class Event(ct.Structure):
+	_pack_ = 1
 	_fields_ = [
-		("type", ct.c_int),  # event_type_t mapped to int
-		("timestamp", ct.c_ulonglong),
+		("type", event_type_t),
+		("timestamp", u64),
 		("file", ct.c_char * 64),
 		("line", ct.c_int),
-		("duration", ct.c_ulonglong),
+		("duration", u64),
+		("insn_idx", u32),
 		("func_name", ct.c_char * 32),
 	]
 
@@ -21,34 +28,25 @@ class Event(ct.Structure):
 	def get_event_type(self):
 		return Event.EVENT_TYPE(self.type)
 
-	def __str__(self):
-		match self.get_event_type():
-			case Event.EVENT_TYPE.VERIFIER_START | Event.EVENT_TYPE.VERIFIER_END:
-				return (
-					super().__str__()
-					+ f" [type={self.get_event_type().name}, file={self.file.decode()}, line={self.line}, timestamp={self.timestamp}, func_name={self.func_name.decode()}]"
-				)
-			case Event.EVENT_TYPE.BLOCK_TIMER_RESULT:
-				return (
-					super().__str__()
-					+ f" [type={self.get_event_type().name}, file={self.file.decode()}, line={self.line}, timestamp={self.timestamp}, duration={self.duration}]"
-				)
-			case Event.EVENT_TYPE.FUNC_TIMER_RESULT:
-				return (
-					super().__str__()
-					+ f" [type={self.get_event_type().name}, file={self.file.decode()}, line={self.line}, timestamp={self.timestamp}, func_name={self.func_name.decode()}, duration={self.duration}]"
-				)
-			case _:
-				raise ValueError(f"Unknown event type: {self.get_event_type()}")
+	def has_insn_idx(self):
+		return (
+			self.get_event_type()
+			in {Event.EVENT_TYPE.BLOCK_TIMER_RESULT, Event.EVENT_TYPE.FUNC_TIMER_RESULT}
+			and self.insn_idx != NO_INSN_IDX
+		)
 
-	def cast_from_pointer(data):
-		return ct.cast(data, ct.POINTER(Event)).contents
+	def __str__(self):
+		return f"[type={self.get_event_type().name}, file={self.file.decode()}, line={self.line}, timestamp={self.timestamp}, func_name={self.func_name.decode()}, duration={self.duration}, insn_idx={self.insn_idx}]"
 
 	def from_bytes(data):
 		if len(data) != ct.sizeof(Event):
-			raise ValueError(f"Invalid data size: expected {ct.sizeof(Event)}, got {len(data)}")
-		event = Event()                       # create a new instance
-		ct.memmove(ct.addressof(event), data, ct.sizeof(Event))  # copy raw bytes into it
+			raise ValueError(
+				f"Invalid data size: expected {ct.sizeof(Event)}, got {len(data)}"
+			)
+		event = Event()  # create a new instance
+		ct.memmove(
+			ct.addressof(event), data, ct.sizeof(Event)
+		)  # copy raw bytes into it
 		return event
 
 	@staticmethod

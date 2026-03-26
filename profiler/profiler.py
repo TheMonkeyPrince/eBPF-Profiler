@@ -6,7 +6,7 @@ from storage import save_trace, load_trace, save_analysis, load_analysis
 
 
 class BPFProfiler:
-	def __init__(self, verbose=True):
+	def __init__(self, verbose=False):
 		self.verbose = verbose
 		self.recorder = None
 
