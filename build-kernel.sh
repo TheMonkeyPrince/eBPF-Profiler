@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-cd linux
+set -e
 
-# echo "Building kernel headers..."
-make headers_install INSTALL_HDR_PATH=headers
+export PATH="$PWD/llvm-project/llvm/build/bin:$PATH"
 
-echo "Building kernel..."
-make -j$(nproc)
-
-# echo "Building bpftool..."
-# cd tools/bpf/bpftool
-# make LDFLAGS="-static"
+# build the kernel
+cd linux/
+make -j PAHOLE=../dwarves/build/pahole
