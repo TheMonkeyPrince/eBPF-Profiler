@@ -22,7 +22,8 @@ sudo cp /etc/resolv.conf "$DIR/etc/resolv.conf"
 
 # install necessary packages inside chroot
 sudo chroot "$DIR" apt-get update
-sudo chroot "$DIR" apt-get install -y clang llvm dwarves libelf-dev libssl-dev libbpf-dev python3 python3-pip isc-dhcp-client curl openssh-server bpftool bpfcc-tools python3-bpfcc
+# sudo chroot "$DIR" apt-get install -y clang llvm dwarves libelf-dev libssl-dev libbpf-dev python3 python3-pip isc-dhcp-client curl openssh-server bpftool bpfcc-tools python3-bpfcc
+sudo chroot "$DIR" apt-get install -y python3 python3-pip isc-dhcp-client curl bpftool bpfcc-tools python3-bpfcc
 
 # enable root autologin on ttyS0
 sudo mkdir -p "$DIR/etc/systemd/system/serial-getty@ttyS0.service.d"
@@ -38,8 +39,8 @@ echo "ttyS0" | sudo tee -a "$DIR/etc/securetty" >/dev/null
 
 # set root password to empty for easy login
 sudo chroot "$DIR" passwd -d root
-sudo sed -i 's/^#\?PermitEmptyPasswords .*/PermitEmptyPasswords yes/' "$DIR/etc/ssh/sshd_config"
-sudo sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' "$DIR/etc/ssh/sshd_config"
+# sudo sed -i 's/^#\?PermitEmptyPasswords .*/PermitEmptyPasswords yes/' "$DIR/etc/ssh/sshd_config"
+# sudo sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' "$DIR/etc/ssh/sshd_config"
 
 # set hostname
 echo "bpfvm" | sudo tee "$DIR/etc/hostname" >/dev/null

@@ -14,9 +14,9 @@ qemu-img create "$IMG" "$SIZE"
 # format filesystem
 mkfs.ext4 "$IMG"
 
-# # unmount
+# unmount
 sudo umount "$DIR" || true
-# rm -rf "$DIR"
+rm -rf "$DIR"
 
 # mount
 mkdir -p "$DIR"
