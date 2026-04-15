@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kernel Profiling Heatmap</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <div id="topBar">
+        <div id="topBarTitle">Kernel Source Heatmap</div>
+        <div class="controls">
+          <label for="argFilter">Arg:</label>
+          <select id="argFilter"></select>
+          <button id="prevProfiledBtn" type="button">Prev</button>
+          <button id="nextProfiledBtn" type="button">Next</button>
+          <span id="profileNavStatus">0 / 0</span>
+          <label class="theme-toggle" for="themeToggle">
+            <input id="themeToggle" type="checkbox" />
+            <span>Light</span>
+          </label>
+          <button id="toggleMetaBtn" type="button">Info</button>
+          <button id="toggleDetailsBtn" type="button">Details</button>
+          <button id="reloadButton" type="button">Reload</button>
+        </div>
+      </div>
+      <div id="meta"></div>
+      <div id="hoverDetails">Hover a line to see detailed profiling data.</div>
+    </header>
+    <main>
+      <aside>
+        <h2>Explorer</h2>
+        <div id="tree"></div>
+        <div id="profiledPanel">
+          <div id="profiledPanelHeader">
+            <span>Profiled boxes</span>
+            <select id="profiledSortSelect">
+              <option value="line">Sort: start line</option>
+              <option value="time">Sort: total time</option>
+            </select>
+          </div>
+          <div id="profiledList"></div>
+        </div>
+      </aside>
+      <section>
+        <div id="fileTitle">Select a file</div>
+        <div id="legend">
+          <span>Cold</span>
+          <div class="legend-bar"></div>
+          <span>Hot</span>
+        </div>
+        <div id="codePane">
+          <div id="monacoEditor"></div>
+        </div>
+      </section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+    <script src="/monaco-app.js"></script>
+  </body>
+</html>

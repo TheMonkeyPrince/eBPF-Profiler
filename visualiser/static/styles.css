@@ -1,0 +1,336 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #101216;
+  --text: #e8e8e8;
+  --header-bg: #161a22;
+  --border: #2a2f3a;
+  --muted: #a8b0c0;
+  --panel-bg: #161a22;
+  --input-bg: #1f2530;
+  --input-border: #374153;
+  --row-active-bg: #2d3545;
+  --row-active-border: #68758f;
+}
+
+body.light-theme {
+  --bg: #f7f8fb;
+  --text: #1e2430;
+  --header-bg: #ffffff;
+  --border: #d6dce8;
+  --muted: #4b5870;
+  --panel-bg: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #c7cfde;
+  --row-active-bg: #e9eefb;
+  --row-active-border: #93a9d8;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 10px;
+  background: var(--header-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+h2 {
+  margin: 0;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+#topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#topBarTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+  display: none;
+}
+
+body.show-meta #meta {
+  display: block;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+button,
+select {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+main {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+aside {
+  border-right: 1px solid var(--border);
+  padding: 12px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+section {
+  padding: 12px;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#fileTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+#tree {
+  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+#profiledPanel {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#profiledPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+#profiledSortSelect {
+  font-size: 0.78rem;
+  padding: 3px 6px;
+}
+
+#profiledList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.profiled-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text);
+  padding: 5px 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.profiled-item:hover {
+  background: color-mix(in srgb, var(--row-active-bg) 55%, transparent);
+}
+
+.profiled-item.active {
+  background: var(--row-active-bg);
+  border-color: var(--row-active-border);
+}
+
+.profiled-item-empty {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.explorer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.explorer-row:hover {
+  background: color-mix(in srgb, var(--row-active-bg) 55%, transparent);
+}
+
+.explorer-row.active {
+  background: var(--row-active-bg);
+  border-color: var(--row-active-border);
+}
+
+.explorer-twisty {
+  width: 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.explorer-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.explorer-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+#legend {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+#profileNavStatus {
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-width: 56px;
+}
+
+.legend-bar {
+  height: 8px;
+  width: 180px;
+  background: linear-gradient(
+    90deg,
+    rgba(45, 174, 75, 0.15),
+    rgba(184, 200, 40, 0.4),
+    rgba(255, 149, 0, 0.7),
+    rgba(255, 64, 0, 0.9)
+  );
+  border-radius: 999px;
+}
+
+#hoverDetails {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  min-height: 52px;
+  white-space: pre-wrap;
+  display: none;
+}
+
+body.show-details #hoverDetails {
+  display: block;
+}
+
+#codePane {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#monacoEditor {
+  height: 100%;
+}
+
+.heat-line-1 { background: rgba(255, 80, 0, 0.04); }
+.heat-line-2 { background: rgba(255, 80, 0, 0.08); }
+.heat-line-3 { background: rgba(255, 80, 0, 0.12); }
+.heat-line-4 { background: rgba(255, 80, 0, 0.16); }
+.heat-line-5 { background: rgba(255, 80, 0, 0.2); }
+.heat-line-6 { background: rgba(255, 80, 0, 0.24); }
+.heat-line-7 { background: rgba(255, 80, 0, 0.28); }
+.heat-line-8 { background: rgba(255, 80, 0, 0.32); }
+.heat-line-9 { background: rgba(255, 80, 0, 0.36); }
+.heat-line-10 { background: rgba(255, 80, 0, 0.4); }
+.heat-line-11 { background: rgba(255, 80, 0, 0.44); }
+.heat-line-12 { background: rgba(255, 80, 0, 0.48); }
+.heat-line-13 { background: rgba(255, 80, 0, 0.52); }
+.heat-line-14 { background: rgba(255, 80, 0, 0.56); }
+.heat-line-15 { background: rgba(255, 80, 0, 0.6); }
+.heat-line-16 { background: rgba(255, 80, 0, 0.66); }
+.heat-line-17 { background: rgba(255, 80, 0, 0.72); }
+.heat-line-18 { background: rgba(255, 80, 0, 0.78); }
+.heat-line-19 { background: rgba(255, 80, 0, 0.84); }
+.heat-line-20 { background: rgba(255, 80, 0, 0.9); }
+
+.monaco-editor .line-numbers.hot-line-number {
+  color: #ffad7a !important;
+  font-weight: 600;
+}
+
+.focused-profiled-range {
+  outline: 1px solid rgba(255, 210, 0, 0.95);
+  outline-offset: -1px;
+}
