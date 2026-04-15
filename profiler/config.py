@@ -1,0 +1,1 @@
+KERNEL_SOURCE_PATH = "/mnt/linux/"
