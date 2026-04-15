@@ -3,17 +3,22 @@ set -e
 
 KERNEL_VERSION=v7.0-rc5
 
+mkdir -p build-tools
+cd build-tools
+
 # clone & build llvm
 git clone https://github.com/llvm/llvm-project.git
 mkdir -p llvm-project/llvm/build
 cd llvm-project/llvm/build
 cmake .. -G "Ninja" -DLLVM_TARGETS_TO_BUILD="BPF;X86" \
-           -DLLVM_ENABLE_PROJECTS="clang;lld"    \
-           -DCMAKE_BUILD_TYPE=Release        \
-           -DLLVM_BUILD_RUNTIME=OFF
+        -DLLVM_ENABLE_PROJECTS="clang;lld"    \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_BUILD_C_BINDINGS=ON \
+        -DLLVM_BUILD_RUNTIME=OFF 
 ninja
 cd ../../../
 export PATH="$PWD/llvm-project/llvm/build/bin:$PATH"
+export PATH="/home/morena/eBPF-Profiler/build-tools/llvm-project/llvm/build/bin:$PATH"
 
 # clone & build pahole
 git clone https://github.com/acmel/dwarves.git
@@ -22,6 +27,8 @@ cd dwarves/build
 cmake ..
 make -j
 cd ../../
+
+cd ..
 
 # clone linux kernel
 git clone https://github.com/torvalds/linux.git

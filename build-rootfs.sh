@@ -23,7 +23,8 @@ sudo cp /etc/resolv.conf "$DIR/etc/resolv.conf"
 # install necessary packages inside chroot
 sudo chroot "$DIR" apt-get update
 # sudo chroot "$DIR" apt-get install -y clang llvm dwarves libelf-dev libssl-dev libbpf-dev python3 python3-pip isc-dhcp-client curl openssh-server bpftool bpfcc-tools python3-bpfcc
-sudo chroot "$DIR" apt-get install -y python3 python3-pip isc-dhcp-client curl bpftool bpfcc-tools python3-bpfcc
+sudo chroot "$DIR" apt-get install -y libelf-dev libssl-dev python3 python3-pip python3-docutils isc-dhcp-client curl bpftool bpfcc-tools python3-bpfcc
+sudo chroot "$DIR" apt-get install -y libelf-dev libssl-dev python3 python3-pip python3-docutils isc-dhcp-client curl bpftool bpfcc-tools python3-bpfcc
 
 # enable root autologin on ttyS0
 sudo mkdir -p "$DIR/etc/systemd/system/serial-getty@ttyS0.service.d"
@@ -62,6 +63,9 @@ echo "profiler /mnt/profiler 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,g
 
 sudo chroot "$DIR" mkdir -p /mnt/linux
 echo "linux /mnt/linux 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
+
+sudo chroot "$DIR" mkdir -p /mnt/build-tools
+echo "build-tools /mnt/build-tools 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
 
 
 # cleanup to reduce size
