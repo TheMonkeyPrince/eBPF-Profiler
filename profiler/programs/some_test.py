@@ -1,6 +1,5 @@
-from bcc import BPF
-
 def some_test():
+    from bcc import BPF
     # BPF program (in C)
     bpf_program = """
     #include <uapi/linux/ptrace.h>
