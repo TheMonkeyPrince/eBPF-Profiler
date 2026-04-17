@@ -13,4 +13,7 @@ fi
 
 # build the kernel
 cd linux/
+git stash
+git clean -fd
+cp -r ../kernel_patch/* kernel/
 make -j$(nproc) PAHOLE=$PAHOLE_PATH
