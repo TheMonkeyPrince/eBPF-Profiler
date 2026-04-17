@@ -4,7 +4,7 @@ from enum import Enum
 event_type_t = ct.c_int
 u64 = ct.c_uint64
 u32 = ct.c_uint32
-NO_INSN_IDX = u32(-1).value
+NO_ARG = u32(-1).value
 
 
 class Event(ct.Structure):
@@ -13,10 +13,11 @@ class Event(ct.Structure):
 		("type", event_type_t),
 		("timestamp", u64),
 		("file", ct.c_char * 64),
-		("line", ct.c_int),
-		("duration", u64),
-		("insn_idx", u32),
+		("start_line", ct.c_int),
 		("func_name", ct.c_char * 32),
+		("arg", u32),
+		("start_time", u64),
+		("end_time", u64),
 	]
 
 	class EVENT_TYPE(Enum):
@@ -28,15 +29,21 @@ class Event(ct.Structure):
 	def get_event_type(self):
 		return Event.EVENT_TYPE(self.type)
 
-	def has_insn_idx(self):
+	def has_arg(self):
 		return (
 			self.get_event_type()
 			in {Event.EVENT_TYPE.BLOCK_TIMER_RESULT, Event.EVENT_TYPE.FUNC_TIMER_RESULT}
-			and self.insn_idx != NO_INSN_IDX
+			and self.arg != NO_ARG
 		)
 
+	def duration(self):
+		if self.get_event_type() in {Event.EVENT_TYPE.BLOCK_TIMER_RESULT, Event.EVENT_TYPE.FUNC_TIMER_RESULT}:
+			return self.end_time - self.start_time
+		else:
+			return None
+
 	def __str__(self):
-		return f"[type={self.get_event_type().name}, file={self.file.decode()}, line={self.line}, timestamp={self.timestamp}, func_name={self.func_name.decode()}, duration={self.duration}, insn_idx={self.insn_idx}]"
+		return f"[type={self.get_event_type().name}, file={self.file.decode()}, line={self.start_line}, timestamp={self.timestamp}, func_name={self.func_name.decode()}, arg={self.arg}, start_time={self.start_time}, end_time={self.end_time}]"
 
 	def from_bytes(data):
 		if len(data) != ct.sizeof(Event):

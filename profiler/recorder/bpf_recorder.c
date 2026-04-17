@@ -13,18 +13,20 @@ struct __attribute__((packed)) event {
     event_type_t type;
     u64 timestamp;
     char file[64];
-    int line;
-    u64 duration;
-    u32 insn_idx;
-    char func_name[32];    
+    int start_line;
+    char func_name[32]; 
+    u32 arg;
+
+    u64 start_time;
+    u64 end_time;   
 };
 
-#define INIT_EVENT(_type, _timestamp, _file, _line) ({            \
+#define INIT_EVENT(_type, _timestamp, _file, _start_line) ({      \
     struct event _e = {0};                                        \
     _e.type = (_type);                                            \
     _e.timestamp = (_timestamp);                                  \
     bpf_probe_read_kernel_str(_e.file, sizeof(_e.file), (_file)); \
-    _e.line = (_line);                                            \
+    _e.start_line = (_start_line);                                \
     _e;                                                           \
 })
 
@@ -47,18 +49,20 @@ int verifier_end(struct pt_regs *ctx) {
     return 0;
 }
 
-int block_timer_result(struct pt_regs *ctx, const char* file, const int start_line, const u64 duration, u32 insn_idx) {
+int block_timer_result(struct pt_regs *ctx, const char* file, const int start_line, u32 arg, const u64 start_time, const u64 end_time) {
     struct event e = INIT_EVENT(BLOCK_TIMER_RESULT, bpf_ktime_get_ns(), file, start_line);
-    e.duration = duration;
-    e.insn_idx = insn_idx;
+    e.arg = arg;
+    e.start_time = start_time;
+    e.end_time = end_time;
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;
 }
 
-int func_timer_result(struct pt_regs *ctx, const char* file, const int line, const u64 duration, u32 insn_idx, const char* func_name) {
+int func_timer_result(struct pt_regs *ctx, const char* file, const int line, char* func_name, u32 arg, const u64 start_time, const u64 end_time) {
     struct event e = INIT_EVENT(FUNC_TIMER_RESULT, bpf_ktime_get_ns(), file, line);
-    e.duration = duration;
-    e.insn_idx = insn_idx;
+    e.arg = arg;
+    e.start_time = start_time;
+    e.end_time = end_time;
     bpf_probe_read_kernel_str(e.func_name, sizeof(e.func_name), func_name);
     events.perf_submit(ctx, &e, sizeof(e));
     return 0;
