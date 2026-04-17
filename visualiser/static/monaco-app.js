@@ -3,7 +3,9 @@ const treeEl = document.getElementById("tree");
 const fileTitleEl = document.getElementById("fileTitle");
 const monacoEditorEl = document.getElementById("monacoEditor");
 const hoverDetailsEl = document.getElementById("hoverDetails");
+const copyDetailsBtnEl = document.getElementById("copyDetailsBtn");
 const argFilterEl = document.getElementById("argFilter");
+const scaleModeSelectEl = document.getElementById("scaleModeSelect");
 const reloadButtonEl = document.getElementById("reloadButton");
 const themeToggleEl = document.getElementById("themeToggle");
 const prevProfiledBtnEl = document.getElementById("prevProfiledBtn");
@@ -16,6 +18,7 @@ const profiledListEl = document.getElementById("profiledList");
 
 let selectedPath = null;
 let selectedArg = "all";
+let selectedScaleMode = "profiled";
 let selectedTheme = "dark";
 let monacoReady = null;
 let editor = null;
@@ -29,17 +32,19 @@ let currentProfiledRangeIndex = -1;
 let profiledSortMode = "line";
 let treeState = {};
 let treeChildrenCache = {};
+let totalDurationNs = 0;
+let lastDetailsText = "Hover a line to see detailed profiling data.";
 const HEAT_BUCKETS = 20;
 
 function formatNs(ns) {
   return `${Number(ns).toLocaleString()} ns`;
 }
 
-function heatAlpha(totalNs, maxTotalNs) {
-  if (!totalNs || !maxTotalNs) {
+function heatAlpha(totalNs, referenceNs) {
+  if (!totalNs || !referenceNs) {
     return 0;
   }
-  const score = Math.log1p(totalNs) / Math.log1p(maxTotalNs);
+  const score = Math.log1p(totalNs) / Math.log1p(referenceNs);
   return Math.min(0.85, Math.max(0.05, score));
 }
 
@@ -88,6 +93,30 @@ function formatSampleList(samples) {
   return `[${shown.join(", ")}]`;
 }
 
+function computeSampleStats(samples) {
+  if (!samples || samples.length === 0) {
+    return { count: 0, total: 0, min: 0, max: 0, avg: 0, med: 0 };
+  }
+  const sorted = [...samples].sort((a, b) => a - b);
+  const count = sorted.length;
+  const total = sorted.reduce((acc, value) => acc + value, 0);
+  const min = sorted[0];
+  const max = sorted[count - 1];
+  const avg = total / count;
+  const mid = Math.floor(count / 2);
+  const med = count % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return { count, total, min, max, avg, med };
+}
+
+function lineSampleStats(lineNo) {
+  const touching = lineRangesIndex[lineNo] || [];
+  const samples = [];
+  for (const range of touching) {
+    samples.push(...rangeSamplesForCurrentArg(range));
+  }
+  return computeSampleStats(samples);
+}
+
 function buildLineRangesIndex(data) {
   lineRangesIndex = {};
   const ranges = data.ranges || [];
@@ -119,6 +148,10 @@ function rangeTotalForCurrentArg(range) {
   return rangeSamplesForCurrentArg(range).reduce((acc, value) => acc + value, 0);
 }
 
+function rangeCallCountForCurrentArg(range) {
+  return rangeSamplesForCurrentArg(range).length;
+}
+
 function buildProfiledRanges(data) {
   const currentRange = profiledRanges[currentProfiledRangeIndex] || null;
   const ranges = (data.ranges || [])
@@ -126,6 +159,11 @@ function buildProfiledRanges(data) {
     .sort((a, b) => {
       if (profiledSortMode === "time") {
         const diff = rangeTotalForCurrentArg(b) - rangeTotalForCurrentArg(a);
+        if (diff !== 0) {
+          return diff;
+        }
+      } else if (profiledSortMode === "calls") {
+        const diff = rangeCallCountForCurrentArg(b) - rangeCallCountForCurrentArg(a);
         if (diff !== 0) {
           return diff;
         }
@@ -168,8 +206,10 @@ function renderProfiledList() {
     button.type = "button";
     button.className = `profiled-item${idx === currentProfiledRangeIndex ? " active" : ""}`;
     const total = rangeTotalForCurrentArg(range);
+    const referenceNs = currentFileData ? computeReferenceNs(currentFileData) : 0;
+    const ratio = referenceNs ? (total / referenceNs) * 100 : 0;
     const count = rangeSamplesForCurrentArg(range).length;
-    button.textContent = `L${range.start}-${range.end} | ${formatNs(total)} | ${count} samples`;
+    button.textContent = `L${range.start}-${range.end} | ${formatNs(total)} (${ratio.toFixed(2)}%) | ${count} samples`;
     button.addEventListener("click", async () => {
       await focusProfiledRange(idx, true);
     });
@@ -221,7 +261,8 @@ async function focusProfiledRange(index, reveal = true) {
 
 function updateHoverDetails(lineNo) {
   if (!currentFileData || !lineNo) {
-    hoverDetailsEl.textContent = "Hover a line to see detailed profiling data.";
+    lastDetailsText = "Hover a line to see detailed profiling data.";
+    hoverDetailsEl.textContent = lastDetailsText;
     return;
   }
 
@@ -232,37 +273,33 @@ function updateHoverDetails(lineNo) {
     max_ns: 0,
   };
   const touching = lineRangesIndex[lineNo] || [];
+  const referenceNs = computeReferenceNs(currentFileData);
+  const ratio = referenceNs ? (stat.total_ns / referenceNs) * 100 : 0;
+
+  const lineStats = lineSampleStats(lineNo);
 
   const header = [
     `Line ${lineNo} (${selectedArg === "all" ? "all args" : `arg=${selectedArg}`})`,
-    `total=${formatNs(stat.total_ns)} | count=${stat.count} | avg=${formatNs(stat.avg_ns)} | max=${formatNs(stat.max_ns)}`,
+    `total=${formatNs(stat.total_ns)} (${ratio.toFixed(2)}%) | ref=${formatNs(referenceNs)} (${selectedScaleMode})`,
+    `samples=${lineStats.count} | min=${formatNs(lineStats.min)} | max=${formatNs(lineStats.max)} | avg=${formatNs(lineStats.avg)} | med=${formatNs(lineStats.med)}`,
   ];
 
   if (!touching.length) {
-    hoverDetailsEl.textContent = `${header.join("\n")}\nNo profiling ranges touch this line.`;
+    lastDetailsText = `${header.join("\n")}\nNo profiling ranges touch this line.`;
+    hoverDetailsEl.textContent = lastDetailsText;
     return;
   }
 
   const rangeLines = touching.slice(0, 6).map((range) => {
-    let samples = [];
-    if (selectedArg === "all") {
-      samples = [...(range.no_arg || [])];
-      for (const argSamples of Object.values(range.by_arg || {})) {
-        samples.push(...argSamples);
-      }
-    } else if (selectedArg === "__no_arg__") {
-      samples = [...(range.no_arg || [])];
-    } else {
-      samples = [...((range.by_arg && range.by_arg[selectedArg]) || [])];
-    }
-    const total = samples.reduce((acc, v) => acc + v, 0);
-    const count = samples.length;
-    const max = count ? Math.max(...samples) : 0;
-    return `range ${range.start}-${range.end} | total=${formatNs(total)} | count=${count} | max=${formatNs(max)} | samples=${formatSampleList(samples)}`;
+    const samples = rangeSamplesForCurrentArg(range);
+    const stats = computeSampleStats(samples);
+    const share = referenceNs ? (stats.total / referenceNs) * 100 : 0;
+    return `range ${range.start}-${range.end} | total=${formatNs(stats.total)} (${share.toFixed(2)}%) | count=${stats.count} | min=${formatNs(stats.min)} | max=${formatNs(stats.max)} | avg=${formatNs(stats.avg)} | med=${formatNs(stats.med)} | samples=${formatSampleList(samples)}`;
   });
 
   const hidden = touching.length > 6 ? `\n... ${touching.length - 6} more touching ranges` : "";
-  hoverDetailsEl.textContent = `${header.join("\n")}\n${rangeLines.join("\n")}${hidden}`;
+  lastDetailsText = `${header.join("\n")}\n${rangeLines.join("\n")}${hidden}`;
+  hoverDetailsEl.textContent = lastDetailsText;
 }
 
 async function apiGet(path) {
@@ -285,6 +322,11 @@ function updateUrlState(replace = false) {
   } else {
     url.searchParams.delete("arg");
   }
+  if (selectedScaleMode !== "profiled") {
+    url.searchParams.set("scale", selectedScaleMode);
+  } else {
+    url.searchParams.delete("scale");
+  }
   url.searchParams.set("theme", selectedTheme);
 
   if (replace) {
@@ -299,6 +341,7 @@ function readUrlState() {
   const maybeFile = url.searchParams.get("file");
   const maybeArg = url.searchParams.get("arg");
   const maybeTheme = url.searchParams.get("theme");
+  const maybeScale = url.searchParams.get("scale");
   if (maybeFile) {
     selectedPath = maybeFile;
   }
@@ -307,6 +350,9 @@ function readUrlState() {
   }
   if (maybeTheme === "light" || maybeTheme === "dark") {
     selectedTheme = maybeTheme;
+  }
+  if (maybeScale === "absolute" || maybeScale === "profiled") {
+    selectedScaleMode = maybeScale;
   }
 }
 
@@ -348,6 +394,7 @@ function buildArgOptions(globalArgs) {
 
 async function loadConfig() {
   const config = await apiGet("/api/config");
+  totalDurationNs = Number(config.total_duration || 0);
   const warnings = config.load_error ? ` | warning: ${config.load_error}` : "";
   metaEl.textContent = [
     `program: ${config.program_name || "n/a"}`,
@@ -357,6 +404,19 @@ async function loadConfig() {
     `REPORT_PATH: ${config.report_path}`,
   ].join(" | ") + warnings;
   buildArgOptions(config.global_args || []);
+  scaleModeSelectEl.value = selectedScaleMode;
+}
+
+function computeReferenceNs(data) {
+  if (selectedScaleMode === "absolute") {
+    return Math.max(1, totalDurationNs || 0);
+  }
+  const ranges = data.ranges || [];
+  let profiledTotal = 0;
+  for (const range of ranges) {
+    profiledTotal += rangeTotalForCurrentArg(range);
+  }
+  return Math.max(1, profiledTotal);
 }
 
 async function fetchTreeChildren(path) {
@@ -468,14 +528,11 @@ async function ensureEditor() {
     fontSize: 12,
     renderWhitespace: "selection",
   });
-  editor.onMouseMove((event) => {
-    if (!event.target.position) {
+  editor.onDidChangeCursorPosition((event) => {
+    if (!event.position) {
       return;
     }
-    updateHoverDetails(event.target.position.lineNumber);
-  });
-  editor.onMouseLeave(() => {
-    updateHoverDetails(null);
+    updateHoverDetails(event.position.lineNumber);
   });
   return monaco;
 }
@@ -492,9 +549,10 @@ async function renderCode(data) {
   currentFileData = data;
   buildLineRangesIndex(data);
   buildProfiledRanges(data);
-  updateHoverDetails(null);
+  const cursorLine = editor && editor.getPosition() ? editor.getPosition().lineNumber : 1;
+  updateHoverDetails(cursorLine);
 
-  const max = data.max_total_ns || 0;
+  const referenceNs = computeReferenceNs(data);
   const nextDecorations = [];
 
   data.lines.forEach((_, idx) => {
@@ -505,8 +563,10 @@ async function renderCode(data) {
       avg_ns: 0,
       max_ns: 0,
     };
-    const alpha = heatAlpha(stat.total_ns, max);
+    const alpha = heatAlpha(stat.total_ns, referenceNs);
     const bucket = heatBucket(alpha);
+    const lineStats = lineSampleStats(lineNo);
+    const share = referenceNs ? (stat.total_ns / referenceNs) * 100 : 0;
     if (!bucket) {
       return;
     }
@@ -525,9 +585,12 @@ async function renderCode(data) {
           value: [
             `line ${lineNo}`,
             `total: ${formatNs(stat.total_ns)}`,
-            `count: ${stat.count}`,
-            `avg: ${formatNs(stat.avg_ns)}`,
-            `max sample: ${formatNs(stat.max_ns)}`,
+            `share: ${share.toFixed(2)}% (${selectedScaleMode})`,
+            `count: ${lineStats.count}`,
+            `min: ${formatNs(lineStats.min)}`,
+            `max: ${formatNs(lineStats.max)}`,
+            `avg: ${formatNs(lineStats.avg)}`,
+            `med: ${formatNs(lineStats.med)}`,
           ].join(" | "),
         },
       },
@@ -572,7 +635,9 @@ reloadButtonEl.addEventListener("click", async () => {
 });
 
 profiledSortSelectEl.addEventListener("change", async (event) => {
-  profiledSortMode = event.target.value === "time" ? "time" : "line";
+  profiledSortMode = ["line", "time", "calls"].includes(event.target.value)
+    ? event.target.value
+    : "line";
   if (!currentFileData) {
     renderProfiledList();
     return;
@@ -591,6 +656,14 @@ argFilterEl.addEventListener("change", async (ev) => {
   updateUrlState();
   if (selectedPath) {
     await loadFile();
+  }
+});
+
+scaleModeSelectEl.addEventListener("change", async (ev) => {
+  selectedScaleMode = ev.target.value === "absolute" ? "absolute" : "profiled";
+  updateUrlState();
+  if (currentFileData) {
+    await renderCode(currentFileData);
   }
 });
 
@@ -614,6 +687,24 @@ toggleMetaBtnEl.addEventListener("click", () => {
 
 toggleDetailsBtnEl.addEventListener("click", () => {
   document.body.classList.toggle("show-details");
+});
+
+copyDetailsBtnEl.addEventListener("click", async () => {
+  const text = hoverDetailsEl.textContent || lastDetailsText || "";
+  try {
+    await navigator.clipboard.writeText(text);
+    copyDetailsBtnEl.textContent = "Copied!";
+  } catch {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(hoverDetailsEl);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    copyDetailsBtnEl.textContent = "Selected";
+  }
+  setTimeout(() => {
+    copyDetailsBtnEl.textContent = "Copy details";
+  }, 1200);
 });
 
 async function boot() {

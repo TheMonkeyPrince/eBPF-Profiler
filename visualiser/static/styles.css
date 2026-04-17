@@ -274,6 +274,20 @@ section {
   border-radius: 999px;
 }
 
+#hoverDetailsWrap {
+  display: none;
+}
+
+body.show-details #hoverDetailsWrap {
+  display: block;
+}
+
+#copyDetailsBtn {
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  padding: 4px 6px;
+}
+
 #hoverDetails {
   margin-bottom: 6px;
   border: 1px solid var(--border);
@@ -284,11 +298,8 @@ section {
   font-size: 0.8rem;
   min-height: 52px;
   white-space: pre-wrap;
-  display: none;
-}
-
-body.show-details #hoverDetails {
-  display: block;
+  user-select: text;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 #codePane {

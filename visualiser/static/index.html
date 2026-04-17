@@ -13,6 +13,11 @@
         <div class="controls">
           <label for="argFilter">Arg:</label>
           <select id="argFilter"></select>
+          <label for="scaleModeSelect">Scale:</label>
+          <select id="scaleModeSelect">
+            <option value="profiled">profiled</option>
+            <option value="absolute">absolute</option>
+          </select>
           <button id="prevProfiledBtn" type="button">Prev</button>
           <button id="nextProfiledBtn" type="button">Next</button>
           <span id="profileNavStatus">0 / 0</span>
@@ -26,7 +31,10 @@
         </div>
       </div>
       <div id="meta"></div>
-      <div id="hoverDetails">Hover a line to see detailed profiling data.</div>
+      <div id="hoverDetailsWrap">
+        <button id="copyDetailsBtn" type="button">Copy details</button>
+        <div id="hoverDetails">Hover a line to see detailed profiling data.</div>
+      </div>
     </header>
     <main>
       <aside>
@@ -38,6 +46,7 @@
             <select id="profiledSortSelect">
               <option value="line">Sort: start line</option>
               <option value="time">Sort: total time</option>
+              <option value="calls">Sort: calls (desc)</option>
             </select>
           </div>
           <div id="profiledList"></div>
