@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-export PATH="$PWD/build-tools/llvm-project/llvm/build/bin:$PATH"
+LLVM_PATH="$PWD/build-tools/llvm/"
+export PATH="$LLVM_PATH/bin:$PATH"
+export LD_LIBRARY_PATH="$LLVM_PATH/lib:$LD_LIBRARY_PATH"
 PAHOLE_PATH="$PWD/build-tools/dwarves/build/pahole"
 
 if [[ "$1" == "clean" ]]; then
@@ -16,4 +18,4 @@ cd linux/
 git stash
 git clean -fd
 cp -r ../kernel_patch/* kernel/
-make -j$(nproc) PAHOLE=$PAHOLE_PATH
+make -j$(nproc) PAHOLE=$PAHOLE_PATH LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
