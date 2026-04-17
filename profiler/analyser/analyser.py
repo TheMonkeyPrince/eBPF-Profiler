@@ -41,9 +41,8 @@ class TraceAnalyser:
                             self.execution_times[key] = []
                         self.execution_times[key].append(ev.duration())
                 case Event.EVENT_TYPE.FUNC_TIMER_RESULT:
-                    start_line = ev.start_line
-                    end_line = ev.end_line
-                    key = (ev.file.decode(), start_line, end_line)
+                    line = ev.start_line
+                    key = (ev.file.decode(), line, line)
                     if self.execution_times.get(key) is None:
                         self.execution_times[key] = []
                     self.execution_times[key].append(ev.duration())
