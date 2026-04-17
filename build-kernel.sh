@@ -15,7 +15,6 @@ fi
 
 # build the kernel
 cd linux/
-git stash
-git clean -fd
+git reset --hard
 cp -r ../kernel_patch/* kernel/
 make -j$(nproc) PAHOLE=$PAHOLE_PATH LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
