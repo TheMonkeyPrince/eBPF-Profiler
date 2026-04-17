@@ -20223,7 +20223,7 @@ static bool states_equal(struct bpf_verifier_env *env,
 	 */
 	for (i = 0; i <= old->curframe; i++) {
 		insn_idx = frame_insn_idx(old, i);
-		RUN_BLOCK_WITH_BPF_TIMER_AND_INSN_IDX(insn_idx, {
+		RUN_BLOCK_WITH_BPF_TIMER_AND_ARG(insn_idx, {
 		if (old->frame[i]->callsite != cur->frame[i]->callsite)
 			return false;
 		if (!func_states_equal(env, old->frame[i], cur->frame[i], insn_idx, exact))
