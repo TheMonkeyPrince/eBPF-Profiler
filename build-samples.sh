@@ -6,5 +6,5 @@ PAHOLE_PATH="$PWD/build-tools/dwarves/build/pahole"
 
 # build all samples with llvm
 cd linux/
-# make headers_install
-make M=samples/bpf
+make headers_install PAHOLE=$PAHOLE_PATH
+make M=samples/bpf PAHOLE=$PAHOLE_PATH
