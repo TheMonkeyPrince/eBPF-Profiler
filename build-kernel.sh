@@ -2,9 +2,9 @@
 set -e
 
 LLVM_PATH="$PWD/build-tools/llvm/"
-export PATH="$LLVM_PATH/bin:$PATH"
+PAHOLE_PATH="$PWD/build-tools/dwarves/build/"
+export PATH="$PAHOLE_PATH:$LLVM_PATH/bin:$PATH"
 export LD_LIBRARY_PATH="$LLVM_PATH/lib:$LD_LIBRARY_PATH"
-PAHOLE_PATH="$PWD/build-tools/dwarves/build/pahole"
 
 if [[ "$1" == "clean" ]]; then
     echo "Cleaning kernel and BPF selftests..."
@@ -17,4 +17,4 @@ fi
 cd linux/
 git reset --hard
 cp -r ../kernel_patch/* kernel/
-make -j$(nproc) PAHOLE=$PAHOLE_PATH LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
+make -j$(nproc) PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
