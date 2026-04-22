@@ -45,6 +45,7 @@ class BPFRecorder:
 			if (
 				not self.started
 				and e.get_event_type() == Event.EVENT_TYPE.VERIFIER_START
+				and not self.finished
 			):
 				self.started = True
 				self.trace.append(e)
@@ -60,6 +61,7 @@ class BPFRecorder:
 					)
 				case Event.EVENT_TYPE.VERIFIER_END:
 					if self.started and not self.finished:
+						self.started = False
 						self.finished = True
 						print(f"Trace finished for program: {self.program_name}")
 
