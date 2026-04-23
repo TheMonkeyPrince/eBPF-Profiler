@@ -103,5 +103,12 @@ def find_working_selftests():
 
 
 if __name__ == "__main__":
-	print("Available selftests:")
-	print(list_working_selftests())
+	# print("Available selftests:")
+	# print(list_working_selftests())
+
+	process = run_selftest("arena_strsearch")
+	stdout, stderr = process.communicate()
+	print("STDOUT:")
+	print(stdout)
+	print("STDERR:")
+	print(stderr)

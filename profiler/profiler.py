@@ -21,7 +21,7 @@ class BPFProfiler:
 		process.terminate()
 		process.wait()
 
-		if save:
+		if save and len(trace) > 0:
 			save_trace(program_name, trace)
 		return trace
 
