@@ -32,6 +32,16 @@ def list_selftests():
 	selftests = map(lambda test: "selftest_" + test, result.stdout.splitlines())
 	return list(selftests)
 
+def list_working_selftests():
+	try:
+		with open("working_selftests.txt", "r") as file:
+			return file.read().splitlines()
+	except:
+		working_selftests = find_working_selftests()
+		with open("working_selftests.txt", "w") as file:
+			file.write("\n".join(working_selftests))
+		return working_selftests
+
 def run_selftest(test_name) -> subprocess.Popen[str]:
 	if test_name.startswith("selftest_"):
 		test_name = test_name[len("selftest_"):]
@@ -45,7 +55,54 @@ def run_selftest(test_name) -> subprocess.Popen[str]:
 	)
 	return process
 
+def extract_working_subtests(test_name) -> list[str]:
+	process = run_selftest(test_name)
+	stdout, stderr = process.communicate()
+	if process.returncode == 0:	
+		print(stdout)	
+		lines = stdout.splitlines()
+		lines.pop()
+		if len(lines) == 0:
+			return []
+		
+		def extract_subtest_name(line):
+			try:
+				test_name, status = line.rsplit(":", 1)
+				test_name = test_name.strip()
+				if status.strip() == "OK":
+					return "selftest_" + test_name.split()[1]
+			except:
+				return False
+			return False
+
+		if len(lines) == 1:
+			test_name = extract_subtest_name(lines[0])
+			if test_name:
+				return [test_name]
+			return []
+		else:
+			lines.pop()
+			subtests = []
+			for line in lines:
+				subtest_name = extract_subtest_name(line)
+				if subtest_name:
+					subtests.append(subtest_name)
+			return subtests
+	return []
+
+def find_working_selftests():
+	selftests = list_selftests()
+	working_subtests = []
+	for test in selftests:
+		subtests = extract_working_subtests(test)
+		working_subtests.extend(subtests)
+		from time import sleep
+
+	return working_subtests
+
+
+
 if __name__ == "__main__":
 	print("Available selftests:")
-	for test in list_selftests():
-		print(test)
+
+	print(list_working_selftests())

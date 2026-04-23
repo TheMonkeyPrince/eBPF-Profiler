@@ -23,7 +23,7 @@ if __name__ == "__main__":
 	else:
 		# selftests = list_selftests()
 		# selftests = ["selftest_bpf_gotox"]
-		selftests = ["selftest_bpftoeol_metadata"]
+		selftests = ["selftest_bpftool_metadata"]
 
 		# selftests = ["selftest_access_variable_array"]
 
