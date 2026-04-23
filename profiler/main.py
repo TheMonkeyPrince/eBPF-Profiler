@@ -12,34 +12,41 @@ if __name__ == "__main__":
 	)
 	args = parser.parse_args()
 
-	profiler = BPFProfiler()
-
 	blacklist = [
 		"selftest_arg_parsing",
-		"selftest_assign_reuse"
+		"selftest_assign_reuse",
+		"selftest_btf_dedup_split"
 	]
 
 	if args.test:
 		selftests = [args.test]
 	else:
 		# selftests = list_selftests()
-		selftests = ["selftest_bpf_gotox"]
+		# selftests = ["selftest_bpf_gotox"]
+		selftests = ["selftest_bpftoeol_metadata"]
 
-	for selftest in selftests:
-		if selftest in blacklist:
-			print(f"Skipping selftest: {selftest}")
-			continue
+		# selftests = ["selftest_access_variable_array"]
 
-		print(f"Running selftest: {selftest}")
-		trace = profiler.profile_program(selftest)
-		time.sleep(0.5)
+	try:
+		with BPFProfiler() as profiler:
 
-	for selftest in selftests:
-		if selftest in blacklist:
-			continue
+			for selftest in selftests:
+				if selftest in blacklist:
+					print(f"Skipping selftest: {selftest}")
+					continue
 
-		print(f"Analysing selftest: {selftest}")
-		profiler.analyse_trace_from_file(selftest)
+				print(f"Running selftest: {selftest}")
+				trace = profiler.profile_program(selftest)
+				time.sleep(0.5)
+
+			for selftest in selftests:
+				if selftest in blacklist:
+					continue
+
+				print(f"Analysing selftest: {selftest}")
+				profiler.analyse_trace_from_file(selftest)
+	except KeyboardInterrupt:
+		print("Stopped")
 
 
 	# trace = profiler.profile_program("selftest_arena_spin_lock")

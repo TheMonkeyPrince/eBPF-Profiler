@@ -45,11 +45,7 @@ def run_selftest(test_name) -> subprocess.Popen[str]:
 	)
 	return process
 
-# for test in list_selftests():
-# 	print(f"Running selftest: {test}")
-# 	process = run_selftest(test)
-# 	stdout, stderr = process.communicate()
-# 	if process.returncode != 0:
-# 		print(f"Error running selftest {test}:", stderr)
-# 	else:		
-# 		print(f"Output of selftest {test}:", stdout)
+if __name__ == "__main__":
+	print("Available selftests:")
+	for test in list_selftests():
+		print(test)

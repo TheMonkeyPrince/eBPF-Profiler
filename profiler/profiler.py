@@ -14,8 +14,10 @@ class BPFProfiler:
 		if not self.recorder:
 			self.recorder = BPFRecorder(verbose=self.verbose)
 
+
+		self.recorder.start_recording(program_name)
 		process = launch_bpf_program(program_name)
-		trace = self.recorder.record_events(program_name)
+		trace = self.recorder.wait_for_completion()
 		process.terminate()
 		process.wait()
 
@@ -37,3 +39,10 @@ class BPFProfiler:
 	) -> TraceAnalyser:
 		trace = load_trace(program_name)
 		return self.analyse_trace(program_name, trace, save=save)
+
+	def __enter__(self):
+		return self
+	
+	def __exit__(self, exc_type, exc, tb):
+		if self.recorder:
+			self.recorder.unload()

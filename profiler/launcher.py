@@ -17,19 +17,11 @@ from selftests import run_selftest
 
 
 def launch_bpf_program(
-    program_name: str,
-    on_completed: Optional[Callable[[subprocess.Popen[str]], None]] = None
+    program_name: str
 ) -> subprocess.Popen[str]:
     
     if program_name.startswith("selftest_"):
         process = run_selftest(program_name)
-
-        if on_completed:
-            def _wait_and_callback():
-                process.wait()
-                on_completed(process)
-
-            threading.Thread(target=_wait_and_callback, daemon=True).start()
 
         return process
 
