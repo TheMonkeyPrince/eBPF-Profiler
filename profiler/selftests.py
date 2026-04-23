@@ -104,5 +104,4 @@ def find_working_selftests():
 
 if __name__ == "__main__":
 	print("Available selftests:")
-
 	print(list_working_selftests())

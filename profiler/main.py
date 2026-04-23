@@ -1,7 +1,7 @@
 import time
 import argparse
 from profiler import BPFProfiler
-from selftests import list_selftests
+from selftests import list_working_selftests
 
 
 if __name__ == "__main__":
@@ -21,9 +21,9 @@ if __name__ == "__main__":
 	if args.test:
 		selftests = [args.test]
 	else:
-		# selftests = list_selftests()
+		selftests = list_working_selftests()
 		# selftests = ["selftest_bpf_gotox"]
-		selftests = ["selftest_bpftool_metadata"]
+		# selftests = ["selftest_bpftool_metadata"]
 
 		# selftests = ["selftest_access_variable_array"]
 
