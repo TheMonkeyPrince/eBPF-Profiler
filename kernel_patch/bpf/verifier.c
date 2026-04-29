@@ -20223,12 +20223,10 @@ static bool states_equal(struct bpf_verifier_env *env,
 	 */
 	for (i = 0; i <= old->curframe; i++) {
 		insn_idx = frame_insn_idx(old, i);
-		RUN_BLOCK_WITH_BPF_TIMER_AND_ARG(insn_idx, {
 		if (old->frame[i]->callsite != cur->frame[i]->callsite)
 			return false;
-		if (!func_states_equal(env, old->frame[i], cur->frame[i], insn_idx, exact))
+		if (!CALL_WITH_BPF_TIMER(func_states_equal, env, old->frame[i], cur->frame[i], insn_idx, exact))
 			return false;
-		});
 	}
 	return true;
 	});
@@ -21216,6 +21214,7 @@ static int do_check(struct bpf_verifier_env *env)
 		struct bpf_insn_aux_data *insn_aux;
 		int err, marks_err;
 
+		RUN_BLOCK_WITH_BPF_TIMER_AND_ARG(env->insn_idx, {
 		/* reset current history entry on each new instruction */
 		env->cur_hist_ent = NULL;
 
@@ -21238,6 +21237,7 @@ static int do_check(struct bpf_verifier_env *env)
 
 		state->last_insn_idx = env->prev_insn_idx;
 		state->insn_idx = env->insn_idx;
+		});
 
 		if (is_prune_point(env, env->insn_idx)) {
 			err = is_state_visited(env, env->insn_idx);
@@ -25949,12 +25949,12 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u3
 		goto err_free_env;
 	env->prog = *prog;
 	env->ops = bpf_verifier_ops[env->prog->type];
-	});
 	env->allow_ptr_leaks = bpf_allow_ptr_leaks(env->prog->aux->token);
 	env->allow_uninit_stack = bpf_allow_uninit_stack(env->prog->aux->token);
 	env->bypass_spec_v1 = bpf_bypass_spec_v1(env->prog->aux->token);
 	env->bypass_spec_v4 = bpf_bypass_spec_v4(env->prog->aux->token);
 	env->bpf_capable = is_priv = bpf_token_capable(env->prog->aux->token, CAP_BPF);
+	});
 
 	bpf_get_btf_vmlinux();
 
@@ -26005,28 +26005,28 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u3
 		INIT_LIST_HEAD(&env->explored_states[i]);
 	INIT_LIST_HEAD(&env->free_list);
 
-	ret = check_btf_info_early(env, attr, uattr);
+	ret = CALL_WITH_BPF_TIMER(check_btf_info_early, env, attr, uattr);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = add_subprog_and_kfunc(env);
+	ret = CALL_WITH_BPF_TIMER(add_subprog_and_kfunc, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = check_subprogs(env);
+	ret = CALL_WITH_BPF_TIMER(check_subprogs, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = check_btf_info(env, attr, uattr);
+	ret = CALL_WITH_BPF_TIMER(check_btf_info, env, attr, uattr);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = resolve_pseudo_ldimm64(env);
+	ret = CALL_WITH_BPF_TIMER(resolve_pseudo_ldimm64, env);
 	if (ret < 0)
 		goto skip_full_check;
 
 	if (bpf_prog_is_offloaded(env->prog->aux)) {
-		ret = bpf_prog_offload_verifier_prep(env->prog);
+		ret = CALL_WITH_BPF_TIMER(bpf_prog_offload_verifier_prep, env->prog);
 		if (ret)
 			goto skip_full_check;
 	}
@@ -26072,45 +26072,45 @@ skip_full_check:
 	 * allocate additional slots.
 	 */
 	if (ret == 0)
-		ret = remove_fastcall_spills_fills(env);
+		ret = CALL_WITH_BPF_TIMER(remove_fastcall_spills_fills, env);
 
 	if (ret == 0)
-		ret = check_max_stack_depth(env);
+		ret = CALL_WITH_BPF_TIMER(check_max_stack_depth, env);
 
 	/* instruction rewrites happen after this point */
 	if (ret == 0)
-		ret = optimize_bpf_loop(env);
+		ret = CALL_WITH_BPF_TIMER(optimize_bpf_loop, env);
 
 	if (is_priv) {
 		if (ret == 0)
-			opt_hard_wire_dead_code_branches(env);
+			CALL_WITH_BPF_TIME(opt_hard_wire_dead_code_branches, env);
 		if (ret == 0)
-			ret = opt_remove_dead_code(env);
+			ret = CALL_WITH_BPF_TIMER(opt_remove_dead_code, env);
 		if (ret == 0)
-			ret = opt_remove_nops(env);
+			ret = CALL_WITH_BPF_TIMER(opt_remove_nops, env);
 	} else {
 		if (ret == 0)
-			sanitize_dead_code(env);
+			CALL_WITH_BPF_TIMER(sanitize_dead_code, env);
 	}
 
 	if (ret == 0)
 		/* program is valid, convert *(u32*)(ctx + off) accesses */
-		ret = convert_ctx_accesses(env);
+		ret = CALL_WITH_BPF_TIMER(convert_ctx_accesses, env);
 
 	if (ret == 0)
-		ret = do_misc_fixups(env);
+		ret = CALL_WITH_BPF_TIME(do_misc_fixups, env);
 
 	/* do 32-bit optimization after insn patching has done so those patched
 	 * insns could be handled correctly.
 	 */
-	if (ret == 0 && !bpf_prog_is_offloaded(env->prog->aux)) {
+	if (ret == 0 && !CALL_WITH_BPF_TIMER(bpf_prog_is_offloaded, env->prog->aux)) {
 		ret = opt_subreg_zext_lo32_rnd_hi32(env, attr);
 		env->prog->aux->verifier_zext = bpf_jit_needs_zext() ? !ret
 								     : false;
 	}
 
 	if (ret == 0)
-		ret = fixup_call_args(env);
+		ret = CALL_WITH_BPF_TIMER(fixup_call_args, env);
 
 	RUN_BLOCK_WITH_BPF_TIMER({
 	env->verification_time = ktime_get_ns() - start_time;

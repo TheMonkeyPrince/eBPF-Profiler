@@ -4,12 +4,20 @@
 
 #define BPF_PROFILER_NO_ARG ((u32)-1)
 
+#define STOP_BPF_TIMER() \
+    do { \
+        u64 __bpf_timer_end = ktime_get_ns(); \
+        bpf_profiler_block_timer_result(__FILE__, __bpf_timer_start_line, __bpf_timer_arg, __bpf_timer_start, __bpf_timer_end); \
+    } while (0)
+
 #define RUN_BLOCK_WITH_BPF_TIMER_AND_ARG(arg, code_block)                                             \
     do {                                                                                              \
+        int __bpf_timer_start_line = __LINE__;                                                        \
+        u32 __bpf_timer_arg = arg;                                                                    \
         u64 __bpf_timer_start = ktime_get_ns();                                                       \
         code_block                                                                                    \
         u64 __bpf_timer_end = ktime_get_ns();                                                         \
-        bpf_profiler_block_timer_result(__FILE__, __LINE__, arg, __bpf_timer_start, __bpf_timer_end); \
+        STOP_BPF_TIMER();                                                                             \
     } while (0)
 
 #define RUN_BLOCK_WITH_BPF_TIMER(code_block)                     \
