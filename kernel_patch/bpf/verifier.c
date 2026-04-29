@@ -26083,14 +26083,14 @@ skip_full_check:
 
 	if (is_priv) {
 		if (ret == 0)
-			CALL_WITH_BPF_TIME(opt_hard_wire_dead_code_branches, env);
+			opt_hard_wire_dead_code_branches(env);
 		if (ret == 0)
 			ret = CALL_WITH_BPF_TIMER(opt_remove_dead_code, env);
 		if (ret == 0)
 			ret = CALL_WITH_BPF_TIMER(opt_remove_nops, env);
 	} else {
 		if (ret == 0)
-			CALL_WITH_BPF_TIMER(sanitize_dead_code, env);
+			sanitize_dead_code(env);
 	}
 
 	if (ret == 0)
@@ -26098,7 +26098,7 @@ skip_full_check:
 		ret = CALL_WITH_BPF_TIMER(convert_ctx_accesses, env);
 
 	if (ret == 0)
-		ret = CALL_WITH_BPF_TIME(do_misc_fixups, env);
+		ret = CALL_WITH_BPF_TIMER(do_misc_fixups, env);
 
 	/* do 32-bit optimization after insn patching has done so those patched
 	 * insns could be handled correctly.

@@ -15,8 +15,7 @@
         int __bpf_timer_start_line = __LINE__;                                                        \
         u32 __bpf_timer_arg = arg;                                                                    \
         u64 __bpf_timer_start = ktime_get_ns();                                                       \
-        code_block                                                                                    \
-        u64 __bpf_timer_end = ktime_get_ns();                                                         \
+        do code_block while (0);                                                                      \
         STOP_BPF_TIMER();                                                                             \
     } while (0)
 
