@@ -1,6 +1,7 @@
 import os
 import threading
 import ctypes as ct
+from time import time
 try:
 	from bcc import BPF
 	BCC_AVAILABLE = True
@@ -91,9 +92,24 @@ class BPFRecorder:
 		self.program_name = program_name
 		self.trace = []
 
+		start_time = time()
+		timeout_on = True
+		timeout_duration = 5
+
 		def recording_loop():
+			nonlocal timeout_on
 			print("Listening for kernel events...")
 			while not self.finished:
+				if timeout_on:
+					if self.started:
+						timeout_on = False
+					else:
+						elapsed_time = time() - start_time
+						if elapsed_time > timeout_duration:
+							print(f"Timeout reached after {elapsed_time:.2f} seconds. Stopping recording.")
+							self.finished = True
+							break
+
 				self.bpf.perf_buffer_poll(timeout=100)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)

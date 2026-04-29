@@ -47,7 +47,7 @@ def run_selftest(test_name) -> subprocess.Popen[str]:
 		test_name = test_name[len("selftest_"):]
 
 	process = subprocess.Popen(
-		["./test_progs", "-t", test_name],
+		["./test_progs", "-t", f"{test_name}"],
 		cwd=f"{KERNEL_SOURCE_PATH}/tools/testing/selftests/bpf",
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
@@ -96,17 +96,20 @@ def find_working_selftests():
 	for test in selftests:
 		subtests = extract_working_subtests(test)
 		working_subtests.extend(subtests)
-		from time import sleep
 
 	return working_subtests
-
 
 
 if __name__ == "__main__":
 	# print("Available selftests:")
 	# print(list_working_selftests())
 
-	process = run_selftest("arena_strsearch")
+	# for e in list_selftests():
+	# 	if "cls_redirect" in e:
+	# 		print(e)	
+
+	# process = run_selftest("cls_redirect/IPv4 UDP accept known (one hop, flags: none)")
+	process = run_selftest("access_variable_array")
 	stdout, stderr = process.communicate()
 	print("STDOUT:")
 	print(stdout)
