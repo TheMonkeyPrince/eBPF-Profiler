@@ -27,7 +27,7 @@ fi
 # build the kernel
 cd linux/
 git reset --hard
-# cp -r ../kernel_patch/* kernel/
+cp -r ../kernel-patch/* kernel/
 # make olddefconfig LLVM=1 LLVM_IAS=1 PAHOLE="$PAHOLE_PATH/pahole"
 # make -j$(nproc) PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
 make -j"$(nproc)" LLVM=1 LLVM_IAS=1 PAHOLE="$PAHOLE_PATH/pahole" LLC="$LLVM_PATH/bin/llc" CLANG="$LLVM_PATH/bin/clang" HOSTCFLAGS="-Wno-error -Wno-error=unused-but-set-variable -Wno-unused-but-set-variable"

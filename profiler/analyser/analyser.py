@@ -1,10 +1,14 @@
+import os
 import json
 
 from event import Event
 from time import time
 from .utils import find_block_end
 
-from config import KERNEL_SOURCE_PATH
+KERNEL_SOURCE_PATH = "/mnt/linux/"
+if not os.path.isdir(KERNEL_SOURCE_PATH):
+    KERNEL_SOURCE_PATH = "../linux/"
+
 
 class TraceAnalyser:
     def __init__(self, program_name: str, trace: list[Event]):
@@ -12,7 +16,7 @@ class TraceAnalyser:
         self.trace = trace
 
     def analyse(self, verbose=True):
-        self.execution_times: dict[tuple[str, int, int], list[int]] = {}
+        self.execution_times: dict[tuple[str, int, int] | tuple[str, int, int, str], list[int]] = {}
 
         start_time = time()
 
@@ -26,7 +30,9 @@ class TraceAnalyser:
                     trace_end_time = ev.timestamp
                 case Event.EVENT_TYPE.BLOCK_TIMER_RESULT:
                     start_line = ev.start_line
-                    end_line = find_block_end(KERNEL_SOURCE_PATH + ev.file.decode(), start_line)
+                    end_line = find_block_end(
+                        KERNEL_SOURCE_PATH + ev.file.decode(), start_line
+                    )
 
                     key = (ev.file.decode(), start_line, end_line)
 
@@ -42,7 +48,7 @@ class TraceAnalyser:
                         self.execution_times[key].append(ev.duration())
                 case Event.EVENT_TYPE.FUNC_TIMER_RESULT:
                     line = ev.start_line
-                    key = (ev.file.decode(), line, line)
+                    key = (ev.file.decode(), line, line, ev.func_name.decode())
                     if self.execution_times.get(key) is None:
                         self.execution_times[key] = []
                     self.execution_times[key].append(ev.duration())
@@ -55,10 +61,19 @@ class TraceAnalyser:
 
     def to_json(self):
         # Convert tuple keys to string for JSON
-        serializable_exec_times = {
-            f"{filename}:{start}-{end}": durations
-            for (filename, start, end), durations in self.execution_times.items()
-        }
+        serializable_exec_times = {}
+
+        for key, durations in self.execution_times.items():
+            filename, start, end, *rest = key
+            name = rest[0] if rest else None
+
+            dict_key = f"{filename}:{start}-{end}"
+            if name is not None:
+                dict_key += f":{name}"
+
+            serializable_exec_times[dict_key] = durations
+
+
         data = {
             "program_name": self.program_name,
             "total_duration": self.total_duration,

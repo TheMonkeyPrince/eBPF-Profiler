@@ -14,10 +14,14 @@
 # # or numeric test/subtest
 # sudo ./test_progs -n 45/2
 
+import os
 import sys
 import subprocess
 
-from config import KERNEL_SOURCE_PATH
+KERNEL_SOURCE_PATH = "/mnt/linux/"
+if not os.path.isdir(KERNEL_SOURCE_PATH):
+    KERNEL_SOURCE_PATH = "../linux/"
+
 
 def list_selftests():
 	result = subprocess.run(

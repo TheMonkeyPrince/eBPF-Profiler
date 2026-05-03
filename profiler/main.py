@@ -1,23 +1,25 @@
 import time
 import argparse
 from profiler import BPFProfiler
-from selftests import list_working_selftests
+from programs.kernel_selftests import list_working_selftests
 
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
 		"--test",
-		help="Run a specific test (e.g. selftest_xyz)"
+		help="Run a specific test (e.g. selftest_xyz, sample_abc)",
+		type=str,
 	)
 	args = parser.parse_args()
 
 	if args.test:
 		# selftest_bpftool_maps_access
-		selftests = [args.test]
+		tests = [args.test]
 	else:
 		# selftests = list_working_selftests()
-		selftests = ["selftest_bpftool_maps_access"]
+		# tests = ["selftest_bpftool_maps_access"]
+		tests = ["sample_tracex1"]
 		# selftests = ["selftest_bpf_gotox"]
 		# selftests = ["selftest_arg_parsing/test_parse_test_list"]
 		# selftests = ["selftest_bpftool_metadata"]
@@ -28,15 +30,15 @@ if __name__ == "__main__":
 	try:
 		with BPFProfiler() as profiler:
 
-			for selftest in selftests:
-				print(f"Running selftest: {selftest}")
-				trace = profiler.profile_program(selftest)
+			for test in tests:
+				print(f"Running test: {test}")
+				trace = profiler.profile_program(test)
 				if len(trace) > 0:
-					runned_tests.append(selftest)
+					runned_tests.append(test)
 
-			for selftest in runned_tests:
-				print(f"Analysing selftest: {selftest}")
-				profiler.analyse_trace_from_file(selftest)
+			for test in runned_tests:
+				print(f"Analysing test: {test}")
+				profiler.analyse_trace_from_file(test)
 	except KeyboardInterrupt:
 		print("Stopped")
 

@@ -33,6 +33,8 @@
 
 #include "disasm.h"
 
+#include "profiler.h"
+
 static const struct bpf_verifier_ops * const bpf_verifier_ops[] = {
 #define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
 	[_id] = & _name ## _verifier_ops,
@@ -19989,77 +19991,77 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u3
 		INIT_LIST_HEAD(&env->explored_states[i]);
 	INIT_LIST_HEAD(&env->free_list);
 
-	ret = bpf_check_btf_info_early(env, attr, uattr);
+	ret = BPF_PROFILE_CALL(bpf_check_btf_info_early, env, attr, uattr);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = add_subprog_and_kfunc(env);
+	ret = BPF_PROFILE_CALL(add_subprog_and_kfunc, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = check_subprogs(env);
+	ret = BPF_PROFILE_CALL(check_subprogs, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_check_btf_info(env, attr, uattr);
+	ret = BPF_PROFILE_CALL(bpf_check_btf_info, env, attr, uattr);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = check_and_resolve_insns(env);
+	ret = BPF_PROFILE_CALL(check_and_resolve_insns, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	if (bpf_prog_is_offloaded(env->prog->aux)) {
-		ret = bpf_prog_offload_verifier_prep(env->prog);
+	if (BPF_PROFILE_CALL(bpf_prog_is_offloaded, env->prog->aux)) {
+		ret = BPF_PROFILE_CALL(bpf_prog_offload_verifier_prep, env->prog);
 		if (ret)
 			goto skip_full_check;
 	}
 
-	ret = bpf_check_cfg(env);
+	ret = BPF_PROFILE_CALL(bpf_check_cfg, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_compute_postorder(env);
+	ret = BPF_PROFILE_CALL(bpf_compute_postorder, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_stack_liveness_init(env);
+	ret = BPF_PROFILE_CALL(bpf_stack_liveness_init, env);
 	if (ret)
 		goto skip_full_check;
 
-	ret = check_attach_btf_id(env);
+	ret = BPF_PROFILE_CALL(check_attach_btf_id, env);
 	if (ret)
 		goto skip_full_check;
 
-	ret = bpf_compute_const_regs(env);
+	ret = BPF_PROFILE_CALL(bpf_compute_const_regs, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_prune_dead_branches(env);
+	ret = BPF_PROFILE_CALL(bpf_prune_dead_branches, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = sort_subprogs_topo(env);
+	ret = BPF_PROFILE_CALL(sort_subprogs_topo, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_compute_scc(env);
+	ret = BPF_PROFILE_CALL(bpf_compute_scc, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = bpf_compute_live_registers(env);
+	ret = BPF_PROFILE_CALL(bpf_compute_live_registers, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = mark_fastcall_patterns(env);
+	ret = BPF_PROFILE_CALL(mark_fastcall_patterns, env);
 	if (ret < 0)
 		goto skip_full_check;
 
-	ret = do_check_main(env);
-	ret = ret ?: do_check_subprogs(env);
+	ret = BPF_PROFILE_CALL(do_check_main, env);
+	ret = ret ?: BPF_PROFILE_CALL(do_check_subprogs, env);
 
-	if (ret == 0 && bpf_prog_is_offloaded(env->prog->aux))
-		ret = bpf_prog_offload_finalize(env);
+	if (ret == 0 && BPF_PROFILE_CALL(bpf_prog_is_offloaded, env->prog->aux))
+		ret = BPF_PROFILE_CALL(bpf_prog_offload_finalize, env);
 
 skip_full_check:
 	kvfree(env->explored_states);
@@ -20068,45 +20070,45 @@ skip_full_check:
 	 * allocate additional slots.
 	 */
 	if (ret == 0)
-		ret = bpf_remove_fastcall_spills_fills(env);
+		ret = BPF_PROFILE_CALL(bpf_remove_fastcall_spills_fills, env);
 
 	if (ret == 0)
-		ret = check_max_stack_depth(env);
+		ret = BPF_PROFILE_CALL(check_max_stack_depth, env);
 
 	/* instruction rewrites happen after this point */
 	if (ret == 0)
-		ret = bpf_optimize_bpf_loop(env);
+		ret = BPF_PROFILE_CALL(bpf_optimize_bpf_loop, env);
 
 	if (is_priv) {
 		if (ret == 0)
-			bpf_opt_hard_wire_dead_code_branches(env);
+			BPF_PROFILE_CALL_VOID(bpf_opt_hard_wire_dead_code_branches, env);
 		if (ret == 0)
-			ret = bpf_opt_remove_dead_code(env);
+			ret = BPF_PROFILE_CALL(bpf_opt_remove_dead_code, env);
 		if (ret == 0)
-			ret = bpf_opt_remove_nops(env);
+			ret = BPF_PROFILE_CALL(bpf_opt_remove_nops, env);
 	} else {
 		if (ret == 0)
-			sanitize_dead_code(env);
+			BPF_PROFILE_CALL_VOID(sanitize_dead_code, env);
 	}
 
 	if (ret == 0)
 		/* program is valid, convert *(u32*)(ctx + off) accesses */
-		ret = bpf_convert_ctx_accesses(env);
+		ret = BPF_PROFILE_CALL(bpf_convert_ctx_accesses, env);
 
 	if (ret == 0)
-		ret = bpf_do_misc_fixups(env);
+		ret = BPF_PROFILE_CALL(bpf_do_misc_fixups, env);
 
 	/* do 32-bit optimization after insn patching has done so those patched
 	 * insns could be handled correctly.
 	 */
-	if (ret == 0 && !bpf_prog_is_offloaded(env->prog->aux)) {
-		ret = bpf_opt_subreg_zext_lo32_rnd_hi32(env, attr);
+	if (ret == 0 && !BPF_PROFILE_CALL(bpf_prog_is_offloaded, env->prog->aux)) {
+		ret = BPF_PROFILE_CALL(bpf_opt_subreg_zext_lo32_rnd_hi32, env, attr);
 		env->prog->aux->verifier_zext = bpf_jit_needs_zext() ? !ret
 								     : false;
 	}
 
 	if (ret == 0)
-		ret = bpf_fixup_call_args(env);
+		ret = BPF_PROFILE_CALL(bpf_fixup_call_args, env);
 
 	env->verification_time = ktime_get_ns() - start_time;
 	print_verification_stats(env);

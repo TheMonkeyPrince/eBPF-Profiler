@@ -1,7 +1,7 @@
 from event import Event
 from recorder.recorder import BPFRecorder
 from analyser.analyser import TraceAnalyser
-from launcher import launch_bpf_program
+from programs.launcher import launch_bpf_program
 from storage import save_trace, load_trace, save_analysis, load_analysis
 
 
