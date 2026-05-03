@@ -14,6 +14,10 @@ make -C samples/bpf clean
 
 make headers_install
 
-# make headers_install PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
-
-make M=samples/bpf PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
+make M=samples/bpf clean
+make M=samples/bpf LLVM=1 \
+  PAHOLE="$PAHOLE_PATH/pahole" \
+  LLC="$LLVM_PATH/bin/llc" \
+  CLANG="$LLVM_PATH/bin/clang" \
+  BPF_EXTRA_CFLAGS="-g -Wno-microsoft-anon-tag -fms-extensions" \
+  TPROGS_USER_CFLAGS="-Wno-microsoft-anon-tag -fms-extensions"

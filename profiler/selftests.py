@@ -14,6 +14,7 @@
 # # or numeric test/subtest
 # sudo ./test_progs -n 45/2
 
+import sys
 import subprocess
 
 from config import KERNEL_SOURCE_PATH
@@ -101,15 +102,12 @@ def find_working_selftests():
 
 
 if __name__ == "__main__":
-	# print("Available selftests:")
-	# print(list_working_selftests())
-
-	# for e in list_selftests():
-	# 	if "cls_redirect" in e:
-	# 		print(e)	
-
 	# process = run_selftest("cls_redirect/IPv4 UDP accept known (one hop, flags: none)")
-	process = run_selftest("access_variable_array")
+	if len(sys.argv) < 2:
+		print("Usage: python selftests.py <test_name>")
+		sys.exit(1)
+
+	process = run_selftest(sys.argv[1])
 	stdout, stderr = process.communicate()
 	print("STDOUT:")
 	print(stdout)

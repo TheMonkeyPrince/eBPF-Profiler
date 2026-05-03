@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-KERNEL_VERSION=v7.0-rc5
+KERNEL_VERSION=v7.1-rc1
 
 LLVM_PATH="$PWD/build-tools/llvm/"
 

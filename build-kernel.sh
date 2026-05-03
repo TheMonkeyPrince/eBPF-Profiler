@@ -13,8 +13,21 @@ if [[ "$1" == "clean" ]]; then
     exit 0
 fi
 
+if [[ "$1" == "config" ]]; then
+    echo "Configuring kernel..."
+    cd linux/
+    make mrproper
+    cp ../.kernel-config .config
+    # cat tools/testing/selftests/bpf/config tools/testing/selftests/bpf/config.x86_64 > .config
+    # make olddefconfig PAHOLE="$PAHOLE_PATH/pahole"
+    make olddefconfig LLVM=1 PAHOLE="$PAHOLE_PATH/pahole"
+    exit 0
+fi
+
 # build the kernel
 cd linux/
 git reset --hard
-cp -r ../kernel_patch/* kernel/
-make -j$(nproc) PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
+# cp -r ../kernel_patch/* kernel/
+# make olddefconfig LLVM=1 LLVM_IAS=1 PAHOLE="$PAHOLE_PATH/pahole"
+# make -j$(nproc) PAHOLE=$PAHOLE_PATH/pahole LLC=$LLVM_PATH/bin/llc CLANG=$LLVM_PATH/bin/clang
+make -j"$(nproc)" LLVM=1 LLVM_IAS=1 PAHOLE="$PAHOLE_PATH/pahole" LLC="$LLVM_PATH/bin/llc" CLANG="$LLVM_PATH/bin/clang" HOSTCFLAGS="-Wno-error -Wno-error=unused-but-set-variable -Wno-unused-but-set-variable"

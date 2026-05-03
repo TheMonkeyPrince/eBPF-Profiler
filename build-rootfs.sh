@@ -58,8 +58,8 @@ EOF
 # sudo cp "$DIR/etc/resolv.conf.bak" "$DIR/etc/resolv.conf"
 echo "nameserver 8.8.8.8" | sudo tee $DIR/etc/resolv.conf >/dev/null
 
-sudo chroot "$DIR" mkdir -p /mnt/profiler
-echo "profiler /mnt/profiler 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
+sudo chroot "$DIR" mkdir -p /root
+echo "profiler /root 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"
 
 sudo chroot "$DIR" mkdir -p /mnt/linux
 echo "linux /mnt/linux 9p trans=virtio,version=9p2000.L,msize=8192,uid=0,gid=0,_netdev 0 0" | sudo tee -a "$DIR/etc/fstab"

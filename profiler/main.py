@@ -13,9 +13,11 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	if args.test:
+		# selftest_bpftool_maps_access
 		selftests = [args.test]
 	else:
-		selftests = list_working_selftests()
+		# selftests = list_working_selftests()
+		selftests = ["selftest_bpftool_maps_access"]
 		# selftests = ["selftest_bpf_gotox"]
 		# selftests = ["selftest_arg_parsing/test_parse_test_list"]
 		# selftests = ["selftest_bpftool_metadata"]
