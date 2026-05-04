@@ -3,8 +3,10 @@ cached_files: dict[str, list[str]] = {}
 
 def find_block_end(filename, start_line):
     """
-    Given a C source file and a starting line number, find the line number of the matching closing brace '}'.
-    This function accounts for nested braces, string literals, character literals, and comments.
+    Given a C source file and a 1-based line number, find the matching closing '}' for the block
+    whose opening '{' appears on that same line.
+
+    Nested braces, string literals, character literals, and comments are handled.
     """
 
     if (filename, start_line) in saved_results:
@@ -22,15 +24,12 @@ def find_block_end(filename, start_line):
     if start_idx < 0 or start_idx >= len(lines):
         raise ValueError("Invalid start line number")
 
-    # Search for the opening brace in the given line
+    # Opening `{` must be on start_line itself; do not scan forward — later lines
+    # may contain unrelated braces (e.g. `case X:` with no block vs `switch (...) {` below).
     line = lines[start_idx]
     brace_pos = line.find('{')
-    while brace_pos == -1 and start_idx + 1 < len(lines): # look for the opening brace in subsequent lines if not found in the current line
-        start_idx += 1
-        line = lines[start_idx]
-        brace_pos = line.find('{')
     if brace_pos == -1:
-        raise ValueError(f"No opening brace found starting from the given line: {filename}:{start_line}")
+        raise ValueError(f"No opening brace on line {start_line}: {filename}")
 
     # Initialize counters
     brace_count = 0
@@ -98,7 +97,8 @@ def find_block_start(filename, end_line):
     if (filename, end_line) in saved_block_starts:
         return saved_block_starts[(filename, end_line)]
 
-    for L in range(1, end_line + 1):
+    # Nearest matching `{` is usually just above `end_line`; scan backward.
+    for L in range(end_line, 0, -1):
         try:
             if find_block_end(filename, L) == end_line:
                 saved_block_starts[(filename, end_line)] = L
