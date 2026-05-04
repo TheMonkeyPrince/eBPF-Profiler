@@ -7,6 +7,7 @@ const copyDetailsBtnEl = document.getElementById("copyDetailsBtn");
 const argFilterEl = document.getElementById("argFilter");
 const scaleModeSelectEl = document.getElementById("scaleModeSelect");
 const reloadButtonEl = document.getElementById("reloadButton");
+const reportSelectEl = document.getElementById("reportSelect");
 const themeToggleEl = document.getElementById("themeToggle");
 const prevProfiledBtnEl = document.getElementById("prevProfiledBtn");
 const nextProfiledBtnEl = document.getElementById("nextProfiledBtn");
@@ -86,18 +87,46 @@ function formatSampleList(samples) {
   if (!samples || samples.length === 0) {
     return "[]";
   }
-  const shown = samples.slice(0, 8).map((v) => Number(v).toLocaleString());
+  const shown = samples.slice(0, 8).map((v) => {
+    const inc = sampleInclusiveNs(v);
+    const exc = sampleExclusiveNs(v);
+    if (exc != null && exc !== inc) {
+      return `${Number(inc).toLocaleString()} ex ${Number(exc).toLocaleString()}`;
+    }
+    return Number(inc).toLocaleString();
+  });
   if (samples.length > 8) {
     shown.push(`... +${samples.length - 8}`);
   }
   return `[${shown.join(", ")}]`;
 }
 
+function sampleInclusiveNs(value) {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (value && typeof value === "object" && value.inclusive_ns != null) {
+    return Number(value.inclusive_ns);
+  }
+  return Number(value);
+}
+
+function sampleExclusiveNs(value) {
+  if (value && typeof value === "object" && value.exclusive_ns != null) {
+    return Number(value.exclusive_ns);
+  }
+  if (typeof value === "number") {
+    return Number(value);
+  }
+  return null;
+}
+
 function computeSampleStats(samples) {
   if (!samples || samples.length === 0) {
     return { count: 0, total: 0, min: 0, max: 0, avg: 0, med: 0 };
   }
-  const sorted = [...samples].sort((a, b) => a - b);
+  const numeric = samples.map((s) => sampleInclusiveNs(s));
+  const sorted = [...numeric].sort((a, b) => a - b);
   const count = sorted.length;
   const total = sorted.reduce((acc, value) => acc + value, 0);
   const min = sorted[0];
@@ -144,8 +173,25 @@ function rangeSamplesForCurrentArg(range) {
   return [...((range.by_arg && range.by_arg[selectedArg]) || [])];
 }
 
+function rangeExclusiveSamplesForCurrentArg(range) {
+  if (!range) {
+    return [];
+  }
+  if (selectedArg === "all") {
+    const combined = [...(range.no_arg_exclusive || [])];
+    for (const xs of Object.values(range.by_arg_exclusive || {})) {
+      combined.push(...xs);
+    }
+    return combined;
+  }
+  if (selectedArg === "__no_arg__") {
+    return [...(range.no_arg_exclusive || [])];
+  }
+  return [...((range.by_arg_exclusive && range.by_arg_exclusive[selectedArg]) || [])];
+}
+
 function rangeTotalForCurrentArg(range) {
-  return rangeSamplesForCurrentArg(range).reduce((acc, value) => acc + value, 0);
+  return rangeSamplesForCurrentArg(range).reduce((acc, value) => acc + sampleInclusiveNs(value), 0);
 }
 
 function rangeCallCountForCurrentArg(range) {
@@ -294,7 +340,19 @@ function updateHoverDetails(lineNo) {
     const samples = rangeSamplesForCurrentArg(range);
     const stats = computeSampleStats(samples);
     const share = referenceNs ? (stats.total / referenceNs) * 100 : 0;
-    return `range ${range.start}-${range.end} | total=${formatNs(stats.total)} (${share.toFixed(2)}%) | count=${stats.count} | min=${formatNs(stats.min)} | max=${formatNs(stats.max)} | avg=${formatNs(stats.avg)} | med=${formatNs(stats.med)} | samples=${formatSampleList(samples)}`;
+    const exSamples = rangeExclusiveSamplesForCurrentArg(range);
+    let exclusiveChunk = "";
+    if (exSamples.length && exSamples.length === samples.length) {
+      const ex = computeSampleStats(exSamples);
+      exclusiveChunk = ` | excl total=${formatNs(ex.total)} ex avg=${formatNs(ex.avg)}`;
+    }
+    return (
+      `range ${range.start}-${range.end}${range.function ? ` ${range.function}` : ""} ` +
+      `| total=${formatNs(stats.total)} (${share.toFixed(2)}%) | count=${stats.count} ` +
+      `| min=${formatNs(stats.min)} | max=${formatNs(stats.max)} ` +
+      `| avg=${formatNs(stats.avg)} | med=${formatNs(stats.med)}${exclusiveChunk} ` +
+      `| samples=${formatSampleList(samples)}`
+    );
   });
 
   const hidden = touching.length > 6 ? `\n... ${touching.length - 6} more touching ranges` : "";
@@ -304,10 +362,21 @@ function updateHoverDetails(lineNo) {
 
 async function apiGet(path) {
   const res = await fetch(path);
-  if (!res.ok) {
-    throw new Error(`Request failed (${res.status}) for ${path}`);
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    /* non-JSON body */
   }
-  return res.json();
+  if (!res.ok) {
+    const msg = data.error || `HTTP ${res.status}`;
+    let detail = msg;
+    if (data.requested_path && data.kernel_path) {
+      detail += ` — looked for ${data.requested_path} under KERNEL_PATH=${data.kernel_path}`;
+    }
+    throw new Error(`Request failed (${res.status}) for ${path}: ${detail}`);
+  }
+  return data;
 }
 
 function updateUrlState(replace = false) {
@@ -328,6 +397,16 @@ function updateUrlState(replace = false) {
     url.searchParams.delete("scale");
   }
   url.searchParams.set("theme", selectedTheme);
+
+  if (
+    reportSelectEl &&
+    reportSelectEl.value &&
+    !reportSelectEl.selectedOptions[0]?.disabled
+  ) {
+    url.searchParams.set("report", reportSelectEl.value);
+  } else {
+    url.searchParams.delete("report");
+  }
 
   if (replace) {
     history.replaceState(null, "", url);
@@ -392,17 +471,50 @@ function buildArgOptions(globalArgs) {
   argFilterEl.value = selectedArg;
 }
 
+function buildReportSelect(reports, currentId) {
+  if (!reportSelectEl) {
+    return;
+  }
+  reportSelectEl.innerHTML = "";
+  if (!reports.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(no reports)";
+    opt.disabled = true;
+    reportSelectEl.appendChild(opt);
+    return;
+  }
+  for (const r of reports) {
+    const id = r.id ?? r;
+    const label = r.label ?? id;
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = label;
+    reportSelectEl.appendChild(opt);
+  }
+  const ids = new Set([...reportSelectEl.options].map((o) => o.value));
+  if (currentId && ids.has(currentId)) {
+    reportSelectEl.value = currentId;
+  } else {
+    reportSelectEl.selectedIndex = 0;
+  }
+}
+
 async function loadConfig() {
   const config = await apiGet("/api/config");
-  totalDurationNs = Number(config.total_duration || 0);
+  totalDurationNs = Number(
+    config.total_duration_ns ?? config.total_duration ?? 0,
+  );
   const warnings = config.load_error ? ` | warning: ${config.load_error}` : "";
   metaEl.textContent = [
+    `report: ${config.current_report || "—"}`,
     `program: ${config.program_name || "n/a"}`,
     `duration: ${formatNs(config.total_duration || 0)}`,
     `profiled files: ${config.profiled_files_count}`,
     `KERNEL_PATH: ${config.kernel_path}`,
-    `REPORT_PATH: ${config.report_path}`,
+    `ANALYSIS_DIR: ${config.analysis_dir || "—"}`,
   ].join(" | ") + warnings;
+  buildReportSelect(config.reports || [], config.current_report);
   buildArgOptions(config.global_args || []);
   scaleModeSelectEl.value = selectedScaleMode;
 }
@@ -611,16 +723,22 @@ async function loadFile() {
     return;
   }
   fileTitleEl.textContent = selectedPath;
-  const data = await apiGet(
-    `/api/file?path=${encodeURIComponent(selectedPath)}&arg=${encodeURIComponent(selectedArg)}`
-  );
-  await renderCode(data);
-  await ensureTreePathExpanded(selectedPath);
-  await renderTree();
+  try {
+    const data = await apiGet(
+      `/api/file?path=${encodeURIComponent(selectedPath)}&arg=${encodeURIComponent(selectedArg)}`
+    );
+    await renderCode(data);
+    await ensureTreePathExpanded(selectedPath);
+    await renderTree();
+  } catch (err) {
+    console.error(err);
+    fileTitleEl.textContent = `${selectedPath} (failed to load source)`;
+    lastDetailsText = err.message || String(err);
+    hoverDetailsEl.textContent = lastDetailsText;
+  }
 }
 
-reloadButtonEl.addEventListener("click", async () => {
-  await apiGet("/api/reload");
+async function refreshAfterReportChange() {
   treeChildrenCache = {};
   await loadConfig();
   if (selectedPath) {
@@ -632,7 +750,24 @@ reloadButtonEl.addEventListener("click", async () => {
   if (selectedPath) {
     await loadFile();
   }
+  updateUrlState();
+}
+
+reloadButtonEl.addEventListener("click", async () => {
+  await apiGet("/api/reload");
+  await refreshAfterReportChange();
 });
+
+if (reportSelectEl) {
+  reportSelectEl.addEventListener("change", async () => {
+    const id = reportSelectEl.value;
+    if (!id) {
+      return;
+    }
+    await apiGet(`/api/reload?report=${encodeURIComponent(id)}`);
+    await refreshAfterReportChange();
+  });
+}
 
 profiledSortSelectEl.addEventListener("change", async (event) => {
   profiledSortMode = ["line", "time", "calls"].includes(event.target.value)
@@ -712,6 +847,18 @@ async function boot() {
   await ensureEditor();
   applyTheme();
   await loadConfig();
+
+  const url = new URL(window.location.href);
+  const urlReport = url.searchParams.get("report");
+  if (urlReport && reportSelectEl) {
+    const ids = new Set([...reportSelectEl.options].map((o) => o.value));
+    if (ids.has(urlReport)) {
+      reportSelectEl.value = urlReport;
+      await apiGet(`/api/reload?report=${encodeURIComponent(urlReport)}`);
+      await loadConfig();
+    }
+  }
+
   if (selectedPath) {
     await ensureTreePathExpanded(selectedPath);
   }
