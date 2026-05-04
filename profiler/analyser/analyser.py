@@ -3,7 +3,7 @@ import json
 
 from event import Event
 from time import time
-from .utils import find_block_end
+from .utils import find_block_start, find_block_end
 
 KERNEL_SOURCE_PATH = "/mnt/linux/"
 if not os.path.isdir(KERNEL_SOURCE_PATH):
@@ -15,7 +15,7 @@ class TraceAnalyser:
         self.program_name = program_name
         self.trace = trace
 
-    def analyse(self, verbose=True):
+    def analyse(self, verbose=True, kernel_compiler="clang"):
         self.execution_times: dict[tuple[str, int, int] | tuple[str, int, int, str], list[int]] = {}
 
         start_time = time()
@@ -29,10 +29,18 @@ class TraceAnalyser:
                 case Event.EVENT_TYPE.VERIFIER_END:
                     trace_end_time = ev.timestamp
                 case Event.EVENT_TYPE.BLOCK_TIMER_RESULT:
-                    start_line = ev.start_line
-                    end_line = find_block_end(
-                        KERNEL_SOURCE_PATH + ev.file.decode(), start_line
-                    )
+                    if kernel_compiler == "clang":
+                        end_line = ev.line
+                        start_line = find_block_start(
+                            KERNEL_SOURCE_PATH + ev.file.decode(), end_line
+                        )
+                    elif kernel_compiler == "gcc":
+                        start_line = ev.line
+                        end_line = find_block_end(
+                            KERNEL_SOURCE_PATH + ev.file.decode(), start_line
+                        )
+                    else:
+                        raise ValueError("Unsupported kernel compiler: " + kernel_compiler)
 
                     key = (ev.file.decode(), start_line, end_line)
 
@@ -47,7 +55,7 @@ class TraceAnalyser:
                             self.execution_times[key] = []
                         self.execution_times[key].append(ev.duration())
                 case Event.EVENT_TYPE.FUNC_TIMER_RESULT:
-                    line = ev.start_line
+                    line = ev.line
                     key = (ev.file.decode(), line, line, ev.func_name.decode())
                     if self.execution_times.get(key) is None:
                         self.execution_times[key] = []

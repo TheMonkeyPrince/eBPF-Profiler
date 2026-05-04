@@ -13,7 +13,7 @@ struct __attribute__((packed)) event {
     event_type_t type;
     u64 timestamp;
     char file[64];
-    int start_line;
+    int line;
     char func_name[32]; 
     u32 arg;
 
@@ -21,12 +21,12 @@ struct __attribute__((packed)) event {
     u64 end_time;   
 };
 
-#define INIT_EVENT(_type, _timestamp, _file, _start_line) ({      \
+#define INIT_EVENT(_type, _timestamp, _file, _line) ({      \
     struct event _e = {0};                                        \
     _e.type = (_type);                                            \
     _e.timestamp = (_timestamp);                                  \
     bpf_probe_read_kernel_str(_e.file, sizeof(_e.file), (_file)); \
-    _e.start_line = (_start_line);                                \
+    _e.line = (_line);                                \
     _e;                                                           \
 })
 
@@ -49,8 +49,8 @@ int verifier_end(struct pt_regs *ctx) {
     return 0;
 }
 
-int block_timer_result(struct pt_regs *ctx, const char* file, const int start_line, u32 arg, const u64 start_time, const u64 end_time) {
-    struct event e = INIT_EVENT(BLOCK_TIMER_RESULT, bpf_ktime_get_ns(), file, start_line);
+int block_timer_result(struct pt_regs *ctx, const char* file, const int line, u32 arg, const u64 start_time, const u64 end_time) {
+    struct event e = INIT_EVENT(BLOCK_TIMER_RESULT, bpf_ktime_get_ns(), file, line);
     e.arg = arg;
     e.start_time = start_time;
     e.end_time = end_time;

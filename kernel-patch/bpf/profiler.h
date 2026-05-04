@@ -7,16 +7,16 @@
 #define BPF_PROFILE_BLOCK_END() \
     do { \
         u64 __bpf_timer_end = ktime_get_ns(); \
-        bpf_profiler_block_timer_result(__FILE__, __bpf_timer_start_line, __bpf_timer_arg, __bpf_timer_start, __bpf_timer_end); \
+        bpf_profiler_block_timer_result(__FILE__, __bpf_timer_line, __bpf_timer_arg, __bpf_timer_start, __bpf_timer_end); \
     } while (0)
 
-#define BPF_PROFILE_BLOCK_ARG(arg, code_block)                                             \
+#define BPF_PROFILE_BLOCK_ARG(arg, code_block)                                                        \
     do {                                                                                              \
-        int __bpf_timer_start_line = __LINE__;                                                        \
+        int __bpf_timer_line = __LINE__;                                                        \
         u32 __bpf_timer_arg = arg;                                                                    \
         u64 __bpf_timer_start = ktime_get_ns();                                                       \
-        do code_block while (0);                                                                      \
-        STOP_BPF_TIMER();                                                                             \
+        do { code_block } while (0);                                                                  \
+        BPF_PROFILE_BLOCK_END();                                                                      \
     } while (0)
 
 #define BPF_PROFILE_BLOCK(code_block)                     \
@@ -47,7 +47,7 @@ do {                                                                            
 #define BPF_PROFILE_CALL_VOID(func, ...) \
     BPF_PROFILE_CALL_VOID_ARG(BPF_PROFILE_NO_ARG, func, __VA_ARGS__)
 
-void bpf_profiler_block_timer_result(const char* file, const int start_line, u32 arg, const u64 start_time, const u64 end_time);
+void bpf_profiler_block_timer_result(const char* file, const int line, u32 arg, const u64 start_time, const u64 end_time);
 void bpf_profiler_func_timer_result(const char* file, const int line, char* func_name, u32 arg, const u64 start_time, const u64 end_time); 
 
 #endif
