@@ -19907,6 +19907,8 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u3
 	u32 log_true_size;
 	bool is_priv;
 
+	bpf_profiler_reset_event_results();
+
 	BTF_TYPE_EMIT(enum bpf_features);
 
 	/* no program is valid */
@@ -20200,6 +20202,8 @@ err_free_env:
 	kvfree(env->scc_info);
 	kvfree(env->succ);
 	kvfree(env->gotox_tmp_buf);
+	bpf_profiler_push_event_results(bpf_profiler_get_event_results(),
+					bpf_profiler_get_event_results_count());
 	kvfree(env);
 	return ret;
 }

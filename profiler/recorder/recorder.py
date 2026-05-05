@@ -35,42 +35,55 @@ class BPFRecorder:
 		self.bpf.attach_kretprobe(event="bpf_check", fn_name="verifier_end")
 
 		self.bpf.attach_kprobe(
-			event="bpf_profiler_func_timer_result", fn_name="func_timer_result"
-		)
-		self.bpf.attach_kprobe(
-			event="bpf_profiler_block_timer_result", fn_name="block_timer_result"
+			event="bpf_profiler_push_event_results", fn_name="push_event_results"
 		)
 
 		def handle_event(cpu, data, size):
-			e = Event.from_bytes(ct.string_at(data, size))
-			if self.verbose and e.get_event_type():
-				# print(f"Received event: {e.get_event_type().name}")
-				print(f"Received event: {e}")
+			raw = ct.string_at(data, size)
+			event_size = Event.size()
 
-			if self.finished:
-				return
+			if size == event_size:
+				decoded_events = [Event.from_bytes(raw)]
+			else:
+				if size < ct.sizeof(ct.c_uint32):
+					return
+				count = ct.c_uint32.from_buffer_copy(raw[:4]).value
+				payload = raw[4:]
+				max_events_in_payload = len(payload) // event_size
+				count = min(count, max_events_in_payload)
+				decoded_events = [
+					Event.from_bytes(payload[i * event_size : (i + 1) * event_size])
+					for i in range(count)
+				]
 
-			if (
-				not self.started
-				and e.get_event_type() == Event.EVENT_TYPE.VERIFIER_START
-			):
-				self.started = True
+			for e in decoded_events:
+				if self.verbose and e.get_event_type():
+					print(f"Received event: {e}")
+
+				if self.finished:
+					return
+
+				if (
+					not self.started
+					and e.get_event_type() == Event.EVENT_TYPE.VERIFIER_START
+				):
+					self.started = True
+					self.trace.append(e)
+					print(f"Trace started for program: {self.program_name}")
+					continue
+
 				self.trace.append(e)
-				print(f"Trace started for program: {self.program_name}")
-				return
 
-			self.trace.append(e)
-
-			match e.get_event_type():
-				case Event.EVENT_TYPE.VERIFIER_START:
-					raise ValueError(
-						"Received VERIFIER_START event while a trace is already in progress"
-					)
-				case Event.EVENT_TYPE.VERIFIER_END:
-					if self.started and not self.finished:
-						self.started = False
-						self.finished = True
-						print(f"Trace finished for program: {self.program_name}")
+				match e.get_event_type():
+					case Event.EVENT_TYPE.VERIFIER_START:
+						raise ValueError(
+							"Received VERIFIER_START event while a trace is already in progress"
+						)
+					case Event.EVENT_TYPE.VERIFIER_END:
+						if self.started and not self.finished:
+							self.started = False
+							self.finished = True
+							print(f"Trace finished for program: {self.program_name}")
 
 		self.bpf["events"].open_perf_buffer(handle_event)
 
