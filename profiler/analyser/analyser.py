@@ -120,6 +120,11 @@ class TraceAnalyser:
         timed_args: list[int | None] = []
 
         for ev in self.trace:
+            if ev.get_event_type() == Event.EVENT_TYPE.FUNC_TIMER_RESULT:
+                pass
+                # print(f"Function: {ev.func_name.decode()}, Args: {ev.arg}")
+            elif ev.get_event_type() == Event.EVENT_TYPE.BLOCK_TIMER_RESULT:
+                print(f"Block: {ev.file.decode()}:{ev.line}, Arg: {ev.arg}")
             match ev.get_event_type():
                 case Event.EVENT_TYPE.VERIFIER_START:
                     verification_start_ns = ev.timestamp
@@ -133,8 +138,6 @@ class TraceAnalyser:
                     else:
                         ta = None
                     timed_args.append(ta)
-                    if ev.get_event_type() == Event.EVENT_TYPE.FUNC_TIMER_RESULT:
-                        print(f"Function: {ev.func_name.decode()}, Args: {ev.arg}")
 
         site_keys = [resolve_site_key(e, kernel_compiler) for e in timed_events]
         exclusive_ns, children = call_tree_exclusive_and_children(timed_events)

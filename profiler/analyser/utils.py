@@ -29,7 +29,7 @@ def find_block_end(filename, start_line):
     line = lines[start_idx]
     brace_pos = line.find('{')
     if brace_pos == -1:
-        raise ValueError(f"No opening brace on line {start_line}: {filename}")
+        raise ValueError(f"No opening brace on line {filename}:{start_line}")
 
     # Initialize counters
     brace_count = 0
@@ -106,7 +106,7 @@ def find_block_start(filename, end_line):
         except ValueError:
             continue
 
-    raise ValueError("No opening brace matches the given end line")
+    raise ValueError(f"No opening brace matches the given end line {filename}:{end_line}")
 
 if __name__ == "__main__":
     import sys
