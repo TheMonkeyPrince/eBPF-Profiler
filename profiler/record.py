@@ -4,7 +4,6 @@ from enum import Enum
 u64 = ct.c_uint64
 u32 = ct.c_uint32
 NO_ARG = u32(-1).value
-BPF_PROFILE_MAX_RECORDS = 4096
 
 
 class RecordType(Enum):

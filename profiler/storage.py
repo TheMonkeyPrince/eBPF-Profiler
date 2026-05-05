@@ -1,26 +1,26 @@
 import os
 import json
 
-from event import Event
-from analyser.analyser import TraceAnalyser
+from record import Record
+from analyser import TraceAnalyser
 
 def fix_program_name(program_name: str) -> str:
     return program_name.replace("/", ".")
 
-def load_trace(program_name: str) -> list[Event]:
+def load_trace(program_name: str) -> list[Record]:
     program_name = fix_program_name(program_name)
     trace = []
-    event_size = Event.size()
+    event_size = Record.size()
     with open(f"out/traces/{program_name}.bin", "rb") as f:
         while chunk := f.read(event_size):
             if len(chunk) != event_size:
                 raise ValueError(f"Incomplete event data: expected {event_size} bytes, got {len(chunk)}")
-            event = Event.from_bytes(chunk)
+            event = Record.from_bytes(chunk)
             trace.append(event)
     return trace
 
 
-def save_trace(program_name: str, trace: list[Event]):
+def save_trace(program_name: str, trace: list[Record]):
     program_name = fix_program_name(program_name)
     os.makedirs("out/traces", exist_ok=True)
     with open(f"out/traces/{program_name}.bin", "wb") as f:

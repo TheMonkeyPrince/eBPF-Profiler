@@ -20,17 +20,16 @@ if __name__ == "__main__":
 
 	runned_tests = []
 	try:
-		with BPFProfiler() as profiler:
+		profiler = BPFProfiler()
+		for test in tests:
+			print(f"Running test: {test}")
+			trace = profiler.profile_program(test)
+			if len(trace) > 0:
+				runned_tests.append(test)
 
-			for test in tests:
-				print(f"Running test: {test}")
-				trace = profiler.profile_program(test)
-				if len(trace) > 0:
-					runned_tests.append(test)
-
-			for test in runned_tests:
-				print(f"Analysing test: {test}")
-				profiler.analyse_trace_from_file(test)
+		for test in runned_tests:
+			print(f"Analysing test: {test}")
+			profiler.analyse_trace_from_file(test)
 	except KeyboardInterrupt:
 		print("Stopped")
 

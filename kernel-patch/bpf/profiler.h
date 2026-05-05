@@ -76,7 +76,7 @@ do {                                                                            
 #define BPF_PROFILE_END() \
 do {                                                                                               \
     bpf_profiler_add_record(END, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, 0, ktime_get_ns()); \
-    bpf_profiler_push_records();                                                                    \
+    bpf_profiler_end();                                                                    \
 } while (0)
 
 void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,
@@ -84,9 +84,7 @@ void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,
                                    u64 start_time, u64 end_time);
 
 void bpf_profiler_push_records(void);
+int bpf_profiler_end(void);
 
-// bpf_profile_records_t *bpf_profile_get_records(void);
-
-void bpf_profiler_hook(const bpf_profile_record_t *record);
 
 #endif

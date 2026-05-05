@@ -1,6 +1,10 @@
 #include "profiler.h"
 #include <linux/spinlock.h>
 #include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/kernel.h>
+
 
 static DEFINE_SPINLOCK(bpf_profiler_lock);
 
@@ -33,14 +37,34 @@ void bpf_profiler_add_record(
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
 }
 
-noinline __used void bpf_profiler_push_records(void) {
-    bpf_profiler_hook(&bpf_profile_records.records[0]);
-    for (u32 i = 0; i < bpf_profile_records.count; i++) {
-        bpf_profiler_hook(&bpf_profile_records.records[i]);
-    }
-}
 
-volatile u64 bpf_profiler_sink;
-noinline __used void bpf_profiler_hook(const bpf_profile_record_t *record) {
-    bpf_profiler_sink += (u64)record;
+int bpf_profiler_end(void) {
+    struct file *file;
+    loff_t pos = 0;
+    ssize_t ret;
+
+    file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (IS_ERR(file))
+        return PTR_ERR(file);
+
+    ret = kernel_write(file, &bpf_profile_records.count,
+                       sizeof(bpf_profile_records.count), &pos);
+    if (ret < 0)
+        goto out;
+
+    ret = kernel_write(file, bpf_profile_records.records,
+                       sizeof(bpf_profile_records.records), &pos);
+    if (ret < 0)
+        goto out;
+
+    ret = 0;
+
+out:
+    filp_close(file, NULL);
+
+    unsigned long flags;
+    spin_lock_irqsave(&bpf_profiler_lock, flags);
+    bpf_profile_records.count = 0;
+    spin_unlock_irqrestore(&bpf_profiler_lock, flags);
+    return ret;
 }

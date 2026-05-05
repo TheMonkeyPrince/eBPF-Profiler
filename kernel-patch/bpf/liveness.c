@@ -2162,14 +2162,11 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 		});
 	});
 
-	BPF_PROFILE_BLOCK({
 	for (i = 0; i < insn_cnt; ++i) {
-		// BPF_PROFILE_CALL_VOID_ARG(i, compute_insn_live_regs, env, &insns[i], &state[i]);
-		BPF_PROFILE_BLOCK_ARG(67, {
+		BPF_PROFILE_BLOCK_ARG(i, {
 			compute_insn_live_regs(env, &insns[i], &state[i]);
 		});
 	}
-	});
 
 
 	/* Forward pass: resolve stack access through FP-derived pointers */

@@ -1,6 +1,6 @@
-from event import Event
-from recorder.recorder import BPFRecorder
-from analyser.analyser import TraceAnalyser
+from record import Record
+from recorder import BPFRecorder
+from analyser import TraceAnalyser
 from programs.launcher import launch_bpf_program
 from storage import save_trace, load_trace, save_analysis, load_analysis
 
@@ -10,7 +10,7 @@ class BPFProfiler:
 		self.verbose = verbose
 		self.recorder = None
 
-	def profile_program(self, program_name: str, save: bool = True) -> list[Event]:
+	def profile_program(self, program_name: str, save: bool = True) -> list[Record]:
 		if not self.recorder:
 			self.recorder = BPFRecorder(verbose=self.verbose)
 
@@ -26,7 +26,7 @@ class BPFProfiler:
 		return trace
 
 	def analyse_trace(
-		self, program_name: str, trace: list[Event], save: bool = True
+		self, program_name: str, trace: list[Record], save: bool = True
 	) -> TraceAnalyser:
 		analyser = TraceAnalyser(program_name, trace)
 		analyser.analyse()
@@ -39,10 +39,3 @@ class BPFProfiler:
 	) -> TraceAnalyser:
 		trace = load_trace(program_name)
 		return self.analyse_trace(program_name, trace, save=save)
-
-	def __enter__(self):
-		return self
-	
-	def __exit__(self, exc_type, exc, tb):
-		if self.recorder:
-			self.recorder.unload()
