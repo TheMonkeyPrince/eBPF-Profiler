@@ -16,6 +16,7 @@ if __name__ == "__main__":
 		tests = [args.test]
 	else:
 		tests = ["sample_tracex1"]
+		# tests = ["selftest_access_variable_array"]
 
 	runned_tests = []
 	try:

@@ -19901,13 +19901,12 @@ int bpf_fixup_kfunc_call(struct bpf_verifier_env *env, struct bpf_insn *insn,
 
 int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u32 uattr_size)
 {
+	BPF_PROFILE_START();
 	u64 start_time = ktime_get_ns();
 	struct bpf_verifier_env *env;
 	int i, len, ret = -EINVAL, err;
 	u32 log_true_size;
 	bool is_priv;
-
-	bpf_profiler_reset_event_results();
 
 	BTF_TYPE_EMIT(enum bpf_features);
 
@@ -20202,8 +20201,8 @@ err_free_env:
 	kvfree(env->scc_info);
 	kvfree(env->succ);
 	kvfree(env->gotox_tmp_buf);
-	bpf_profiler_push_event_results(bpf_profiler_get_event_results(),
-					bpf_profiler_get_event_results_count());
 	kvfree(env);
+
+	BPF_PROFILE_END();
 	return ret;
 }

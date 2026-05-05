@@ -9,7 +9,7 @@ except ImportError:
 	BPF = None
 	BCC_AVAILABLE = False
 
-from event import Event
+from record import Record
 
 
 class BPFRecorder:
@@ -31,59 +31,47 @@ class BPFRecorder:
 		self.bpf = BPF(src_file=f"{os.path.dirname(__file__)}/bpf_recorder.c")
 
 		# Attach kprobes to the kernel function "bpf_check"
-		self.bpf.attach_kprobe(event="bpf_check", fn_name="verifier_start")
-		self.bpf.attach_kretprobe(event="bpf_check", fn_name="verifier_end")
+		self.bpf.attach_kretprobe(event="bpf_profiler_hook", fn_name="profiler_hook")
 
-		self.bpf.attach_kprobe(
-			event="bpf_profiler_push_event_results", fn_name="push_event_results"
-		)
 
 		def handle_event(cpu, data, size):
-			raw = ct.string_at(data, size)
-			event_size = Event.size()
+			# print(f"Handling event on CPU {cpu} with data size {size} bytes")
+			# raw = ct.string_at(data, size)
+			# print(raw)
+			# return
 
-			if size == event_size:
-				decoded_events = [Event.from_bytes(raw)]
-			else:
-				if size < ct.sizeof(ct.c_uint32):
-					return
-				count = ct.c_uint32.from_buffer_copy(raw[:4]).value
-				payload = raw[4:]
-				max_events_in_payload = len(payload) // event_size
-				count = min(count, max_events_in_payload)
-				decoded_events = [
-					Event.from_bytes(payload[i * event_size : (i + 1) * event_size])
-					for i in range(count)
-				]
 
-			for e in decoded_events:
-				if self.verbose and e.get_event_type():
-					print(f"Received event: {e}")
+			record = Record.from_bytes(ct.string_at(data, size))
+			self.trace.append(record)
+			return
+			if self.verbose and e.get_event_type():
+				# print(f"Received event: {e.get_event_type().name}")
+				print(f"Received event: {e}")
 
-				if self.finished:
-					return
+			if self.finished:
+				return
 
-				if (
-					not self.started
-					and e.get_event_type() == Event.EVENT_TYPE.VERIFIER_START
-				):
-					self.started = True
-					self.trace.append(e)
-					print(f"Trace started for program: {self.program_name}")
-					continue
-
+			if (
+				not self.started
+				and e.get_event_type() == Event.EVENT_TYPE.VERIFIER_START
+			):
+				self.started = True
 				self.trace.append(e)
+				print(f"Trace started for program: {self.program_name}")
+				return
 
-				match e.get_event_type():
-					case Event.EVENT_TYPE.VERIFIER_START:
-						raise ValueError(
-							"Received VERIFIER_START event while a trace is already in progress"
-						)
-					case Event.EVENT_TYPE.VERIFIER_END:
-						if self.started and not self.finished:
-							self.started = False
-							self.finished = True
-							print(f"Trace finished for program: {self.program_name}")
+			self.trace.append(e)
+
+			match e.get_event_type():
+				case Event.EVENT_TYPE.VERIFIER_START:
+					raise ValueError(
+						"Received VERIFIER_START event while a trace is already in progress"
+					)
+				case Event.EVENT_TYPE.VERIFIER_END:
+					if self.started and not self.finished:
+						self.started = False
+						self.finished = True
+						print(f"Trace finished for program: {self.program_name}")
 
 		self.bpf["events"].open_perf_buffer(handle_event)
 
@@ -129,9 +117,21 @@ class BPFRecorder:
 		self.record_thread.start()
 
 
-	def wait_for_completion(self) -> list[Event]:
+	def wait_for_completion(self) -> list[Record]:
 		self.record_thread.join()
-		return list(sorted(self.trace, key=lambda e: e.timestamp))
+
+		print(f"Recording thread finished. Total events recorded: {len(self.trace)}")
+
+		l = []
+		for elt in self.trace:
+			if elt.start_time in l:
+				print(f"Duplicate timestamp found: {elt.start_time}")
+			l.append(elt.start_time)
+		print(f"Unique timestamps: {len(set(l))}")
+
+		import sys
+		sys.exit(0)
+		# return list(sorted(self.trace, key=lambda e: e.timestamp))
 	
 	def unload(self):
 		if self.record_thread and self.record_thread.is_alive():

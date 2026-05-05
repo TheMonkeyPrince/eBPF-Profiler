@@ -1,22 +1,27 @@
-def some_test():
-    from bcc import BPF
-    # BPF program (in C)
-    bpf_program = """
-    #include <uapi/linux/ptrace.h>
+from bcc import BPF
+from bcc.utils import printb
 
-    int trace_execve(struct pt_regs *ctx, const char __user *filename) {
-        char comm[256];
-        bpf_probe_read_user_str(comm, sizeof(comm), filename);
-        bpf_trace_printk("execve: %s\\n", comm);
-        return 0;
-    }
-    """
+# define BPF program
+prog = """
+int hello(void *ctx) {
+    bpf_trace_printk("Hello, World!\\n");
+    return 0;
+}
+"""
 
-    # Load BPF program
-    b = BPF(text=bpf_program)
+# load BPF program
+b = BPF(text=prog)
+b.attach_kprobe(event=b.get_syscall_fnname("clone"), fn_name="hello")
 
-    # Attach kprobe to sys_execve (kernel function)
-    b.attach_kprobe(event="__x64_sys_execve", fn_name="trace_execve")
+# header
+print("%-18s %-16s %-6s %s" % ("TIME(s)", "COMM", "PID", "MESSAGE"))
 
-
-
+# format output
+while 1:
+    try:
+        (task, pid, cpu, flags, ts, msg) = b.trace_fields()
+    except ValueError:
+        continue
+    except KeyboardInterrupt:
+        exit()
+    printb(b"%-18.9f %-16s %-6d %s" % (ts, task, pid, msg))
