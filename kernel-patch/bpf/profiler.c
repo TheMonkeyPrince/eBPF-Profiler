@@ -37,35 +37,23 @@ void bpf_profiler_add_record(
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
 }
 
-int bpf_profiler_start(void) {
-    // unsigned long flags;
-    // spin_lock_irqsave(&bpf_profiler_lock, flags);
-    // bpf_profile_records.count = 0;
-    // spin_unlock_irqrestore(&bpf_profiler_lock, flags);
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        }); 
-    });
-    BPF_PROFILE_CALL(ktime_get_ns);
-    return 0;
-}
-
-int bpf_profiler_end(void) {
+int bpf_profiler_start(struct bpf_prog *prog)
+{
     struct file *file;
     loff_t pos = 0;
     ssize_t ret;
+
+    unsigned long flags;
 
     file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (IS_ERR(file))
         return PTR_ERR(file);
 
-    ret = kernel_write(file, &bpf_profile_records.count,
-                       sizeof(bpf_profile_records.count), &pos);
+    ret = kernel_write(file, &prog->len, sizeof(prog->len), &pos);
     if (ret < 0)
         goto out;
 
-    ret = kernel_write(file, bpf_profile_records.records,
-                       sizeof(bpf_profile_records.records), &pos);
+    ret = kernel_write(file, prog->insnsi, sizeof(struct bpf_insn) * prog->len, &pos);
     if (ret < 0)
         goto out;
 
@@ -74,9 +62,40 @@ int bpf_profiler_end(void) {
 out:
     filp_close(file, NULL);
 
-    unsigned long flags;
     spin_lock_irqsave(&bpf_profiler_lock, flags);
     bpf_profile_records.count = 0;
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
+    return ret;
+}
+
+int bpf_profiler_end(void) {
+    struct file *file;
+    loff_t pos = 0;
+    ssize_t ret;
+
+    unsigned long flags;
+
+    file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (IS_ERR(file))
+        return PTR_ERR(file);
+
+    spin_lock_irqsave(&bpf_profiler_lock, flags);
+    ret = kernel_write(file, &bpf_profile_records.count,
+                       sizeof(bpf_profile_records.count), &pos);
+    if (ret < 0)
+        goto out;
+
+    ret = kernel_write(file, bpf_profile_records.records,
+                       sizeof(bpf_profile_record_t) * bpf_profile_records.count, &pos);
+    if (ret < 0)
+        goto out;
+
+    ret = 0;
+
+out:    
+    bpf_profile_records.count = 0;
+    spin_unlock_irqrestore(&bpf_profiler_lock, flags);
+    filp_close(file, NULL);
+    
     return ret;
 }

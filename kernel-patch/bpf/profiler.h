@@ -1,6 +1,7 @@
 #ifndef BPF_PROFILER_H
 #define BPF_PROFILER_H
 #include <linux/types.h>
+#include <linux/bpf.h>
 
 #define BPF_PROFILE_NO_ARG ((u32)-1)
 #define BPF_PROFILE_MAX_RECORDS 4096
@@ -63,7 +64,7 @@ do {                                                                            
     u64 __bpf_timer_start = ktime_get_ns();                                           \
     func(__VA_ARGS__);                                                                \
     u64 __bpf_timer_end = ktime_get_ns();                                             \
-    bpf_profiler_add_record(CALL, __FILE__, __LINE__, #func, arg, \
+    bpf_profiler_add_record(CALL, __FILE__, __LINE__, #func, arg,                     \
                                   __bpf_timer_start, __bpf_timer_end);                \
 } while (0)
 
@@ -71,23 +72,22 @@ do {                                                                            
     BPF_PROFILE_CALL_VOID_ARG(BPF_PROFILE_NO_ARG, func, __VA_ARGS__)
 
 #define BPF_PROFILE_START() \
-do {                                                                                               \
+do {                                                                                                 \
+    bpf_profiler_start(*prog);                                                                       \
     bpf_profiler_add_record(START, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, ktime_get_ns(), 0); \
-    bpf_profiler_start();                                                                    \
 } while (0)   
 
 #define BPF_PROFILE_END() \
 do {                                                                                               \
     bpf_profiler_add_record(END, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, 0, ktime_get_ns()); \
-    bpf_profiler_end();                                                                    \
+    bpf_profiler_end();                                                                            \
 } while (0)
 
 void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,
                                    int line, const char *func_name, u32 arg,
                                    u64 start_time, u64 end_time);
 
-void bpf_profiler_push_records(void);
-int bpf_profiler_start(void);
+int bpf_profiler_start(struct bpf_prog *prog);
 int bpf_profiler_end(void);
 
 
