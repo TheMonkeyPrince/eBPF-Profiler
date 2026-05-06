@@ -1,254 +1,228 @@
 {
   "schema_version": 3,
   "program_name": "sample_tracex1",
-  "total_duration_ns": 115580,
-  "total_duration": 115580,
+  "total_duration_ns": 114340,
+  "total_duration": 114340,
   "meta": {
     "kernel_compiler": "clang",
-    "analysis_time_s": 0.004141
+    "analysis_time_s": 0.001944
   },
   "verification": {
-    "duration_ns": 115580
+    "duration_ns": 114340
   },
   "call_tree": [
     {
+      "file": "kernel/bpf/profiler.c:45:48",
+      "inclusive_ns": 744,
+      "exclusive_ns": 606,
+      "children": [
+        {
+          "file": "kernel/bpf/profiler.c:46:47",
+          "inclusive_ns": 138,
+          "exclusive_ns": 138
+        }
+      ]
+    },
+    {
+      "file": "kernel/bpf/profiler.c:49:49",
+      "inclusive_ns": 289,
+      "exclusive_ns": 289,
+      "function": "ktime_get_ns"
+    },
+    {
       "file": "kernel/bpf/verifier.c:19995:19995",
-      "inclusive_ns": 326,
-      "exclusive_ns": 326,
+      "inclusive_ns": 297,
+      "exclusive_ns": 297,
       "function": "bpf_check_btf_info_early"
     },
     {
       "file": "kernel/bpf/verifier.c:19999:19999",
-      "inclusive_ns": 827,
-      "exclusive_ns": 827,
+      "inclusive_ns": 924,
+      "exclusive_ns": 924,
       "function": "add_subprog_and_kfunc"
     },
     {
       "file": "kernel/bpf/verifier.c:20003:20003",
-      "inclusive_ns": 265,
-      "exclusive_ns": 265,
+      "inclusive_ns": 513,
+      "exclusive_ns": 513,
       "function": "check_subprogs"
     },
     {
       "file": "kernel/bpf/verifier.c:20007:20007",
-      "inclusive_ns": 451,
-      "exclusive_ns": 451,
+      "inclusive_ns": 409,
+      "exclusive_ns": 409,
       "function": "bpf_check_btf_info"
     },
     {
       "file": "kernel/bpf/verifier.c:20011:20011",
-      "inclusive_ns": 8697,
-      "exclusive_ns": 8697,
+      "inclusive_ns": 8630,
+      "exclusive_ns": 8630,
       "function": "check_and_resolve_insns"
     },
     {
       "file": "kernel/bpf/verifier.c:20015:20015",
-      "inclusive_ns": 159,
-      "exclusive_ns": 159,
+      "inclusive_ns": 158,
+      "exclusive_ns": 158,
       "function": "bpf_prog_is_offloaded"
     },
     {
       "file": "kernel/bpf/verifier.c:20021:20021",
-      "inclusive_ns": 4488,
-      "exclusive_ns": 4488,
+      "inclusive_ns": 4600,
+      "exclusive_ns": 4600,
       "function": "bpf_check_cfg"
     },
     {
       "file": "kernel/bpf/verifier.c:20025:20025",
-      "inclusive_ns": 2883,
-      "exclusive_ns": 2883,
+      "inclusive_ns": 2959,
+      "exclusive_ns": 2959,
       "function": "bpf_compute_postorder"
     },
     {
       "file": "kernel/bpf/verifier.c:20029:20029",
-      "inclusive_ns": 2270,
-      "exclusive_ns": 2270,
+      "inclusive_ns": 2421,
+      "exclusive_ns": 2421,
       "function": "bpf_stack_liveness_init"
     },
     {
       "file": "kernel/bpf/verifier.c:20033:20033",
-      "inclusive_ns": 378,
-      "exclusive_ns": 378,
+      "inclusive_ns": 180,
+      "exclusive_ns": 180,
       "function": "check_attach_btf_id"
     },
     {
       "file": "kernel/bpf/verifier.c:20037:20037",
-      "inclusive_ns": 3352,
-      "exclusive_ns": 3352,
+      "inclusive_ns": 3195,
+      "exclusive_ns": 3195,
       "function": "bpf_compute_const_regs"
     },
     {
       "file": "kernel/bpf/verifier.c:20041:20041",
-      "inclusive_ns": 362,
-      "exclusive_ns": 362,
+      "inclusive_ns": 401,
+      "exclusive_ns": 401,
       "function": "bpf_prune_dead_branches"
     },
     {
       "file": "kernel/bpf/verifier.c:20045:20045",
-      "inclusive_ns": 2013,
-      "exclusive_ns": 2013,
+      "inclusive_ns": 2290,
+      "exclusive_ns": 2290,
       "function": "sort_subprogs_topo"
     },
     {
       "file": "kernel/bpf/verifier.c:20049:20049",
-      "inclusive_ns": 4408,
-      "exclusive_ns": 4408,
+      "inclusive_ns": 4493,
+      "exclusive_ns": 4493,
       "function": "bpf_compute_scc"
     },
     {
       "file": "kernel/bpf/verifier.c:20053:20053",
-      "inclusive_ns": 17855,
-      "exclusive_ns": 2580,
+      "inclusive_ns": 14250,
+      "exclusive_ns": 13617,
       "function": "bpf_compute_live_registers",
       "children": [
         {
-          "file": "kernel/bpf/liveness.c:2152:2158",
-          "inclusive_ns": 658,
-          "exclusive_ns": 658
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 455,
+          "exclusive_ns": 455,
+          "function": "compute_insn_live_regs",
+          "arg": 0
         },
         {
-          "file": "kernel/bpf/liveness.c:2160:2163",
-          "inclusive_ns": 584,
-          "exclusive_ns": 438,
-          "children": [
-            {
-              "file": "kernel/bpf/liveness.c:2161:2162",
-              "inclusive_ns": 146,
-              "exclusive_ns": 146,
-              "arg": 3600
-            }
-          ]
-        },
-        {
-          "file": "kernel/bpf/liveness.c:2165:2172",
-          "inclusive_ns": 1317,
-          "exclusive_ns": 726,
-          "children": [
-            {
-              "file": "kernel/bpf/liveness.c:2168:2170",
-              "inclusive_ns": 406,
-              "exclusive_ns": 406,
-              "arg": 67
-            },
-            {
-              "file": "kernel/bpf/liveness.c:2168:2170",
-              "inclusive_ns": 185,
-              "exclusive_ns": 185,
-              "arg": 67
-            }
-          ]
-        },
-        {
-          "file": "kernel/bpf/liveness.c:2176:2176",
-          "inclusive_ns": 11705,
-          "exclusive_ns": 11705,
-          "function": "bpf_compute_subprog_arg_access"
-        },
-        {
-          "file": "kernel/bpf/liveness.c:2180:2205",
-          "inclusive_ns": 412,
-          "exclusive_ns": 412
-        },
-        {
-          "file": "kernel/bpf/liveness.c:2207:2227",
-          "inclusive_ns": 170,
-          "exclusive_ns": 170
-        },
-        {
-          "file": "kernel/bpf/liveness.c:2231:2233",
-          "inclusive_ns": 429,
-          "exclusive_ns": 429
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 178,
+          "exclusive_ns": 178,
+          "function": "compute_insn_live_regs",
+          "arg": 1
         }
       ]
     },
     {
       "file": "kernel/bpf/verifier.c:20057:20057",
-      "inclusive_ns": 343,
-      "exclusive_ns": 343,
+      "inclusive_ns": 348,
+      "exclusive_ns": 348,
       "function": "mark_fastcall_patterns"
     },
     {
       "file": "kernel/bpf/verifier.c:20061:20061",
-      "inclusive_ns": 11866,
-      "exclusive_ns": 11866,
+      "inclusive_ns": 12889,
+      "exclusive_ns": 12889,
       "function": "do_check_main"
     },
     {
       "file": "kernel/bpf/verifier.c:20062:20062",
-      "inclusive_ns": 189,
-      "exclusive_ns": 189,
+      "inclusive_ns": 185,
+      "exclusive_ns": 185,
       "function": "do_check_subprogs"
     },
     {
       "file": "kernel/bpf/verifier.c:20064:20064",
-      "inclusive_ns": 145,
-      "exclusive_ns": 145,
+      "inclusive_ns": 143,
+      "exclusive_ns": 143,
       "function": "bpf_prog_is_offloaded"
     },
     {
       "file": "kernel/bpf/verifier.c:20074:20074",
-      "inclusive_ns": 358,
-      "exclusive_ns": 358,
+      "inclusive_ns": 354,
+      "exclusive_ns": 354,
       "function": "bpf_remove_fastcall_spills_fill"
     },
     {
       "file": "kernel/bpf/verifier.c:20077:20077",
-      "inclusive_ns": 1386,
-      "exclusive_ns": 1386,
+      "inclusive_ns": 1273,
+      "exclusive_ns": 1273,
       "function": "check_max_stack_depth"
     },
     {
       "file": "kernel/bpf/verifier.c:20081:20081",
-      "inclusive_ns": 419,
-      "exclusive_ns": 419,
+      "inclusive_ns": 433,
+      "exclusive_ns": 433,
       "function": "bpf_optimize_bpf_loop"
     },
     {
       "file": "kernel/bpf/verifier.c:20085:20085",
-      "inclusive_ns": 232,
-      "exclusive_ns": 232,
+      "inclusive_ns": 239,
+      "exclusive_ns": 239,
       "function": "bpf_opt_hard_wire_dead_code_bra"
     },
     {
       "file": "kernel/bpf/verifier.c:20087:20087",
-      "inclusive_ns": 228,
-      "exclusive_ns": 228,
+      "inclusive_ns": 225,
+      "exclusive_ns": 225,
       "function": "bpf_opt_remove_dead_code"
     },
     {
       "file": "kernel/bpf/verifier.c:20089:20089",
-      "inclusive_ns": 303,
-      "exclusive_ns": 303,
+      "inclusive_ns": 281,
+      "exclusive_ns": 281,
       "function": "bpf_opt_remove_nops"
     },
     {
       "file": "kernel/bpf/verifier.c:20097:20097",
-      "inclusive_ns": 787,
-      "exclusive_ns": 787,
+      "inclusive_ns": 848,
+      "exclusive_ns": 848,
       "function": "bpf_convert_ctx_accesses"
     },
     {
       "file": "kernel/bpf/verifier.c:20100:20100",
-      "inclusive_ns": 1818,
-      "exclusive_ns": 1818,
+      "inclusive_ns": 1782,
+      "exclusive_ns": 1782,
       "function": "bpf_do_misc_fixups"
     },
     {
       "file": "kernel/bpf/verifier.c:20105:20105",
-      "inclusive_ns": 149,
-      "exclusive_ns": 149,
+      "inclusive_ns": 147,
+      "exclusive_ns": 147,
       "function": "bpf_prog_is_offloaded"
     },
     {
       "file": "kernel/bpf/verifier.c:20106:20106",
-      "inclusive_ns": 306,
-      "exclusive_ns": 306,
+      "inclusive_ns": 275,
+      "exclusive_ns": 275,
       "function": "bpf_opt_subreg_zext_lo32_rnd_hi"
     },
     {
       "file": "kernel/bpf/verifier.c:20112:20112",
-      "inclusive_ns": 486,
-      "exclusive_ns": 486,
+      "inclusive_ns": 547,
+      "exclusive_ns": 547,
       "function": "bpf_fixup_call_args"
     }
   ]

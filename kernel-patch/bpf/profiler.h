@@ -71,7 +71,10 @@ do {                                                                            
     BPF_PROFILE_CALL_VOID_ARG(BPF_PROFILE_NO_ARG, func, __VA_ARGS__)
 
 #define BPF_PROFILE_START() \
-    bpf_profiler_add_record(START, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, ktime_get_ns(), 0)
+do {                                                                                               \
+    bpf_profiler_add_record(START, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, ktime_get_ns(), 0); \
+    bpf_profiler_start();                                                                    \
+} while (0)   
 
 #define BPF_PROFILE_END() \
 do {                                                                                               \
@@ -84,6 +87,7 @@ void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,
                                    u64 start_time, u64 end_time);
 
 void bpf_profiler_push_records(void);
+int bpf_profiler_start(void);
 int bpf_profiler_end(void);
 
 

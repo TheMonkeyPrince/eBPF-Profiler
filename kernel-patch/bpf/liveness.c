@@ -2149,32 +2149,20 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 	 * - repeat the computation while {in,out} fields changes for
 	 *   any instruction.
 	 */
-	BPF_PROFILE_BLOCK({
 	state = kvzalloc_objs(*state, insn_cnt, GFP_KERNEL_ACCOUNT);
 	if (!state) {
 		err = -ENOMEM;
 		goto out;
 	}
-	});
 
-	BPF_PROFILE_BLOCK({
-		BPF_PROFILE_BLOCK_ARG(3600, {
-		});
-	});
-
-	for (i = 0; i < insn_cnt; ++i) {
-		BPF_PROFILE_BLOCK_ARG(i, {
-			compute_insn_live_regs(env, &insns[i], &state[i]);
-		});
-	}
-
+	for (i = 0; i < insn_cnt; ++i)
+		BPF_PROFILE_CALL_VOID_ARG(i, compute_insn_live_regs, env, &insns[i], &state[i]);
 
 	/* Forward pass: resolve stack access through FP-derived pointers */
-	err = BPF_PROFILE_CALL(bpf_compute_subprog_arg_access, env);
+	err = bpf_compute_subprog_arg_access(env);
 	if (err)
 		goto out;
 
-	BPF_PROFILE_BLOCK({
 	changed = true;
 	while (changed) {
 		changed = false;
@@ -2199,9 +2187,7 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 
 	for (i = 0; i < insn_cnt; ++i)
 		insn_aux[i].live_regs_before = state[i].in;
-	});
 
-	BPF_PROFILE_BLOCK({	
 	if (env->log.level & BPF_LOG_LEVEL2) {
 		verbose(env, "Live regs before insn:\n");
 		for (i = 0; i < insn_cnt; ++i) {
@@ -2221,12 +2207,8 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 				i++;
 		}
 	}
-	});
-
 
 out:
-	BPF_PROFILE_BLOCK({	
 	kvfree(state);
-	});
 	return err;
 }

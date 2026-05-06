@@ -37,6 +37,18 @@ void bpf_profiler_add_record(
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
 }
 
+int bpf_profiler_start(void) {
+    // unsigned long flags;
+    // spin_lock_irqsave(&bpf_profiler_lock, flags);
+    // bpf_profile_records.count = 0;
+    // spin_unlock_irqrestore(&bpf_profiler_lock, flags);
+    BPF_PROFILE_BLOCK({
+        BPF_PROFILE_BLOCK({
+        }); 
+    });
+    BPF_PROFILE_CALL(ktime_get_ns);
+    return 0;
+}
 
 int bpf_profiler_end(void) {
     struct file *file;

@@ -133,7 +133,7 @@ class TraceAnalyser:
                 case RecordType.BLOCK | RecordType.CALL:
                     timed_records.append(ev)
                     ta: int | None
-                    if ev.get_record_type() == RecordType.BLOCK:
+                    if ev.get_record_type() == RecordType.BLOCK or ev.get_record_type() == RecordType.CALL:
                         ta = ev.arg if ev.has_arg() else None
                     else:
                         ta = None
