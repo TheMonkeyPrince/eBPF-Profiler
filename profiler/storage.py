@@ -1,7 +1,7 @@
 import os
 import json
 
-from profiler.types import Record
+from profiler_types import Record
 from analyser import TraceAnalyser
 
 def fix_program_name(program_name: str) -> str:
@@ -26,7 +26,7 @@ def save_trace(program_name: str, trace: list[Record]):
     with open(f"out/traces/{program_name}.bin", "wb") as f:
         for ev in trace:
             f.write(bytes(ev))
-    print(f"Trace saved to out/traces/{program_name}.bin")
+    # print(f"Trace saved to out/traces/{program_name}.bin")
 
 
 def load_analysis(program_name: str) -> dict:
@@ -40,4 +40,4 @@ def save_analysis(program_name: str, trace_analyser: TraceAnalyser):
     os.makedirs("out/analysis", exist_ok=True)
     with open(f"out/analysis/{program_name}.json", "w") as f:
         f.write(trace_analyser.to_json())
-    print(f"Analysis saved to out/analysis/{program_name}.json")
+    # print(f"Analysis saved to out/analysis/{program_name}.json")

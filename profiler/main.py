@@ -10,12 +10,19 @@ if __name__ == "__main__":
 		help="Run a specific test (e.g. selftest_xyz, sample_abc)",
 		type=str,
 	)
+	parser.add_argument(
+		"--no-analysis",
+		help="Only run the profiler without analysing the trace",
+		action="store_true",
+	)
 	args = parser.parse_args()
 
 	if args.test:
 		tests = [args.test]
 	else:
 		tests = ["sample_tracex1"]
+		tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
+		tests = ["sample_ibumad"]
 		# tests = ["selftest_access_variable_array"]
 
 	runned_tests = []
@@ -27,9 +34,10 @@ if __name__ == "__main__":
 			if len(trace) > 0:
 				runned_tests.append(test)
 
-		for test in runned_tests:
-			print(f"Analysing test: {test}")
-			profiler.analyse_trace_from_file(test)
+		if not args.no_analysis:
+			for test in runned_tests:
+				print(f"Analysing test: {test}")
+				profiler.analyse_trace_from_file(test)
 	except KeyboardInterrupt:
 		print("Stopped")
 

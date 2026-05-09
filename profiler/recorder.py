@@ -3,7 +3,7 @@ import threading
 from time import time, sleep
 import struct
 
-from profiler.types import Record, BPFInsn
+from profiler_types import Record, BPFInsn
 
 RECORD_FILE_PATH = "/tmp/bpf_profile_records"
 
@@ -22,15 +22,12 @@ class BPFRecorder:
 		self.program_name = program_name
 
 		start_time = time()
-		timeout_on = True
-		timeout_duration = 5
 
 		os.remove(RECORD_FILE_PATH) if os.path.exists(RECORD_FILE_PATH) else None
 
 		def recording_loop():
-			print(f"Recording thread started for program '{program_name}'")
-			sleep(self.timeout_duration)
-			print(f"Recording thread finished waiting for {self.timeout_duration} seconds")
+			duration = 5 # seconds
+			sleep(duration)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
 		self.record_thread.start()
@@ -42,8 +39,8 @@ class BPFRecorder:
 		results = self.read_profile_file()
 		print(f"Read {len(results)} programs and traces from profile file.")
 
-		if results:
-			print(f"First program has {len(results[0][0])} instructions and {len(results[0][1])} records.")
+		for (program, trace) in results:
+			print(f"Program with {len(program)} instructions and trace with {len(trace)} records")
 		
 		return results[0][1] if results else []
 		# return list(sorted(trace, key=lambda e: e.timestamp))
@@ -52,15 +49,14 @@ class BPFRecorder:
 		results = []
 		with open("/tmp/bpf_profile_records", "rb") as f:
 			while True:
-				try:
-					program = self.read_bpf_program(f)
-					trace = self.read_trace_(f)
-					results.append((program, trace))
-				except ValueError as e:
-					print(f"Finished reading profile file: {e}")
+				pos = f.tell()
+				if not f.read(1):
 					break
-				break # only read one program + trace for now
-
+				f.seek(pos)
+				program = self.read_bpf_program(f)
+				trace = self.read_trace_(f)
+				results.append((program, trace))
+	
 		return results
 	
 	def read_bpf_program(self, file) -> list[BPFInsn]:

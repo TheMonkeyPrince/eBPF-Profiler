@@ -1,4 +1,4 @@
-from profiler.types import Record
+from profiler_types import Record
 from recorder import BPFRecorder
 from analyser import TraceAnalyser
 from programs.launcher import launch_bpf_program

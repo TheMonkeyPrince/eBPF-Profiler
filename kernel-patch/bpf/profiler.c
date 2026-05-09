@@ -78,8 +78,7 @@ int bpf_profiler_end(void) {
     file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (IS_ERR(file))
         return PTR_ERR(file);
-
-    spin_lock_irqsave(&bpf_profiler_lock, flags);
+        
     ret = kernel_write(file, &bpf_profile_records.count,
                        sizeof(bpf_profile_records.count), &pos);
     if (ret < 0)
@@ -93,6 +92,7 @@ int bpf_profiler_end(void) {
     ret = 0;
 
 out:    
+    spin_lock_irqsave(&bpf_profiler_lock, flags);
     bpf_profile_records.count = 0;
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
     filp_close(file, NULL);
