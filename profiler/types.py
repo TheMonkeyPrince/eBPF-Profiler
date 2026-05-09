@@ -57,3 +57,52 @@ class Record(ct.Structure):
 	@staticmethod
 	def size():
 		return ct.sizeof(Record)
+	
+class BPFInsn(ct.Structure):
+	_pack_ = 1
+	_fields_ = [
+		("code", ct.c_uint8),
+		("_regs", ct.c_uint8),
+		("off", ct.c_int16),
+		("imm", ct.c_int32),
+	]
+
+	@property
+	def dst_reg(self):
+		return self._regs & 0x0F
+
+	@dst_reg.setter
+	def dst_reg(self, value):
+		self._regs = (self._regs & 0xF0) | (value & 0x0F)
+
+	@property
+	def src_reg(self):
+		return (self._regs >> 4) & 0x0F
+
+	@src_reg.setter
+	def src_reg(self, value):
+		self._regs = (self._regs & 0x0F) | ((value & 0x0F) << 4)
+
+	def __str__(self):
+		return (
+			f"[code=0x{self.code:02x}, "
+			f"dst_reg={self.dst_reg}, "
+			f"src_reg={self.src_reg}, "
+			f"off={self.off}, "
+			f"imm={self.imm}]"
+		)
+
+	@staticmethod
+	def from_bytes(data):
+		if len(data) != ct.sizeof(BPFInsn):
+			raise ValueError(
+				f"Invalid data size: expected {ct.sizeof(BPFInsn)}, got {len(data)}"
+			)
+
+		insn = BPFInsn()
+		ct.memmove(ct.addressof(insn), data, ct.sizeof(BPFInsn))
+		return insn
+
+	@staticmethod
+	def size():
+		return ct.sizeof(BPFInsn)

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Literal
 
-from record import Record, RecordType
+from profiler.types import Record, RecordType
 from utils import find_block_start, find_block_end
 
 KERNEL_SOURCE_PATH = "/mnt/linux/"

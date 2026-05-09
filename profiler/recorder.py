@@ -3,7 +3,7 @@ import threading
 from time import time, sleep
 import struct
 
-from record import Record
+from profiler.types import Record, BPFInsn
 
 RECORD_FILE_PATH = "/tmp/bpf_profile_records"
 
@@ -39,36 +39,62 @@ class BPFRecorder:
 	def wait_for_completion(self) -> list[Record]:
 		self.record_thread.join()
 
-		records = self.read_profile_file()
-		print(f"Read {len(records)} records from profile file.")
+		results = self.read_profile_file()
+		print(f"Read {len(results)} programs and traces from profile file.")
 
-		return records
+		if results:
+			print(f"First program has {len(results[0][0])} instructions and {len(results[0][1])} records.")
+		
+		return results[0][1] if results else []
 		# return list(sorted(trace, key=lambda e: e.timestamp))
 
-	def read_profile_file(self) -> list[Record]:
-		records = []
-		record_size = Record.size()
-
+	def read_profile_file(self) -> list[tuple[list[BPFInsn], Record]]:
+		results = []
 		with open("/tmp/bpf_profile_records", "rb") as f:
-			# while True:
-			count_bytes = f.read(4)
-			# if not count_bytes:
-			# 	break  # EOF
+			while True:
+				try:
+					program = self.read_bpf_program(f)
+					trace = self.read_trace_(f)
+					results.append((program, trace))
+				except ValueError as e:
+					print(f"Finished reading profile file: {e}")
+					break
+				break # only read one program + trace for now
 
-			if len(count_bytes) != 4:
-				raise ValueError("Corrupted file: partial count")
+		return results
+	
+	def read_bpf_program(self, file) -> list[BPFInsn]:
+		len_bytes = file.read(4)
+		if len(len_bytes) != 4:
+			raise ValueError("Corrupted file: partial count")
+		
+		(program_len, ) = struct.unpack("<I", len_bytes)
+		insn_size = BPFInsn.size()
+		raw = file.read(program_len * insn_size)
+		if len(raw) != program_len * insn_size:
+			raise ValueError("Corrupted file: truncated BPF program block")
+		
+		program = []
+		for i in range(program_len):
+			chunk = raw[i * insn_size:(i + 1) * insn_size]
+			program.append(BPFInsn.from_bytes(chunk))
 
-			(count,) = struct.unpack("<I", count_bytes)
+		return program
 
-			raw = f.read(count * record_size)
-			if len(raw) != count * record_size:
-				raise ValueError("Corrupted file: truncated record block")
-
-			for i in range(count):
-				chunk = raw[i * record_size:(i + 1) * record_size]
-				records.append(Record.from_bytes(chunk))
+	def read_trace_(self, file) -> list[Record]:
+		len_bytes = file.read(4)
+		if len(len_bytes) != 4:
+			raise ValueError("Corrupted file: partial count")
+		
+		(record_count, ) = struct.unpack("<I", len_bytes)
+		record_size = Record.size()
+		raw = file.read(record_count * record_size)
+		if len(raw) != record_count * record_size:
+			raise ValueError("Corrupted file: truncated record block")
+		
+		records = []
+		for i in range(record_count):
+			chunk = raw[i * record_size:(i + 1) * record_size]
+			records.append(Record.from_bytes(chunk))
 
 		return records
-	
-	def read_trace_from_file(self) -> list[Record]:
-		return self.read_profile_file()

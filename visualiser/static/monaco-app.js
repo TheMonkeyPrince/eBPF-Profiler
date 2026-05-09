@@ -294,6 +294,12 @@ async function focusProfiledRange(index, reveal = true) {
       options: {
         isWholeLine: true,
         className: "focused-profiled-range",
+        linesDecorationsClassName: "focused-profiled-line-number",
+        glyphMarginClassName: "focused-profiled-glyph",
+        overviewRuler: {
+          color: "#ffe066",
+          position: monaco.editor.OverviewRulerLane.Center,
+        },
       },
     },
   ]);
@@ -635,6 +641,7 @@ async function ensureEditor() {
     theme: selectedTheme === "light" ? "vs" : "vs-dark",
     readOnly: true,
     minimap: { enabled: true },
+    glyphMargin: true,
     scrollBeyondLastLine: false,
     automaticLayout: true,
     fontSize: 12,

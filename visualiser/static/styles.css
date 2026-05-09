@@ -342,6 +342,24 @@ body.show-details #hoverDetailsWrap {
 }
 
 .focused-profiled-range {
-  outline: 1px solid rgba(255, 210, 0, 0.95);
-  outline-offset: -1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 224, 102, 0.38) 0%,
+    rgba(255, 224, 102, 0.18) 62%,
+    rgba(255, 224, 102, 0.06) 100%
+  ) !important;
+  border-top: 1px solid rgba(255, 224, 102, 0.95);
+  border-bottom: 1px solid rgba(255, 224, 102, 0.95);
+}
+
+.monaco-editor .line-numbers.focused-profiled-line-number {
+  color: #fff2b3 !important;
+  font-weight: 800;
+}
+
+.monaco-editor .margin .focused-profiled-glyph {
+  background: #ffe066;
+  width: 6px !important;
+  margin-left: 6px;
+  border-radius: 999px;
 }

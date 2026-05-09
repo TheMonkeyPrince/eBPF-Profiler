@@ -1,7 +1,7 @@
 import os
 import json
 
-from record import Record
+from profiler.types import Record
 from analyser import TraceAnalyser
 
 def fix_program_name(program_name: str) -> str:

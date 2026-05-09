@@ -17,6 +17,10 @@ _DEFAULT_KERNEL_PATH = (_REPO_ROOT / "linux").resolve()
 KERNEL_PATH = Path(
     os.environ.get("KERNEL_PATH", str(_DEFAULT_KERNEL_PATH))
 ).resolve()
+_DEFAULT_KERNEL_PATCH_PATH = (_REPO_ROOT / "kernel-patch").resolve()
+KERNEL_PATCH_PATH = Path(
+    os.environ.get("KERNEL_PATCH_PATH", str(_DEFAULT_KERNEL_PATCH_PATH))
+).resolve()
 _DEFAULT_ANALYSIS_DIR = (_REPO_ROOT / "profiler" / "out" / "analysis").resolve()
 ANALYSIS_DIR = Path(
     os.environ.get("ANALYSIS_DIR", str(_DEFAULT_ANALYSIS_DIR))
@@ -680,10 +684,16 @@ class Handler(SimpleHTTPRequestHandler):
 
         super().do_GET()
 
+def apply_kernel_patch():
+    print(f"Applying kernel patch from {KERNEL_PATCH_PATH}...")
+    os.system(f"cp -r {KERNEL_PATCH_PATH}/* {KERNEL_PATH}/kernel/")
 
 def main():
     if not KERNEL_PATH.exists():
         print(f"[warning] KERNEL_PATH does not exist: {KERNEL_PATH}")
+    else:
+        print("Applying kernel patch...")
+        apply_kernel_patch()
     print(f"Serving on http://{HOST}:{PORT}")
     print(f"KERNEL_PATH={KERNEL_PATH}")
     print(f"ANALYSIS_DIR={ANALYSIS_DIR}")
