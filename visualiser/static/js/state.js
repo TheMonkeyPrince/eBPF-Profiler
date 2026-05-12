@@ -1,4 +1,4 @@
-/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledViewSelectEl: HTMLSelectElement | null, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null }} UiRefs */
+/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null }} UiRefs */
 
 export const HEAT_BUCKETS = 20;
 
@@ -29,9 +29,6 @@ export const app = {
   profiledRanges: /** @type {unknown[]} */ ([]),
   currentProfiledRangeIndex: -1,
   profiledSortMode: "line",
-  profiledViewMode: "list",
-  /** Collapsed when false; missing = expanded */
-  profiledTreeExpanded: /** @type {Record<number, boolean>} */ ({}),
   treeState: /** @type {Record<string, boolean>} */ ({}),
   treeChildrenCache: /** @type {Record<string, unknown>} */ ({}),
   totalDurationNs: 0,

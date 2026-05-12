@@ -31,7 +31,6 @@ bindUi({
   toggleMetaBtnEl: /** @type {HTMLButtonElement} */ (document.getElementById("toggleMetaBtn")),
   toggleDetailsBtnEl: /** @type {HTMLButtonElement} */ (document.getElementById("toggleDetailsBtn")),
   profiledSortSelectEl: /** @type {HTMLSelectElement} */ (document.getElementById("profiledSortSelect")),
-  profiledViewSelectEl: document.getElementById("profiledViewSelect"),
   profiledListEl: /** @type {HTMLElement} */ (document.getElementById("profiledList")),
   bpfDisasmPreEl: document.getElementById("bpfDisasmPre"),
   bpfProgramDetailsEl: document.getElementById("bpfProgramDetails"),
@@ -89,19 +88,6 @@ ui.profiledSortSelectEl.addEventListener("change", async (event) => {
     return;
   }
   await focusProfiledRange(app.currentProfiledRangeIndex, false);
-});
-
-document.getElementById("profiledPanel")?.addEventListener("change", (event) => {
-  const t = event.target;
-  if (!(t instanceof HTMLSelectElement)) {
-    return;
-  }
-  if (t.id !== "profiledViewSelect") {
-    return;
-  }
-  app.profiledViewMode = t.value === "tree" ? "tree" : "list";
-  renderProfiledList();
-  updateUrlState();
 });
 
 ui.argFilterEl.addEventListener("change", async (ev) => {
@@ -182,10 +168,6 @@ async function boot() {
   }
   await renderTree();
   updateUrlState(true);
-  const viewSel = document.getElementById("profiledViewSelect");
-  if (viewSel instanceof HTMLSelectElement) {
-    viewSel.value = app.profiledViewMode;
-  }
   updateProfileNavUI();
   if (app.selectedPath) {
     await loadFile();
