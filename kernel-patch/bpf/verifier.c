@@ -17700,7 +17700,7 @@ static int do_check(struct bpf_verifier_env *env)
 		state->insn_idx = env->insn_idx;
 
 		if (bpf_is_prune_point(env, env->insn_idx)) {
-			err = bpf_is_state_visited(env, env->insn_idx);
+			err = BPF_PROFILE_CALL_ARG(env->insn_idx, bpf_is_state_visited, env, env->insn_idx);
 			if (err < 0)
 				return err;
 			if (err == 1) {
