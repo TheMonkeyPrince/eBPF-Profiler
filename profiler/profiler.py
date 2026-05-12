@@ -1,4 +1,4 @@
-from profiler_types import ProfilingResult, Record
+from profiler_types import BPFInsn, ProfilingResult, Record
 from analyser import TraceAnalyser
 from programs.launcher import launch_bpf_program
 from recorder import BPFRecorder
@@ -10,7 +10,12 @@ class BPFProfiler:
         self.verbose = verbose
         self.recorder = None
 
-    def profile_program(self, program_name: str, save: bool = True) -> list[ProfilingResult]:
+    def profile_program(
+        self,
+        program_name: str,
+        save: bool = True,
+        min_insns_to_save: int = 50,
+    ) -> list[ProfilingResult]:
         if not self.recorder:
             self.recorder = BPFRecorder(verbose=self.verbose)
         self.recorder.start_recording()
@@ -20,7 +25,8 @@ class BPFProfiler:
         proc.wait()
         if save and results:
             for r in results:
-                save_result(r)
+                if len(r.program) > min_insns_to_save:
+                    save_result(r)
         return results
 
     def analyse_trace(
@@ -28,9 +34,9 @@ class BPFProfiler:
         program_name: str,
         trace: list[Record],
         save: bool = True,
-        bpf_insn_count: int | None = None,
+        program: list[BPFInsn] | None = None,
     ) -> TraceAnalyser:
-        a = TraceAnalyser(program_name, trace, bpf_insn_count=bpf_insn_count)
+        a = TraceAnalyser(program_name, trace, program=program)
         a.analyse()
         if save:
             save_analysis(program_name, a)
@@ -43,6 +49,5 @@ class BPFProfiler:
         out: list[TraceAnalyser] = []
         for p in paths:
             r = read_profile_file(p, p.stem)
-            insn_n = len(r.program) if r.program else None
-            out.append(self.analyse_trace(r.program_name, r.trace, save, insn_n))
+            out.append(self.analyse_trace(r.program_name, r.trace, save, program=r.program))
         return out

@@ -1,6 +1,7 @@
 import argparse
 from profiler import BPFProfiler
 from programs.kernel_selftests import list_working_selftests
+from storage import result_bin_paths
 
 
 if __name__ == "__main__":
@@ -9,6 +10,12 @@ if __name__ == "__main__":
 		"--test",
 		help="Run a specific test (e.g. selftest_xyz, sample_abc)",
 		type=str,
+	)
+	parser.add_argument(
+		"--min-insns-to-save",
+		help="Only write out/results/*.bin when the BPF program has more than this many insns (default: 50)",
+		type=int,
+		default=50,
 	)
 	parser.add_argument(
 		"--no-analysis",
@@ -26,18 +33,24 @@ if __name__ == "__main__":
 		# tests = ["selftest_access_variable_array"]
 
 	runned_tests = []
+	results_by_test = {}
 	try:
 		profiler = BPFProfiler()
 		for test in tests:
 			print(f"Running test: {test}")
-			results = profiler.profile_program(test)
+			results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
+			results_by_test[test] = results
 			if len(results) > 0:
 				runned_tests.append(test)
 
 		if not args.no_analysis:
 			for test in runned_tests:
 				print(f"Analysing test: {test}")
-				profiler.analyse_trace_from_file(test)
+				if result_bin_paths(test):
+					profiler.analyse_trace_from_file(test)
+				else:
+					for r in results_by_test[test]:
+						profiler.analyse_trace(r.program_name, r.trace, program=r.program)
 	except KeyboardInterrupt:
 		print("Stopped")
 

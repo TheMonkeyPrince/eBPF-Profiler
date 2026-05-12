@@ -16,6 +16,8 @@ const toggleMetaBtnEl = document.getElementById("toggleMetaBtn");
 const toggleDetailsBtnEl = document.getElementById("toggleDetailsBtn");
 const profiledSortSelectEl = document.getElementById("profiledSortSelect");
 const profiledListEl = document.getElementById("profiledList");
+const bpfDisasmPreEl = document.getElementById("bpfDisasmPre");
+const bpfProgramDetailsEl = document.getElementById("bpfProgramDetails");
 
 let selectedPath = null;
 let selectedArg = "all";
@@ -506,23 +508,50 @@ function buildReportSelect(reports, currentId) {
   }
 }
 
+function renderBpfDisasm(config) {
+  if (!bpfDisasmPreEl || !bpfProgramDetailsEl) {
+    return;
+  }
+  const insns = config.bpf_insns;
+  if (!Array.isArray(insns) || insns.length === 0) {
+    bpfDisasmPreEl.textContent =
+      "(No BPF instruction dump in this report — re-run analysis after profiling, or program was below the save threshold.)";
+    bpfProgramDetailsEl.open = false;
+    return;
+  }
+  bpfDisasmPreEl.textContent =
+    typeof window.disasmBpfProgram === "function"
+      ? window.disasmBpfProgram(insns)
+      : JSON.stringify(insns, null, 2);
+}
+
 async function loadConfig() {
   const config = await apiGet("/api/config");
   totalDurationNs = Number(
     config.total_duration_ns ?? config.total_duration ?? 0,
   );
   const warnings = config.load_error ? ` | warning: ${config.load_error}` : "";
-  metaEl.textContent = [
+  const insnCount =
+    config.bpf_insn_count != null
+      ? config.bpf_insn_count
+      : Array.isArray(config.bpf_insns)
+        ? config.bpf_insns.length
+        : null;
+  const parts = [
     `report: ${config.current_report || "—"}`,
     `program: ${config.program_name || "n/a"}`,
-    ...(config.bpf_insn_count != null
-      ? [`profiled BPF program: ${config.bpf_insn_count} insns`]
-      : []),
     `duration: ${formatNs(config.total_duration || 0)}`,
     `profiled files: ${config.profiled_files_count}`,
-    `KERNEL_PATH: ${config.kernel_path}`,
-    `ANALYSIS_DIR: ${config.analysis_dir || "—"}`,
-  ].join(" | ") + warnings;
+  ];
+  if (insnCount != null) {
+    parts.push(`bpf insns: ${insnCount}`);
+  }
+  if (config.kernel_compiler) {
+    parts.push(`compiler: ${config.kernel_compiler}`);
+  }
+  parts.push(`KERNEL_PATH: ${config.kernel_path}`, `ANALYSIS_DIR: ${config.analysis_dir || "—"}`);
+  metaEl.textContent = parts.join(" | ") + warnings;
+  renderBpfDisasm(config);
   buildReportSelect(config.reports || [], config.current_report);
   buildArgOptions(config.global_args || []);
   scaleModeSelectEl.value = selectedScaleMode;

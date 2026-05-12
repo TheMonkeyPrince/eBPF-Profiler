@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
-from time import perf_counter
 
-from profiler_types import Record, RecordType
-from utils import find_block_start, find_block_end
+from profiler_types import BPFInsn, Record, RecordType
+from utils import find_block_end, find_block_start
 
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
 
@@ -54,19 +53,28 @@ def _site_str(t: tuple[str, int, int, str | None]) -> str:
     return f"{f}:{s}:{e}"
 
 
+def _insn_dict(i: BPFInsn) -> dict:
+    return {
+        "code": int(i.code),
+        "dst": i.dst_reg,
+        "src": i.src_reg,
+        "off": int(i.off),
+        "imm": int(i.imm),
+    }
+
+
 class TraceAnalyser:
     def __init__(
         self,
         program_name: str,
         trace: list[Record],
-        bpf_insn_count: int | None = None,
+        program: list[BPFInsn] | None = None,
     ):
         self.program_name = program_name
         self.trace = trace
-        self.bpf_insn_count = bpf_insn_count
+        self._program = list(program) if program else []
         self.kernel_compiler = "clang"
         self.total_duration_ns = 0
-        self.analysis_time_s = 0.0
         self._timed: list[Record] = []
         self._sites: list[tuple[str, int, int, str | None]] = []
         self._args: list[int | None] = []
@@ -76,7 +84,6 @@ class TraceAnalyser:
 
     def analyse(self, verbose: bool = True, kernel_compiler: str = "clang"):
         self.kernel_compiler = kernel_compiler
-        t0 = perf_counter()
         v0 = v1 = None
         timed: list[Record] = []
         args: list[int | None] = []
@@ -105,11 +112,9 @@ class TraceAnalyser:
         self._children = ch
         self._roots = roots
         self.total_duration_ns = (v1 - v0) if v0 is not None and v1 is not None else 0
-        self.analysis_time_s = perf_counter() - t0
 
         if verbose:
             print(f"Total verification time: {self.total_duration_ns / 1e6:.2f} ms")
-        print(f"Analysis completed in {self.analysis_time_s:.2f} seconds")
 
     def _node(self, i: int) -> dict:
         ev, sk = self._timed[i], self._sites[i]
@@ -128,21 +133,12 @@ class TraceAnalyser:
         return d
 
     def to_json(self) -> str:
-        meta = {
+        out: dict = {
+            "program_name": self.program_name,
+            "verification_ns": self.total_duration_ns,
             "kernel_compiler": self.kernel_compiler,
-            "analysis_time_s": round(self.analysis_time_s, 6),
+            "call_tree": [self._node(r) for r in self._roots],
         }
-        if self.bpf_insn_count is not None:
-            meta["bpf_insn_count"] = self.bpf_insn_count
-        return json.dumps(
-            {
-                "schema_version": 3,
-                "program_name": self.program_name,
-                "total_duration_ns": self.total_duration_ns,
-                "total_duration": self.total_duration_ns,
-                "meta": meta,
-                "verification": {"duration_ns": self.total_duration_ns},
-                "call_tree": [self._node(r) for r in self._roots],
-            },
-            indent=2,
-        )
+        if self._program:
+            out["bpf_insns"] = [_insn_dict(i) for i in self._program]
+        return json.dumps(out, indent=2)

@@ -130,15 +130,27 @@ def empty_line_stats():
 
 
 def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
-    meta = report.get("meta")
-    if not isinstance(meta, dict):
-        return
-    bic = meta.get("bpf_insn_count")
-    if bic is not None:
-        indexed["bpf_insn_count"] = int(bic)
+    kc = report.get("kernel_compiler")
+    if isinstance(kc, str) and kc:
+        indexed["kernel_compiler"] = kc
+    else:
+        meta = report.get("meta")
+        if isinstance(meta, dict) and isinstance(meta.get("kernel_compiler"), str):
+            indexed["kernel_compiler"] = meta["kernel_compiler"]
+
+    insns = report.get("bpf_insns")
+    if isinstance(insns, list):
+        indexed["bpf_insns"] = insns
+        indexed["bpf_insn_count"] = len(insns)
+    else:
+        meta = report.get("meta")
+        if isinstance(meta, dict) and meta.get("bpf_insn_count") is not None:
+            indexed["bpf_insn_count"] = int(meta["bpf_insn_count"])
 
 
 def _total_duration_ns_from_report(report):
+    if "verification_ns" in report:
+        return int(report["verification_ns"])
     if "total_duration_ns" in report:
         return int(report["total_duration_ns"])
     td = report.get("total_duration")
@@ -513,7 +525,7 @@ class AppState:
         self._load_current_report_from_disk()
 
     def _empty_index_report(self):
-        return {"schema_version": 3, "call_tree": []}
+        return {"call_tree": []}
 
     def _load_current_report_from_disk(self):
         empty = self._empty_index_report()
@@ -590,6 +602,8 @@ class Handler(SimpleHTTPRequestHandler):
                     "load_error": STATE.load_error,
                     "profiled_files_count": len(STATE.index.get("files", {})),
                     "bpf_insn_count": STATE.index.get("bpf_insn_count"),
+                    "bpf_insns": STATE.index.get("bpf_insns"),
+                    "kernel_compiler": STATE.index.get("kernel_compiler"),
                 }
             )
             return
