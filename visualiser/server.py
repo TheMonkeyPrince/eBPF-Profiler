@@ -129,6 +129,15 @@ def empty_line_stats():
     }
 
 
+def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
+    meta = report.get("meta")
+    if not isinstance(meta, dict):
+        return
+    bic = meta.get("bpf_insn_count")
+    if bic is not None:
+        indexed["bpf_insn_count"] = int(bic)
+
+
 def _total_duration_ns_from_report(report):
     if "total_duration_ns" in report:
         return int(report["total_duration_ns"])
@@ -308,6 +317,7 @@ def ingest_regions_schema_v2(report):
         )
 
     indexed["global_args"] = sorted(indexed["global_args"], key=lambda a: int(a))
+    _merge_visualiser_meta_from_report(indexed, report)
     return indexed
 
 
@@ -394,6 +404,7 @@ def ingest_legacy_execution_times(report):
                     arg_stat["max_ns"] = max(arg_stat["max_ns"], max(samples))
 
     indexed["global_args"] = sorted(indexed["global_args"], key=lambda a: int(a))
+    _merge_visualiser_meta_from_report(indexed, report)
     return indexed
 
 
@@ -476,6 +487,7 @@ def ingest_call_tree_schema_v3(report):
         )
 
     indexed["global_args"] = sorted(indexed["global_args"], key=lambda a: int(a))
+    _merge_visualiser_meta_from_report(indexed, report)
     return indexed
 
 
@@ -577,6 +589,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "global_args": STATE.index.get("global_args", []),
                     "load_error": STATE.load_error,
                     "profiled_files_count": len(STATE.index.get("files", {})),
+                    "bpf_insn_count": STATE.index.get("bpf_insn_count"),
                 }
             )
             return

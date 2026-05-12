@@ -1,206 +1,148 @@
 import json
-import os
-from dataclasses import dataclass
+from pathlib import Path
 from time import perf_counter
-from typing import Literal
 
 from profiler_types import Record, RecordType
 from utils import find_block_start, find_block_end
 
-KERNEL_SOURCE_PATH = "/mnt/linux/"
-if not os.path.isdir(KERNEL_SOURCE_PATH):
-    KERNEL_SOURCE_PATH = "../linux/"
+_KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
 
 
-KernelCompiler = Literal["clang", "gcc"]
+def _contains(outer: Record, inner: Record) -> bool:
+    return outer.start_time < inner.start_time and outer.end_time > inner.end_time
 
 
-def _strictly_contains(outer: Record, inner: Record) -> bool:
-    return (
-        outer.start_time < inner.start_time and outer.end_time > inner.end_time
-    )
-
-
-def call_tree_exclusive_and_children(
-    records: list[Record],
-) -> tuple[list[int], list[list[int]]]:
-    """
-    For strict time nesting: immediate parent has largest outer start_time.
-    Returns exclusive duration per occurrence and adjacency lists of child
-    indices (siblings in trace order).
-    """
+def _exclusive_and_children(records: list[Record]) -> tuple[list[int], list[list[int]]]:
     n = len(records)
     children: list[list[int]] = [[] for _ in range(n)]
-
     for i in range(n):
         ei = records[i]
-        parent_j = -1
-        best_parent_start = -1
+        best_j, best_start = -1, -1
         for j in range(n):
             if i == j:
                 continue
             ej = records[j]
-            if _strictly_contains(ej, ei) and ej.start_time > best_parent_start:
-                best_parent_start = ej.start_time
-                parent_j = j
-        if parent_j >= 0:
-            children[parent_j].append(i)
-
-    exclusive: list[int] = []
+            if _contains(ej, ei) and ej.start_time > best_start:
+                best_start, best_j = ej.start_time, j
+        if best_j >= 0:
+            children[best_j].append(i)
+    exclusive = []
     for i in range(n):
         inc = records[i].duration()
-        child_sum = sum(records[c].duration() for c in children[i])
-        exclusive.append(max(0, inc - child_sum))
+        ch = sum(records[c].duration() for c in children[i])
+        exclusive.append(max(0, inc - ch))
     return exclusive, children
 
 
-@dataclass(frozen=True, slots=True)
-class SiteKey:
-    file: str
-    start_line: int
-    end_line: int
-    function: str | None
-
-
-def site_compact(site: SiteKey) -> str:
-    """Compact location: kernel/path/file.c:start:end"""
-    return f"{site.file}:{site.start_line}:{site.end_line}"
-
-
-def resolve_site_key(ev: Record, kernel_compiler: KernelCompiler) -> SiteKey:
+def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
     if ev.get_record_type() == RecordType.CALL:
-        return SiteKey(
-            file=ev.file.decode(),
-            start_line=int(ev.line),
-            end_line=int(ev.line),
-            function=ev.func_name.decode(),
-        )
+        return (ev.file.decode(), int(ev.line), int(ev.line), ev.func_name.decode())
     if ev.get_record_type() != RecordType.BLOCK:
         raise ValueError(f"timed record expected, got {ev.get_record_type()}")
-    path = KERNEL_SOURCE_PATH + ev.file.decode()
-    if kernel_compiler == "clang":
-        start_line = find_block_start(path, ev.line)
-        end_line = ev.line
-    elif kernel_compiler == "gcc":
-        start_line = ev.line
-        end_line = find_block_end(path, start_line)
+    path = str(_KERNEL_ROOT / ev.file.decode())
+    if kernel == "clang":
+        lo, hi = find_block_start(path, ev.line), ev.line
+    elif kernel == "gcc":
+        lo, hi = ev.line, find_block_end(path, ev.line)
     else:
-        raise ValueError(f"Unsupported kernel compiler: {kernel_compiler}")
-    return SiteKey(
-        file=ev.file.decode(),
-        start_line=int(start_line),
-        end_line=int(end_line),
-        function=None,
-    )
+        raise ValueError(f"unsupported kernel compiler: {kernel}")
+    return (ev.file.decode(), int(lo), int(hi), None)
+
+
+def _site_str(t: tuple[str, int, int, str | None]) -> str:
+    f, s, e, _ = t
+    return f"{f}:{s}:{e}"
 
 
 class TraceAnalyser:
-    """Builds verifier timing as a nested call tree (interval containment)."""
-
-    def __init__(self, program_name: str, trace: list[Record]):
+    def __init__(
+        self,
+        program_name: str,
+        trace: list[Record],
+        bpf_insn_count: int | None = None,
+    ):
         self.program_name = program_name
         self.trace = trace
-        self.kernel_compiler: KernelCompiler = "clang"
+        self.bpf_insn_count = bpf_insn_count
+        self.kernel_compiler = "clang"
         self.total_duration_ns = 0
         self.analysis_time_s = 0.0
-        self._timed_records: list[Record] = []
-        self._site_keys: list[SiteKey] = []
-        self._timed_args: list[int | None] = []
-        self._exclusive_ns: list[int] = []
+        self._timed: list[Record] = []
+        self._sites: list[tuple[str, int, int, str | None]] = []
+        self._args: list[int | None] = []
+        self._exclusive: list[int] = []
         self._children: list[list[int]] = []
-        self._root_indices: list[int] = []
+        self._roots: list[int] = []
 
-    def analyse(self, verbose: bool = True, kernel_compiler: KernelCompiler = "clang"):
+    def analyse(self, verbose: bool = True, kernel_compiler: str = "clang"):
         self.kernel_compiler = kernel_compiler
         t0 = perf_counter()
-
-        verification_start_ns: int | None = None
-        verification_end_ns: int | None = None
-        timed_records: list[Record] = []
-        timed_args: list[int | None] = []
+        v0 = v1 = None
+        timed: list[Record] = []
+        args: list[int | None] = []
 
         for ev in self.trace:
-            # if ev.get_record_type() == RecordType.CALL:
-            #     pass
-            #     # print(f"Function: {ev.func_name.decode()}, Args: {ev.arg}")
-            # elif ev.get_record_type() == RecordType.BLOCK:
-            #     print(f"Block: {ev.file.decode()}:{ev.line}, Arg: {ev.arg}")
             match ev.get_record_type():
                 case RecordType.START:
-                    verification_start_ns = ev.start_time
+                    v0 = ev.start_time
                 case RecordType.END:
-                    verification_end_ns = ev.end_time
+                    v1 = ev.end_time
                 case RecordType.BLOCK | RecordType.CALL:
-                    timed_records.append(ev)
-                    ta: int | None
-                    if ev.get_record_type() == RecordType.BLOCK or ev.get_record_type() == RecordType.CALL:
-                        ta = ev.arg if ev.has_arg() else None
-                    else:
-                        ta = None
-                    timed_args.append(ta)
+                    timed.append(ev)
+                    args.append(ev.arg if ev.has_arg() else None)
 
-        site_keys = [resolve_site_key(e, kernel_compiler) for e in timed_records]
-        exclusive_ns, children = call_tree_exclusive_and_children(timed_records)
+        exc, ch = _exclusive_and_children(timed)
+        mark = [False] * len(timed)
+        for row in ch:
+            for c in row:
+                mark[c] = True
+        roots = [i for i in range(len(timed)) if not mark[i]]
 
-        child_mark = [False] * len(timed_records)
-        for chs in children:
-            for c in chs:
-                child_mark[c] = True
-        roots = [i for i in range(len(timed_records)) if not child_mark[i]]
-
-        self._timed_records = timed_records
-        self._site_keys = site_keys
-        self._timed_args = timed_args
-        self._exclusive_ns = exclusive_ns
-        self._children = children
-        self._root_indices = roots
-
-        if verification_start_ns is not None and verification_end_ns is not None:
-            self.total_duration_ns = verification_end_ns - verification_start_ns
-        else:
-            self.total_duration_ns = 0
-
+        self._timed = timed
+        self._sites = [_site(e, kernel_compiler) for e in timed]
+        self._args = args
+        self._exclusive = exc
+        self._children = ch
+        self._roots = roots
+        self.total_duration_ns = (v1 - v0) if v0 is not None and v1 is not None else 0
         self.analysis_time_s = perf_counter() - t0
 
         if verbose:
-            print(
-                "Total verification time: "
-                f"{self.total_duration_ns / 1_000_000:.2f} ms"
-            )
+            print(f"Total verification time: {self.total_duration_ns / 1e6:.2f} ms")
         print(f"Analysis completed in {self.analysis_time_s:.2f} seconds")
 
-    def _serialize_node(self, i: int) -> dict:
-        ev = self._timed_records[i]
-        sk = self._site_keys[i]
-        node: dict = {
-            "file": site_compact(sk),
+    def _node(self, i: int) -> dict:
+        ev, sk = self._timed[i], self._sites[i]
+        d: dict = {
+            "file": _site_str(sk),
             "inclusive_ns": ev.duration(),
-            "exclusive_ns": self._exclusive_ns[i],
+            "exclusive_ns": self._exclusive[i],
         }
-        if sk.function:
-            node["function"] = sk.function
-        arg = self._timed_args[i]
-        if arg is not None:
-            node["arg"] = arg
+        if sk[3]:
+            d["function"] = sk[3]
+        if self._args[i] is not None:
+            d["arg"] = self._args[i]
         ch = self._children[i]
         if ch:
-            node["children"] = [self._serialize_node(c) for c in ch]
-        return node
-
-    def _call_tree_payload(self) -> list[dict]:
-        return [self._serialize_node(r) for r in self._root_indices]
+            d["children"] = [self._node(c) for c in ch]
+        return d
 
     def to_json(self) -> str:
-        payload = {
-            "schema_version": 3,
-            "program_name": self.program_name,
-            "total_duration_ns": self.total_duration_ns,
-            "total_duration": self.total_duration_ns,
-            "meta": {
-                "kernel_compiler": self.kernel_compiler,
-                "analysis_time_s": round(self.analysis_time_s, 6),
-            },
-            "verification": {"duration_ns": self.total_duration_ns},
-            "call_tree": self._call_tree_payload(),
+        meta = {
+            "kernel_compiler": self.kernel_compiler,
+            "analysis_time_s": round(self.analysis_time_s, 6),
         }
-        return json.dumps(payload, indent=2)
+        if self.bpf_insn_count is not None:
+            meta["bpf_insn_count"] = self.bpf_insn_count
+        return json.dumps(
+            {
+                "schema_version": 3,
+                "program_name": self.program_name,
+                "total_duration_ns": self.total_duration_ns,
+                "total_duration": self.total_duration_ns,
+                "meta": meta,
+                "verification": {"duration_ns": self.total_duration_ns},
+                "call_tree": [self._node(r) for r in self._roots],
+            },
+            indent=2,
+        )

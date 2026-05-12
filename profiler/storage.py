@@ -1,104 +1,76 @@
-import os
 import json
 import struct
+from pathlib import Path
 
-from profiler_types import ProfilingResult, BPFInsn, Record
 from analyser import TraceAnalyser
+from profiler_types import BPFInsn, ProfilingResult, Record
 
-def fix_program_name(program_name: str) -> str:
-    return program_name.replace("/", ".")
-
-def load_trace(program_name: str) -> list[Record]:
-    program_name = fix_program_name(program_name)
-    trace = []
-    event_size = Record.size()
-    with open(f"out/traces/{program_name}.bin", "rb") as f:
-        while chunk := f.read(event_size):
-            if len(chunk) != event_size:
-                raise ValueError(f"Incomplete event data: expected {event_size} bytes, got {len(chunk)}")
-            event = Record.from_bytes(chunk)
-            trace.append(event)
-    return trace
+RESULTS_DIR = Path("out/results")
+ANALYSIS_DIR = Path("out/analysis")
 
 
-def save_result(result: ProfilingResult):
-    program_name = fix_program_name(program_name)
-    os.makedirs("out/results", exist_ok=True)
-    with open(f"out/results/{program_name}.bin", "wb") as f:
-        
-        for ev in result.trace:
-            f.write(bytes(ev))
-    # print(f"Trace saved to out/traces/{program_name}.bin")
+def fix_program_name(name: str) -> str:
+    return name.replace("/", ".")
 
-def load_analysis(program_name: str) -> dict:
-    program_name = fix_program_name(program_name)
-    with open(f"out/analysis/{program_name}.json", "r") as f:        return json.load(f)
 
-def save_analysis(program_name: str, trace_analyser: TraceAnalyser):
-    program_name = fix_program_name(program_name)
-    os.makedirs("out/analysis", exist_ok=True)
-    with open(f"out/analysis/{program_name}.json", "w") as f:
-        f.write(trace_analyser.to_json())
-    # print(f"Analysis saved to out/analysis/{program_name}.json")
+def result_bin_paths(name: str) -> list[Path]:
+    base = fix_program_name(name)
+    if not RESULTS_DIR.is_dir():
+        return []
+    out: list[Path] = []
+    exact = RESULTS_DIR / f"{base}.bin"
+    if exact.is_file():
+        out.append(exact)
+    prefix = f"{base}_"
+    numbered = sorted(
+        RESULTS_DIR.glob(f"{base}_*.bin"),
+        key=lambda p: (
+            int(p.stem[len(prefix) :])
+            if p.stem.startswith(prefix) and p.stem[len(prefix) :].isdigit()
+            else 10**9
+        ),
+    )
+    out.extend(p for p in numbered if p not in out)
+    return out
 
-def read_profile_file(file_path: str, program_name: str) -> ProfilingResult:
-    with open(file_path, "rb") as f:
-        return read_result(f, program_name)
 
-def read_result(file, program_name: str) -> ProfilingResult:
-    program = read_bpf_program(file)
-    trace = read_trace(file)
+def _read_block(f, item_size: int, from_bytes):
+    hdr = f.read(4)
+    if len(hdr) != 4:
+        raise ValueError("corrupt profile: short header")
+    (n,) = struct.unpack("<I", hdr)
+    blob = f.read(n * item_size)
+    if len(blob) != n * item_size:
+        raise ValueError("corrupt profile: truncated block")
+    return [from_bytes(blob[i * item_size : (i + 1) * item_size]) for i in range(n)]
+
+
+def read_profile_file(path: str | Path, program_name: str) -> ProfilingResult:
+    with open(path, "rb") as f:
+        program = _read_block(f, BPFInsn.size(), BPFInsn.from_bytes)
+        trace = _read_block(f, Record.size(), Record.from_bytes)
     return ProfilingResult(program_name, program, trace)
 
-def read_bpf_program(file) -> list[BPFInsn]:
-    len_bytes = file.read(4)
-    if len(len_bytes) != 4:
-        raise ValueError("Corrupted file: partial count")
-
-    (program_len,) = struct.unpack("<I", len_bytes)
-    insn_size = BPFInsn.size()
-    raw = file.read(program_len * insn_size)
-    if len(raw) != program_len * insn_size:
-        raise ValueError("Corrupted file: truncated BPF program block")
-
-    program = []
-    for i in range(program_len):
-        chunk = raw[i * insn_size : (i + 1) * insn_size]
-        program.append(BPFInsn.from_bytes(chunk))
-
-    return program
-
-def read_trace(file) -> list[Record]:
-    len_bytes = file.read(4)
-    if len(len_bytes) != 4:
-        raise ValueError("Corrupted file: partial count")
-
-    (record_count,) = struct.unpack("<I", len_bytes)
-    record_size = Record.size()
-    raw = file.read(record_count * record_size)
-    if len(raw) != record_count * record_size:
-        raise ValueError("Corrupted file: truncated record block")
-
-    records = []
-    for i in range(record_count):
-        chunk = raw[i * record_size : (i + 1) * record_size]
-        records.append(Record.from_bytes(chunk))
-
-    return records
 
 def save_result(result: ProfilingResult):
-    program_name = fix_program_name(result.program_name)
-    os.makedirs("out/results", exist_ok=True)
-    with open(f"out/results/{program_name}.bin", "wb") as f:
-        # Write program
-        program_len = len(result.program)
-        f.write(struct.pack("<I", program_len))
+    name = fix_program_name(result.program_name)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(RESULTS_DIR / f"{name}.bin", "wb") as f:
+        f.write(struct.pack("<I", len(result.program)))
         for insn in result.program:
             f.write(bytes(insn))
+        f.write(struct.pack("<I", len(result.trace)))
+        for rec in result.trace:
+            f.write(bytes(rec))
 
-        # Write trace
-        record_count = len(result.trace)
-        f.write(struct.pack("<I", record_count))
-        for record in result.trace:
-            f.write(bytes(record))
-        
+
+def load_analysis(name: str) -> dict:
+    path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_analysis(name: str, analyser: TraceAnalyser):
+    path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(analyser.to_json(), encoding="utf-8")

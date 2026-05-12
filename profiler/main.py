@@ -30,8 +30,8 @@ if __name__ == "__main__":
 		profiler = BPFProfiler()
 		for test in tests:
 			print(f"Running test: {test}")
-			trace = profiler.profile_program(test)
-			if len(trace) > 0:
+			results = profiler.profile_program(test)
+			if len(results) > 0:
 				runned_tests.append(test)
 
 		if not args.no_analysis:

@@ -515,6 +515,9 @@ async function loadConfig() {
   metaEl.textContent = [
     `report: ${config.current_report || "—"}`,
     `program: ${config.program_name || "n/a"}`,
+    ...(config.bpf_insn_count != null
+      ? [`profiled BPF program: ${config.bpf_insn_count} insns`]
+      : []),
     `duration: ${formatNs(config.total_duration || 0)}`,
     `profiled files: ${config.profiled_files_count}`,
     `KERNEL_PATH: ${config.kernel_path}`,
