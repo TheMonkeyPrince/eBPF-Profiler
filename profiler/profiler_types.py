@@ -5,7 +5,6 @@ u64 = ct.c_uint64
 u32 = ct.c_uint32
 NO_ARG = u32(-1).value
 
-
 class RecordType(Enum):
 	START = 0
 	END = 1
@@ -106,3 +105,22 @@ class BPFInsn(ct.Structure):
 	@staticmethod
 	def size():
 		return ct.sizeof(BPFInsn)
+
+	def __eq__(self, other):
+		if not isinstance(other, BPFInsn):
+			return NotImplemented
+		a = ct.string_at(ct.addressof(self), ct.sizeof(self))
+		b = ct.string_at(ct.addressof(other), ct.sizeof(other))
+		return a == b
+		
+	def __hash__(self):
+		return hash(ct.string_at(ct.addressof(self), ct.sizeof(self)))
+	
+class ProfilingResult:
+	def __init__(self, program_name: str, program: list[BPFInsn], trace: list[Record]):
+		self.program_name = program_name
+		self.program = program
+		self.trace = trace
+
+	def __str__(self):
+		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], trace=[{len(self.trace)} records])"

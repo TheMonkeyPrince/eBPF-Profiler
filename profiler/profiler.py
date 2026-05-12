@@ -1,8 +1,8 @@
-from profiler_types import Record
+from profiler_types import ProfilingResult
 from recorder import BPFRecorder
 from analyser import TraceAnalyser
 from programs.launcher import launch_bpf_program
-from storage import save_trace, load_trace, save_analysis, load_analysis
+from storage import save_result, load_trace, save_analysis, load_analysis
 
 
 class BPFProfiler:
@@ -10,19 +10,19 @@ class BPFProfiler:
 		self.verbose = verbose
 		self.recorder = None
 
-	def profile_program(self, program_name: str, save: bool = True) -> list[Record]:
+	def profile_program(self, program_name: str, save: bool = True) -> list[ProfilingResult]:
 		if not self.recorder:
 			self.recorder = BPFRecorder(verbose=self.verbose)
 
-
-		self.recorder.start_recording(program_name)
+		self.recorder.start_recording()
 		process = launch_bpf_program(program_name)
-		trace = self.recorder.wait_for_completion()
+		results = self.recorder.wait_for_completion(program_name)
 		process.terminate()
 		process.wait()
 
 		if save and len(trace) > 0:
-			save_trace(program_name, trace)
+			for result in results:
+				save_result(result)
 		return trace
 
 	def analyse_trace(
