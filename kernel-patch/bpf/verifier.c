@@ -17719,7 +17719,7 @@ static int do_check(struct bpf_verifier_env *env)
 		}
 
 		if (bpf_is_jmp_point(env, env->insn_idx)) {
-			err = bpf_push_jmp_history(env, state, 0, 0);
+			err = BPF_PROFILE_CALL_ARG(env->insn_idx, bpf_push_jmp_history, env, state, 0, 0);
 			if (err)
 				return err;
 		}
@@ -17727,8 +17727,8 @@ static int do_check(struct bpf_verifier_env *env)
 		if (signal_pending(current))
 			return -EAGAIN;
 
-		if (need_resched())
-			cond_resched();
+		if (BPF_PROFILE_CALL(need_resched))
+			BPF_PROFILE_CALL_VOID(cond_resched);
 
 		if (env->log.level & BPF_LOG_LEVEL2 && do_print_state) {
 			verbose(env, "\nfrom %d to %d%s:",
@@ -17788,7 +17788,7 @@ static int do_check(struct bpf_verifier_env *env)
 		if (state->speculative && insn_aux->nospec)
 			goto process_bpf_exit;
 
-		err = do_check_insn(env, &do_print_state);
+		err = BPF_PROFILE_CALL_ARG(env->insn_idx, do_check_insn, env, &do_print_state);
 		if (error_recoverable_with_nospec(err) && state->speculative) {
 			/* Prevent this speculative path from ever reaching the
 			 * insn that would have been unsafe to execute.
