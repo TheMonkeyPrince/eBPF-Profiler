@@ -83,6 +83,9 @@ class TraceAnalyser:
         self._roots: list[int] = []
 
     def analyse(self, verbose: bool = True, kernel_compiler: str = "clang"):
+        if verbose:
+            print(f"Analysing trace for {self.program_name!r} with {len(self.trace)} records and {len(self._program)} BPF instructions...")
+        
         self.kernel_compiler = kernel_compiler
         v0 = v1 = None
         timed: list[Record] = []

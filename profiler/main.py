@@ -27,9 +27,10 @@ if __name__ == "__main__":
 	if args.test:
 		tests = [args.test]
 	else:
-		tests = ["sample_tracex1"]
-		tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
-		tests = ["sample_ibumad"]
+		tests = ["sample_hbm"]
+		# tests = ["sample_tracex1"]
+		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
+		# tests = ["sample_ibumad"]
 		# tests = ["selftest_access_variable_array"]
 
 	runned_tests = []

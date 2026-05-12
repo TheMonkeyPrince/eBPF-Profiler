@@ -1,0 +1,3705 @@
+{
+  "program_name": "sample_hbm_5",
+  "verification_ns": 3899973,
+  "kernel_compiler": "clang",
+  "call_tree": [
+    {
+      "file": "kernel/bpf/verifier.c:19995:19995",
+      "inclusive_ns": 1198,
+      "exclusive_ns": 1198,
+      "function": "bpf_check_btf_info_early"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:19999:19999",
+      "inclusive_ns": 1281,
+      "exclusive_ns": 1281,
+      "function": "add_subprog_and_kfunc"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20003:20003",
+      "inclusive_ns": 2577,
+      "exclusive_ns": 2577,
+      "function": "check_subprogs"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20007:20007",
+      "inclusive_ns": 21619,
+      "exclusive_ns": 21619,
+      "function": "bpf_check_btf_info"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20011:20011",
+      "inclusive_ns": 13408,
+      "exclusive_ns": 13408,
+      "function": "check_and_resolve_insns"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20015:20015",
+      "inclusive_ns": 153,
+      "exclusive_ns": 153,
+      "function": "bpf_prog_is_offloaded"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20021:20021",
+      "inclusive_ns": 16358,
+      "exclusive_ns": 16358,
+      "function": "bpf_check_cfg"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20025:20025",
+      "inclusive_ns": 8634,
+      "exclusive_ns": 8634,
+      "function": "bpf_compute_postorder"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20029:20029",
+      "inclusive_ns": 1639,
+      "exclusive_ns": 1639,
+      "function": "bpf_stack_liveness_init"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20033:20033",
+      "inclusive_ns": 167,
+      "exclusive_ns": 167,
+      "function": "check_attach_btf_id"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20037:20037",
+      "inclusive_ns": 66185,
+      "exclusive_ns": 66185,
+      "function": "bpf_compute_const_regs"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20041:20041",
+      "inclusive_ns": 2419,
+      "exclusive_ns": 2419,
+      "function": "bpf_prune_dead_branches"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20045:20045",
+      "inclusive_ns": 3181,
+      "exclusive_ns": 3181,
+      "function": "sort_subprogs_topo"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20049:20049",
+      "inclusive_ns": 13198,
+      "exclusive_ns": 13198,
+      "function": "bpf_compute_scc"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20053:20053",
+      "inclusive_ns": 1024833,
+      "exclusive_ns": 982565,
+      "function": "bpf_compute_live_registers",
+      "children": [
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 192,
+          "exclusive_ns": 192,
+          "function": "compute_insn_live_regs",
+          "arg": 0
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 194,
+          "exclusive_ns": 194,
+          "function": "compute_insn_live_regs",
+          "arg": 1
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 2
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 3
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 4
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 5
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 180,
+          "exclusive_ns": 180,
+          "function": "compute_insn_live_regs",
+          "arg": 6
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 170,
+          "exclusive_ns": 170,
+          "function": "compute_insn_live_regs",
+          "arg": 7
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 8
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 350,
+          "exclusive_ns": 350,
+          "function": "compute_insn_live_regs",
+          "arg": 9
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 10
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 173,
+          "exclusive_ns": 173,
+          "function": "compute_insn_live_regs",
+          "arg": 11
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 178,
+          "exclusive_ns": 178,
+          "function": "compute_insn_live_regs",
+          "arg": 12
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 173,
+          "exclusive_ns": 173,
+          "function": "compute_insn_live_regs",
+          "arg": 13
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 14
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 15
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 16
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 17
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 18
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 19
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 172,
+          "exclusive_ns": 172,
+          "function": "compute_insn_live_regs",
+          "arg": 20
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 21
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 22
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 23
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 255,
+          "exclusive_ns": 255,
+          "function": "compute_insn_live_regs",
+          "arg": 24
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 25
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 26
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 168,
+          "exclusive_ns": 168,
+          "function": "compute_insn_live_regs",
+          "arg": 27
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 28
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 171,
+          "exclusive_ns": 171,
+          "function": "compute_insn_live_regs",
+          "arg": 29
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 30
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 31
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 32
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 166,
+          "exclusive_ns": 166,
+          "function": "compute_insn_live_regs",
+          "arg": 33
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 34
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 35
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 157,
+          "exclusive_ns": 157,
+          "function": "compute_insn_live_regs",
+          "arg": 36
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 37
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 170,
+          "exclusive_ns": 170,
+          "function": "compute_insn_live_regs",
+          "arg": 38
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 39
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 40
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 167,
+          "exclusive_ns": 167,
+          "function": "compute_insn_live_regs",
+          "arg": 41
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 222,
+          "exclusive_ns": 222,
+          "function": "compute_insn_live_regs",
+          "arg": 42
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 43
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 44
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 45
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 46
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 47
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 48
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 236,
+          "exclusive_ns": 236,
+          "function": "compute_insn_live_regs",
+          "arg": 49
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 50
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 51
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 52
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 53
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 215,
+          "exclusive_ns": 215,
+          "function": "compute_insn_live_regs",
+          "arg": 54
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 172,
+          "exclusive_ns": 172,
+          "function": "compute_insn_live_regs",
+          "arg": 55
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 173,
+          "exclusive_ns": 173,
+          "function": "compute_insn_live_regs",
+          "arg": 56
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 586,
+          "exclusive_ns": 586,
+          "function": "compute_insn_live_regs",
+          "arg": 57
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 58
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 59
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 194,
+          "exclusive_ns": 194,
+          "function": "compute_insn_live_regs",
+          "arg": 60
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 171,
+          "exclusive_ns": 171,
+          "function": "compute_insn_live_regs",
+          "arg": 61
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 62
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 166,
+          "exclusive_ns": 166,
+          "function": "compute_insn_live_regs",
+          "arg": 63
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 64
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 65
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 66
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 166,
+          "exclusive_ns": 166,
+          "function": "compute_insn_live_regs",
+          "arg": 67
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 68
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 69
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 70
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 71
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 72
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 73
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 74
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 154,
+          "exclusive_ns": 154,
+          "function": "compute_insn_live_regs",
+          "arg": 75
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 76
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 77
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 78
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 368,
+          "exclusive_ns": 368,
+          "function": "compute_insn_live_regs",
+          "arg": 79
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 166,
+          "exclusive_ns": 166,
+          "function": "compute_insn_live_regs",
+          "arg": 80
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 81
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 151,
+          "exclusive_ns": 151,
+          "function": "compute_insn_live_regs",
+          "arg": 82
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 83
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 84
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 85
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 179,
+          "exclusive_ns": 179,
+          "function": "compute_insn_live_regs",
+          "arg": 86
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 87
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 175,
+          "exclusive_ns": 175,
+          "function": "compute_insn_live_regs",
+          "arg": 88
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 180,
+          "exclusive_ns": 180,
+          "function": "compute_insn_live_regs",
+          "arg": 89
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 90
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 91
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 92
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 93
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 166,
+          "exclusive_ns": 166,
+          "function": "compute_insn_live_regs",
+          "arg": 94
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 95
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 96
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 97
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 191,
+          "exclusive_ns": 191,
+          "function": "compute_insn_live_regs",
+          "arg": 98
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 99
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 172,
+          "exclusive_ns": 172,
+          "function": "compute_insn_live_regs",
+          "arg": 100
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 101
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 187,
+          "exclusive_ns": 187,
+          "function": "compute_insn_live_regs",
+          "arg": 102
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 103
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 104
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 105
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 175,
+          "exclusive_ns": 175,
+          "function": "compute_insn_live_regs",
+          "arg": 106
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 107
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 108
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 109
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 110
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 111
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 112
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 165,
+          "exclusive_ns": 165,
+          "function": "compute_insn_live_regs",
+          "arg": 113
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 157,
+          "exclusive_ns": 157,
+          "function": "compute_insn_live_regs",
+          "arg": 114
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 202,
+          "exclusive_ns": 202,
+          "function": "compute_insn_live_regs",
+          "arg": 115
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 116
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 117
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 118
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 119
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 157,
+          "exclusive_ns": 157,
+          "function": "compute_insn_live_regs",
+          "arg": 120
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 121
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 122
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 123
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 124
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 447,
+          "exclusive_ns": 447,
+          "function": "compute_insn_live_regs",
+          "arg": 125
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 126
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 147,
+          "exclusive_ns": 147,
+          "function": "compute_insn_live_regs",
+          "arg": 127
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 128
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 129
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 157,
+          "exclusive_ns": 157,
+          "function": "compute_insn_live_regs",
+          "arg": 130
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 131
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 132
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 181,
+          "exclusive_ns": 181,
+          "function": "compute_insn_live_regs",
+          "arg": 133
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 134
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 135
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 136
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 137
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 138
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 139
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 140
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 141
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 187,
+          "exclusive_ns": 187,
+          "function": "compute_insn_live_regs",
+          "arg": 142
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 151,
+          "exclusive_ns": 151,
+          "function": "compute_insn_live_regs",
+          "arg": 143
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 144
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 145
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 146
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 152,
+          "exclusive_ns": 152,
+          "function": "compute_insn_live_regs",
+          "arg": 147
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 148
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 149
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 192,
+          "exclusive_ns": 192,
+          "function": "compute_insn_live_regs",
+          "arg": 150
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 147,
+          "exclusive_ns": 147,
+          "function": "compute_insn_live_regs",
+          "arg": 151
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 152
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 147,
+          "exclusive_ns": 147,
+          "function": "compute_insn_live_regs",
+          "arg": 153
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 154
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 155
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 156
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 426,
+          "exclusive_ns": 426,
+          "function": "compute_insn_live_regs",
+          "arg": 157
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 158
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 159
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 160
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 161
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 162
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 163
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 157,
+          "exclusive_ns": 157,
+          "function": "compute_insn_live_regs",
+          "arg": 164
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 151,
+          "exclusive_ns": 151,
+          "function": "compute_insn_live_regs",
+          "arg": 165
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 166
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 167
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 168
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 169
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 170
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 179,
+          "exclusive_ns": 179,
+          "function": "compute_insn_live_regs",
+          "arg": 171
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 153,
+          "exclusive_ns": 153,
+          "function": "compute_insn_live_regs",
+          "arg": 172
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 173
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 167,
+          "exclusive_ns": 167,
+          "function": "compute_insn_live_regs",
+          "arg": 174
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 175
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 176
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 177
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 178
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 174,
+          "exclusive_ns": 174,
+          "function": "compute_insn_live_regs",
+          "arg": 179
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 180
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 181
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 182
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 183
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 184
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 185
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 186
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 187
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 152,
+          "exclusive_ns": 152,
+          "function": "compute_insn_live_regs",
+          "arg": 188
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 204,
+          "exclusive_ns": 204,
+          "function": "compute_insn_live_regs",
+          "arg": 189
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 190
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 191
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 147,
+          "exclusive_ns": 147,
+          "function": "compute_insn_live_regs",
+          "arg": 192
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 193
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 194
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 195
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 196
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 197
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 198
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 155,
+          "exclusive_ns": 155,
+          "function": "compute_insn_live_regs",
+          "arg": 199
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 200
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 170,
+          "exclusive_ns": 170,
+          "function": "compute_insn_live_regs",
+          "arg": 201
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 197,
+          "exclusive_ns": 197,
+          "function": "compute_insn_live_regs",
+          "arg": 202
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 172,
+          "exclusive_ns": 172,
+          "function": "compute_insn_live_regs",
+          "arg": 203
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 190,
+          "exclusive_ns": 190,
+          "function": "compute_insn_live_regs",
+          "arg": 204
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 156,
+          "exclusive_ns": 156,
+          "function": "compute_insn_live_regs",
+          "arg": 205
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 173,
+          "exclusive_ns": 173,
+          "function": "compute_insn_live_regs",
+          "arg": 206
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 171,
+          "exclusive_ns": 171,
+          "function": "compute_insn_live_regs",
+          "arg": 207
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 208
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 209
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 169,
+          "exclusive_ns": 169,
+          "function": "compute_insn_live_regs",
+          "arg": 210
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 211
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 153,
+          "exclusive_ns": 153,
+          "function": "compute_insn_live_regs",
+          "arg": 212
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 213
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 214
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 181,
+          "exclusive_ns": 181,
+          "function": "compute_insn_live_regs",
+          "arg": 215
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 216
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 217
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 158,
+          "exclusive_ns": 158,
+          "function": "compute_insn_live_regs",
+          "arg": 218
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 151,
+          "exclusive_ns": 151,
+          "function": "compute_insn_live_regs",
+          "arg": 219
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 220
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 221
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 175,
+          "exclusive_ns": 175,
+          "function": "compute_insn_live_regs",
+          "arg": 222
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 159,
+          "exclusive_ns": 159,
+          "function": "compute_insn_live_regs",
+          "arg": 223
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 224
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 225
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 151,
+          "exclusive_ns": 151,
+          "function": "compute_insn_live_regs",
+          "arg": 226
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 227
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 160,
+          "exclusive_ns": 160,
+          "function": "compute_insn_live_regs",
+          "arg": 228
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 164,
+          "exclusive_ns": 164,
+          "function": "compute_insn_live_regs",
+          "arg": 229
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 230
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 231
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 148,
+          "exclusive_ns": 148,
+          "function": "compute_insn_live_regs",
+          "arg": 232
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 233
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 234
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 235
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 236
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 237
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 238
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 239
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 149,
+          "exclusive_ns": 149,
+          "function": "compute_insn_live_regs",
+          "arg": 240
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 176,
+          "exclusive_ns": 176,
+          "function": "compute_insn_live_regs",
+          "arg": 241
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 162,
+          "exclusive_ns": 162,
+          "function": "compute_insn_live_regs",
+          "arg": 242
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 163,
+          "exclusive_ns": 163,
+          "function": "compute_insn_live_regs",
+          "arg": 243
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 146,
+          "exclusive_ns": 146,
+          "function": "compute_insn_live_regs",
+          "arg": 244
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 245
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 150,
+          "exclusive_ns": 150,
+          "function": "compute_insn_live_regs",
+          "arg": 246
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 247
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 161,
+          "exclusive_ns": 161,
+          "function": "compute_insn_live_regs",
+          "arg": 248
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 147,
+          "exclusive_ns": 147,
+          "function": "compute_insn_live_regs",
+          "arg": 249
+        },
+        {
+          "file": "kernel/bpf/liveness.c:2159:2159",
+          "inclusive_ns": 193,
+          "exclusive_ns": 193,
+          "function": "compute_insn_live_regs",
+          "arg": 250
+        }
+      ]
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20057:20057",
+      "inclusive_ns": 2103,
+      "exclusive_ns": 2103,
+      "function": "mark_fastcall_patterns"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20061:20061",
+      "inclusive_ns": 2593764,
+      "exclusive_ns": 2593764,
+      "function": "do_check_main"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20062:20062",
+      "inclusive_ns": 262,
+      "exclusive_ns": 262,
+      "function": "do_check_subprogs"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20064:20064",
+      "inclusive_ns": 156,
+      "exclusive_ns": 156,
+      "function": "bpf_prog_is_offloaded"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20074:20074",
+      "inclusive_ns": 744,
+      "exclusive_ns": 744,
+      "function": "bpf_remove_fastcall_spills_fill"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20077:20077",
+      "inclusive_ns": 1992,
+      "exclusive_ns": 1992,
+      "function": "check_max_stack_depth"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20081:20081",
+      "inclusive_ns": 896,
+      "exclusive_ns": 896,
+      "function": "bpf_optimize_bpf_loop"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20085:20085",
+      "inclusive_ns": 1915,
+      "exclusive_ns": 1915,
+      "function": "bpf_opt_hard_wire_dead_code_bra"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20087:20087",
+      "inclusive_ns": 808,
+      "exclusive_ns": 808,
+      "function": "bpf_opt_remove_dead_code"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20089:20089",
+      "inclusive_ns": 521,
+      "exclusive_ns": 521,
+      "function": "bpf_opt_remove_nops"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20097:20097",
+      "inclusive_ns": 9945,
+      "exclusive_ns": 9945,
+      "function": "bpf_convert_ctx_accesses"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20100:20100",
+      "inclusive_ns": 10982,
+      "exclusive_ns": 10982,
+      "function": "bpf_do_misc_fixups"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20105:20105",
+      "inclusive_ns": 158,
+      "exclusive_ns": 158,
+      "function": "bpf_prog_is_offloaded"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20106:20106",
+      "inclusive_ns": 3517,
+      "exclusive_ns": 3517,
+      "function": "bpf_opt_subreg_zext_lo32_rnd_hi"
+    },
+    {
+      "file": "kernel/bpf/verifier.c:20112:20112",
+      "inclusive_ns": 233,
+      "exclusive_ns": 233,
+      "function": "bpf_fixup_call_args"
+    }
+  ],
+  "bpf_insns": [
+    {
+      "code": 123,
+      "dst": 10,
+      "src": 1,
+      "off": -32,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 1,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 10,
+      "src": 1,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 9,
+      "off": -24,
+      "imm": 0
+    },
+    {
+      "code": 191,
+      "dst": 2,
+      "src": 10,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 7,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": -24
+    },
+    {
+      "code": 24,
+      "dst": 1,
+      "src": 1,
+      "off": 0,
+      "imm": 4
+    },
+    {
+      "code": 0,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 191,
+      "dst": 6,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 21,
+      "dst": 6,
+      "src": 0,
+      "off": 7,
+      "imm": 0
+    },
+    {
+      "code": 113,
+      "dst": 1,
+      "src": 6,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 2
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": 4,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -32,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 1,
+      "src": 1,
+      "off": 40,
+      "imm": 0
+    },
+    {
+      "code": 22,
+      "dst": 1,
+      "src": 0,
+      "off": 231,
+      "imm": 1
+    },
+    {
+      "code": 191,
+      "dst": 3,
+      "src": 10,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 7,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": -20
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -32,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 12
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 26
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 113,
+      "dst": 1,
+      "src": 10,
+      "off": -20,
+      "imm": 0
+    },
+    {
+      "code": 116,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 4
+    },
+    {
+      "code": 22,
+      "dst": 1,
+      "src": 0,
+      "off": 74,
+      "imm": 6
+    },
+    {
+      "code": 180,
+      "dst": 8,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": 5,
+      "imm": 4
+    },
+    {
+      "code": 113,
+      "dst": 8,
+      "src": 10,
+      "off": -19,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 8,
+      "src": 0,
+      "off": 0,
+      "imm": 3
+    },
+    {
+      "code": 113,
+      "dst": 1,
+      "src": 10,
+      "off": -11,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 22,
+      "dst": 1,
+      "src": 0,
+      "off": 72,
+      "imm": 6
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 3,
+      "off": -56,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 10,
+      "src": 2,
+      "off": -72,
+      "imm": 0
+    },
+    {
+      "code": 24,
+      "dst": 1,
+      "src": 1,
+      "off": 0,
+      "imm": 5
+    },
+    {
+      "code": 0,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 183,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 81
+    },
+    {
+      "code": 191,
+      "dst": 7,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 21,
+      "dst": 7,
+      "src": 0,
+      "off": 204,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 10,
+      "src": 9,
+      "off": -80,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 7,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 85,
+      "dst": 1,
+      "src": 0,
+      "off": 5,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 5
+    },
+    {
+      "code": 24,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 150000
+    },
+    {
+      "code": 0,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 131072
+    },
+    {
+      "code": 123,
+      "dst": 7,
+      "src": 1,
+      "off": 16,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 7,
+      "src": 0,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 5
+    },
+    {
+      "code": 191,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 191,
+      "dst": 1,
+      "src": 7,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 93
+    },
+    {
+      "code": 121,
+      "dst": 2,
+      "src": 7,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 10,
+      "src": 9,
+      "off": -64,
+      "imm": 0
+    },
+    {
+      "code": 191,
+      "dst": 1,
+      "src": 9,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 31,
+      "dst": 1,
+      "src": 2,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 9,
+      "src": 7,
+      "off": 16,
+      "imm": 0
+    },
+    {
+      "code": 197,
+      "dst": 1,
+      "src": 0,
+      "off": 11,
+      "imm": 1
+    },
+    {
+      "code": 121,
+      "dst": 2,
+      "src": 10,
+      "off": -64,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 7,
+      "src": 2,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 2,
+      "src": 7,
+      "off": 20,
+      "imm": 0
+    },
+    {
+      "code": 47,
+      "dst": 1,
+      "src": 2,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 119,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 20
+    },
+    {
+      "code": 103,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 199,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 15,
+      "dst": 1,
+      "src": 9,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 150000
+    },
+    {
+      "code": 101,
+      "dst": 1,
+      "src": 0,
+      "off": 1,
+      "imm": 150000
+    },
+    {
+      "code": 188,
+      "dst": 9,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 28,
+      "dst": 9,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 99,
+      "dst": 7,
+      "src": 9,
+      "off": 16,
+      "imm": 0
+    },
+    {
+      "code": 191,
+      "dst": 1,
+      "src": 7,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 94
+    },
+    {
+      "code": 21,
+      "dst": 6,
+      "src": 0,
+      "off": 5,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 6,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 103,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 7
+    },
+    {
+      "code": 97,
+      "dst": 2,
+      "src": 7,
+      "off": 20,
+      "imm": 0
+    },
+    {
+      "code": 29,
+      "dst": 1,
+      "src": 2,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 99,
+      "dst": 7,
+      "src": 1,
+      "off": 20,
+      "imm": 0
+    },
+    {
+      "code": 198,
+      "dst": 9,
+      "src": 0,
+      "off": 3,
+      "imm": -600000
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 198,
+      "dst": 1,
+      "src": 0,
+      "off": 45,
+      "imm": 121
+    },
+    {
+      "code": 102,
+      "dst": 9,
+      "src": 0,
+      "off": 44,
+      "imm": -577501
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 8,
+      "src": 0,
+      "off": 56,
+      "imm": 0
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 1,
+      "src": 10,
+      "off": -56,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": 78,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 5,
+      "dst": 0,
+      "src": 0,
+      "off": 74,
+      "imm": 0
+    },
+    {
+      "code": 113,
+      "dst": 8,
+      "src": 10,
+      "off": -19,
+      "imm": 0
+    },
+    {
+      "code": 116,
+      "dst": 8,
+      "src": 0,
+      "off": 0,
+      "imm": 4
+    },
+    {
+      "code": 84,
+      "dst": 8,
+      "src": 0,
+      "off": 0,
+      "imm": 3
+    },
+    {
+      "code": 113,
+      "dst": 1,
+      "src": 10,
+      "off": -14,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": -72,
+      "imm": 6
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -32,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 1,
+      "off": 168,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 21,
+      "dst": 1,
+      "src": 0,
+      "off": -78,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 95
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 21,
+      "dst": 0,
+      "src": 0,
+      "off": -83,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 1,
+      "src": 0,
+      "off": 12,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": -87,
+      "imm": 6
+    },
+    {
+      "code": 191,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 96
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 21,
+      "dst": 0,
+      "src": 0,
+      "off": -93,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 9,
+      "src": 0,
+      "off": 4,
+      "imm": 0
+    },
+    {
+      "code": 116,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 3
+    },
+    {
+      "code": 5,
+      "dst": 0,
+      "src": 0,
+      "off": -97,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 102,
+      "dst": 9,
+      "src": 0,
+      "off": 37,
+      "imm": -1
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 8,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 2,
+      "src": 10,
+      "off": -56,
+      "imm": 0
+    },
+    {
+      "code": 92,
+      "dst": 2,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 2,
+      "src": 0,
+      "off": 2,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 38,
+      "dst": 9,
+      "src": 0,
+      "off": 28,
+      "imm": -60001
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -32,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 97
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 85,
+      "dst": 0,
+      "src": 0,
+      "off": 22,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 1,
+      "src": 10,
+      "off": -56,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 1,
+      "src": 0,
+      "off": 15,
+      "imm": 0
+    },
+    {
+      "code": 133,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 7
+    },
+    {
+      "code": 188,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 39,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1087825997
+    },
+    {
+      "code": 119,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 49
+    },
+    {
+      "code": 36,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 517500
+    },
+    {
+      "code": 28,
+      "dst": 0,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 188,
+      "dst": 1,
+      "src": 9,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 132,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 4,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 60000
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 190,
+      "dst": 0,
+      "src": 1,
+      "off": 7,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 5,
+      "dst": 0,
+      "src": 0,
+      "off": 5,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 198,
+      "dst": 1,
+      "src": 0,
+      "off": 2,
+      "imm": 121
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 99,
+      "dst": 10,
+      "src": 1,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 97,
+      "dst": 8,
+      "src": 10,
+      "off": -48,
+      "imm": 0
+    },
+    {
+      "code": 21,
+      "dst": 6,
+      "src": 0,
+      "off": 61,
+      "imm": 0
+    },
+    {
+      "code": 113,
+      "dst": 5,
+      "src": 6,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 5,
+      "src": 0,
+      "off": 0,
+      "imm": 4
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 5,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 92,
+      "dst": 1,
+      "src": 4,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 5,
+      "src": 10,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 103,
+      "dst": 5,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 199,
+      "dst": 5,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 191,
+      "dst": 4,
+      "src": 5,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 4,
+      "off": 56,
+      "imm": 1
+    },
+    {
+      "code": 113,
+      "dst": 0,
+      "src": 6,
+      "off": 8,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 188,
+      "dst": 4,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 22,
+      "dst": 0,
+      "src": 0,
+      "off": 46,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 4,
+      "src": 6,
+      "off": 64,
+      "imm": 0
+    },
+    {
+      "code": 85,
+      "dst": 4,
+      "src": 0,
+      "off": 2,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 4,
+      "src": 10,
+      "off": -64,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 6,
+      "src": 4,
+      "off": 64,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 4,
+      "src": 10,
+      "off": -64,
+      "imm": 0
+    },
+    {
+      "code": 123,
+      "dst": 6,
+      "src": 4,
+      "off": 72,
+      "imm": 0
+    },
+    {
+      "code": 183,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 183,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 0,
+      "off": 48,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 2,
+      "src": 0,
+      "off": 3,
+      "imm": 0
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 4,
+      "off": 16,
+      "imm": 1
+    },
+    {
+      "code": 191,
+      "dst": 2,
+      "src": 5,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 24,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 8,
+      "src": 0,
+      "off": 3,
+      "imm": 0
+    },
+    {
+      "code": 183,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 32,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 5,
+      "off": 40,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 3,
+      "src": 0,
+      "off": 2,
+      "imm": 0
+    },
+    {
+      "code": 183,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 80,
+      "imm": 1
+    },
+    {
+      "code": 121,
+      "dst": 2,
+      "src": 10,
+      "off": -72,
+      "imm": 0
+    },
+    {
+      "code": 22,
+      "dst": 2,
+      "src": 0,
+      "off": 5,
+      "imm": 0
+    },
+    {
+      "code": 103,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 199,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 120,
+      "imm": 1
+    },
+    {
+      "code": 183,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 136,
+      "imm": 1
+    },
+    {
+      "code": 121,
+      "dst": 2,
+      "src": 10,
+      "off": -80,
+      "imm": 0
+    },
+    {
+      "code": 22,
+      "dst": 2,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 128,
+      "imm": 1
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 86,
+      "dst": 8,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 3,
+      "src": 0,
+      "off": 0,
+      "imm": 8
+    },
+    {
+      "code": 188,
+      "dst": 4,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 188,
+      "dst": 2,
+      "src": 3,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 68,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 16
+    },
+    {
+      "code": 86,
+      "dst": 4,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 188,
+      "dst": 2,
+      "src": 3,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 103,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 199,
+      "dst": 9,
+      "src": 0,
+      "off": 0,
+      "imm": 32
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 9,
+      "off": 144,
+      "imm": 1
+    },
+    {
+      "code": 15,
+      "dst": 6,
+      "src": 2,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 183,
+      "dst": 2,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 219,
+      "dst": 6,
+      "src": 2,
+      "off": 88,
+      "imm": 1
+    },
+    {
+      "code": 188,
+      "dst": 4,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 22,
+      "dst": 8,
+      "src": 0,
+      "off": 3,
+      "imm": 0
+    },
+    {
+      "code": 121,
+      "dst": 1,
+      "src": 10,
+      "off": -40,
+      "imm": 0
+    },
+    {
+      "code": 195,
+      "dst": 7,
+      "src": 1,
+      "off": 16,
+      "imm": 1
+    },
+    {
+      "code": 180,
+      "dst": 1,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 84,
+      "dst": 4,
+      "src": 0,
+      "off": 0,
+      "imm": 1
+    },
+    {
+      "code": 188,
+      "dst": 0,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 68,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 2
+    },
+    {
+      "code": 86,
+      "dst": 4,
+      "src": 0,
+      "off": 1,
+      "imm": 0
+    },
+    {
+      "code": 188,
+      "dst": 0,
+      "src": 1,
+      "off": 0,
+      "imm": 0
+    },
+    {
+      "code": 149,
+      "dst": 0,
+      "src": 0,
+      "off": 0,
+      "imm": 0
+    }
+  ]
+}
