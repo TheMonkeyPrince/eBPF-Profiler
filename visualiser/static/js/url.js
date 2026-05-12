@@ -19,12 +19,6 @@ export function updateUrlState(replace = false) {
   }
   url.searchParams.set("theme", app.selectedTheme);
 
-  if (app.profiledViewMode === "tree") {
-    url.searchParams.set("profiledView", "tree");
-  } else {
-    url.searchParams.delete("profiledView");
-  }
-
   const reportSelectEl = ui?.reportSelectEl;
   if (reportSelectEl && reportSelectEl.value && !reportSelectEl.selectedOptions[0]?.disabled) {
     url.searchParams.set("report", reportSelectEl.value);
@@ -56,9 +50,5 @@ export function readUrlState() {
   }
   if (maybeScale === "absolute" || maybeScale === "profiled") {
     app.selectedScaleMode = maybeScale;
-  }
-  const maybeProfiledView = url.searchParams.get("profiledView");
-  if (maybeProfiledView === "tree" || maybeProfiledView === "list") {
-    app.profiledViewMode = maybeProfiledView;
   }
 }
