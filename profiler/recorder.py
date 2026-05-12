@@ -18,7 +18,7 @@ class BPFRecorder:
 		os.remove(RECORD_FILE_PATH) if os.path.exists(RECORD_FILE_PATH) else None
 
 		def recording_loop():
-			duration = 5  # seconds
+			duration = 2  # seconds
 			sleep(duration)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
@@ -34,6 +34,7 @@ class BPFRecorder:
 			key = tuple(result.program)
 			if key not in seen:
 				seen.add(key)
+				result.program_name = program_name + "_" + str(len(seen))
 				filtered_results.append(result)
 
 		for result in filtered_results:

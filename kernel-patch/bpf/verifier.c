@@ -18706,6 +18706,7 @@ static int do_check_common(struct bpf_verifier_env *env, int subprog)
 	state->last_insn_idx = -1;
 
 	regs = state->frame[state->curframe]->regs;
+	BPF_PROFILE_BLOCK({
 	if (subprog || env->prog->type == BPF_PROG_TYPE_EXT) {
 		const char *sub_name = subprog_name(env, subprog);
 		struct bpf_subprog_arg_info *arg;
@@ -18795,6 +18796,7 @@ static int do_check_common(struct bpf_verifier_env *env, int subprog)
 		regs[BPF_REG_1].type = PTR_TO_CTX;
 		mark_reg_known_zero(env, regs, BPF_REG_1);
 	}
+	});
 
 	/* Acquire references for struct_ops program arguments tagged with "__ref" */
 	if (!subprog && env->prog->type == BPF_PROG_TYPE_STRUCT_OPS) {
@@ -18803,7 +18805,7 @@ static int do_check_common(struct bpf_verifier_env *env, int subprog)
 							  acquire_reference(env, 0) : 0;
 	}
 
-	ret = do_check(env);
+	ret = BPF_PROFILE_CALL(do_check, env);
 out:
 	if (!ret && pop_log)
 		bpf_vlog_reset(&env->log, 0);

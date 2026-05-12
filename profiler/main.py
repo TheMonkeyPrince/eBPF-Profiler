@@ -15,7 +15,7 @@ if __name__ == "__main__":
 		"--min-insns-to-save",
 		help="Only write out/results/*.bin when the BPF program has more than this many insns (default: 50)",
 		type=int,
-		default=50,
+		default=25,
 	)
 	parser.add_argument(
 		"--no-analysis",
@@ -27,20 +27,18 @@ if __name__ == "__main__":
 	if args.test:
 		tests = [args.test]
 	else:
-		tests = ["sample_hbm"]
+		tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
 		# tests = ["sample_tracex1"]
 		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
 		# tests = ["sample_ibumad"]
 		# tests = ["selftest_access_variable_array"]
 
 	runned_tests = []
-	results_by_test = {}
 	try:
 		profiler = BPFProfiler()
 		for test in tests:
 			print(f"Running test: {test}")
 			results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
-			results_by_test[test] = results
 			if len(results) > 0:
 				runned_tests.append(test)
 
@@ -49,9 +47,6 @@ if __name__ == "__main__":
 				print(f"Analysing test: {test}")
 				if result_bin_paths(test):
 					profiler.analyse_trace_from_file(test)
-				else:
-					for r in results_by_test[test]:
-						profiler.analyse_trace(r.program_name, r.trace, program=r.program)
 	except KeyboardInterrupt:
 		print("Stopped")
 
