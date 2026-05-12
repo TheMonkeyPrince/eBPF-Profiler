@@ -1,4 +1,4 @@
-/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null }} UiRefs */
+/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledDisplaySelectEl: HTMLSelectElement, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null }} UiRefs */
 
 export const HEAT_BUCKETS = 20;
 
@@ -23,12 +23,18 @@ export const app = {
   model: null,
   decorationIds: /** @type {string[]} */ ([]),
   focusedRangeDecorationIds: /** @type {string[]} */ ([]),
-  currentFileData: /** @type {null | { lines: string[], line_stats: Record<number, unknown>, ranges?: unknown[] }} */ (null),
+  currentFileData: /** @type {null | { lines: string[], line_stats: Record<number, unknown>, ranges?: unknown[], call_tree?: unknown[] }} */ (null),
   /** @type {Record<number, unknown[]>} */
   lineRangesIndex: {},
   profiledRanges: /** @type {unknown[]} */ ([]),
   currentProfiledRangeIndex: -1,
   profiledSortMode: "line",
+  /** "flat" | "tree" — tree uses analyser call_tree when available */
+  profiledListDisplayMode: "flat",
+  /** Sibling-sorted clone of `call_tree` for tree UI + nav DFS order; null in flat mode */
+  sortedCallTreeForDisplay: /** @type {unknown[] | null} */ (null),
+  /** @type {Record<string, boolean>} */
+  profiledTreeExpanded: {},
   treeState: /** @type {Record<string, boolean>} */ ({}),
   treeChildrenCache: /** @type {Record<string, unknown>} */ ({}),
   totalDurationNs: 0,

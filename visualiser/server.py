@@ -169,6 +169,64 @@ def _parse_file_colon_location(loc: str):
     return path, int(start_s), int(end_s)
 
 
+def _node_matches_arg_filter(node: dict, arg_filter: str) -> bool:
+    if arg_filter == "all":
+        return True
+    arg_val = node.get("arg")
+    if arg_filter == "__no_arg__":
+        return arg_val is None
+    try:
+        return arg_val is not None and str(int(arg_val)) == str(arg_filter)
+    except (TypeError, ValueError):
+        return False
+
+
+def _prune_call_tree_node_for_file_arg(
+    node: dict, rel_path: str, arg_filter: str
+) -> dict | None:
+    """Keep branches that touch rel_path, with arg filtering like the flat profiled list."""
+    loc = node.get("file") or node.get("site")
+    if not isinstance(loc, str):
+        return None
+    try:
+        nf, _start, _end = _parse_file_colon_location(loc)
+    except ValueError:
+        return None
+
+    children_in = []
+    for ch in node.get("children") or []:
+        if not isinstance(ch, dict):
+            continue
+        pruned = _prune_call_tree_node_for_file_arg(ch, rel_path, arg_filter)
+        if pruned is not None:
+            children_in.append(pruned)
+
+    in_file = nf == rel_path
+    arg_ok = _node_matches_arg_filter(node, arg_filter)
+    if children_in:
+        out = dict(node)
+        out["children"] = children_in
+        return out
+    if in_file and arg_ok:
+        out = dict(node)
+        out["children"] = []
+        return out
+    return None
+
+
+def prune_call_tree_for_file_arg(roots: list, rel_path: str, arg_filter: str) -> list:
+    if not isinstance(roots, list) or not rel_path:
+        return []
+    out = []
+    for node in roots:
+        if not isinstance(node, dict):
+            continue
+        pruned = _prune_call_tree_node_for_file_arg(node, rel_path, arg_filter)
+        if pruned is not None:
+            out.append(pruned)
+    return out
+
+
 def _index_append_range(
     indexed,
     rel_file,
@@ -520,6 +578,7 @@ class AppState:
         self.current_report: str | None = None
         self.index = None
         self.load_error = None
+        self.call_tree_roots: list | None = None
         stems = list_analysis_report_stems(self.analysis_dir)
         self.current_report = stems[0] if stems else None
         self._load_current_report_from_disk()
@@ -529,6 +588,7 @@ class AppState:
 
     def _load_current_report_from_disk(self):
         empty = self._empty_index_report()
+        self.call_tree_roots = None
         try:
             if not self.current_report:
                 self.index = ingest_report(empty)
@@ -549,9 +609,12 @@ class AppState:
             with path.open("r", encoding="utf-8") as handle:
                 report = json.load(handle)
             self.index = ingest_report(report)
+            ct = report.get("call_tree")
+            self.call_tree_roots = ct if isinstance(ct, list) else None
             self.load_error = None
         except Exception as exc:  # pylint: disable=broad-except
             self.index = ingest_report(empty)
+            self.call_tree_roots = None
             self.load_error = f"Failed to parse report: {exc}"
 
     def reload_report(self, report_stem: str | None = None):
@@ -698,6 +761,12 @@ class Handler(SimpleHTTPRequestHandler):
                 if total_ns > max_total:
                     max_total = total_ns
 
+            call_tree_payload: list = []
+            if STATE.call_tree_roots:
+                call_tree_payload = prune_call_tree_for_file_arg(
+                    STATE.call_tree_roots, rel_path, arg
+                )
+
             self._write_json(
                 {
                     "path": rel_path,
@@ -705,6 +774,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "line_stats": line_stats,
                     "max_total_ns": max_total,
                     "ranges": profile["ranges"],
+                    "call_tree": call_tree_payload,
                 }
             )
             return

@@ -1,4 +1,4 @@
-import { formatNs, formatSampleList } from "./formatting.js";
+import { formatLineRangeLabel, formatNs, formatSampleList } from "./formatting.js";
 import {
   computeReferenceNs,
   lineSampleStats,
@@ -62,7 +62,7 @@ export function updateHoverDetails(lineNo) {
       exclusiveChunk = ` | excl total=${formatNs(ex.total)} ex avg=${formatNs(ex.avg)}`;
     }
     return (
-      `range ${range.start}-${range.end}${range.function ? ` ${range.function}` : ""} ` +
+      `range ${formatLineRangeLabel(range.start, range.end)}${range.function ? ` ${range.function}` : ""} ` +
       `| total=${formatNs(stats.total)} (${share.toFixed(2)}%) | count=${stats.count} ` +
       `| min=${formatNs(stats.min)} | max=${formatNs(stats.max)} ` +
       `| avg=${formatNs(stats.avg)} | med=${formatNs(stats.med)}${exclusiveChunk} ` +

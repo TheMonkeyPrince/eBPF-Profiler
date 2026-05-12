@@ -5,6 +5,16 @@ export function formatNs(ns) {
   return `${Number(ns).toLocaleString()} ns`;
 }
 
+/** e.g. `L101` when start === end, else `L101-110`. */
+export function formatLineRangeLabel(start, end) {
+  const s = Number(start);
+  const e = Number(end);
+  if (s === e) {
+    return `L${s}`;
+  }
+  return `L${s}-${e}`;
+}
+
 export function heatAlpha(totalNs, referenceNs) {
   if (!totalNs || !referenceNs) {
     return 0;

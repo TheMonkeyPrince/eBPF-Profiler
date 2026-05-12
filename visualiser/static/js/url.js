@@ -18,6 +18,11 @@ export function updateUrlState(replace = false) {
     url.searchParams.delete("scale");
   }
   url.searchParams.set("theme", app.selectedTheme);
+  if (app.profiledListDisplayMode === "tree") {
+    url.searchParams.set("pview", "tree");
+  } else {
+    url.searchParams.delete("pview");
+  }
 
   const reportSelectEl = ui?.reportSelectEl;
   if (reportSelectEl && reportSelectEl.value && !reportSelectEl.selectedOptions[0]?.disabled) {
@@ -50,5 +55,9 @@ export function readUrlState() {
   }
   if (maybeScale === "absolute" || maybeScale === "profiled") {
     app.selectedScaleMode = maybeScale;
+  }
+  const maybePview = url.searchParams.get("pview");
+  if (maybePview === "tree" || maybePview === "flat") {
+    app.profiledListDisplayMode = maybePview;
   }
 }

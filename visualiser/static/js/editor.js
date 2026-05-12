@@ -186,6 +186,7 @@ export async function loadFile() {
     const data = await apiGet(
       `/api/file?path=${encodeURIComponent(app.selectedPath)}&arg=${encodeURIComponent(app.selectedArg)}`,
     );
+    app.profiledTreeExpanded = {};
     await renderCode(data);
     await ensureTreePathExpanded(app.selectedPath);
     await renderTree();

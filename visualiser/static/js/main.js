@@ -31,6 +31,7 @@ bindUi({
   toggleMetaBtnEl: /** @type {HTMLButtonElement} */ (document.getElementById("toggleMetaBtn")),
   toggleDetailsBtnEl: /** @type {HTMLButtonElement} */ (document.getElementById("toggleDetailsBtn")),
   profiledSortSelectEl: /** @type {HTMLSelectElement} */ (document.getElementById("profiledSortSelect")),
+  profiledDisplaySelectEl: /** @type {HTMLSelectElement} */ (document.getElementById("profiledDisplaySelect")),
   profiledListEl: /** @type {HTMLElement} */ (document.getElementById("profiledList")),
   bpfDisasmPreEl: document.getElementById("bpfDisasmPre"),
   bpfProgramDetailsEl: document.getElementById("bpfProgramDetails"),
@@ -75,6 +76,25 @@ ui.profiledSortSelectEl.addEventListener("change", async (event) => {
   app.profiledSortMode = ["line", "time", "calls"].includes(event.target.value)
     ? event.target.value
     : "line";
+  if (!app.currentFileData) {
+    renderProfiledList();
+    return;
+  }
+  buildProfiledRanges(app.currentFileData);
+  if (!app.profiledRanges.length) {
+    if (app.editor) {
+      app.focusedRangeDecorationIds = app.editor.deltaDecorations(app.focusedRangeDecorationIds, []);
+    }
+    updateProfileNavUI();
+    return;
+  }
+  await focusProfiledRange(app.currentProfiledRangeIndex, false);
+});
+
+ui.profiledDisplaySelectEl.addEventListener("change", async (event) => {
+  app.profiledListDisplayMode = event.target.value === "tree" ? "tree" : "flat";
+  updateUrlState();
+  app.profiledTreeExpanded = {};
   if (!app.currentFileData) {
     renderProfiledList();
     return;
@@ -171,6 +191,9 @@ async function boot() {
   updateProfileNavUI();
   if (app.selectedPath) {
     await loadFile();
+  }
+  if (ui.profiledDisplaySelectEl) {
+    ui.profiledDisplaySelectEl.value = app.profiledListDisplayMode;
   }
 }
 
