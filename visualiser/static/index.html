@@ -45,11 +45,17 @@
         <div id="profiledPanel">
           <div id="profiledPanelHeader">
             <span>Profiled boxes</span>
-            <select id="profiledSortSelect">
-              <option value="line">Sort: start line</option>
-              <option value="time">Sort: total time</option>
-              <option value="calls">Sort: calls (desc)</option>
-            </select>
+            <div id="profiledPanelControls">
+              <select id="profiledViewSelect" title="How profiled ranges are shown in the panel">
+                <option value="list">View: list</option>
+                <option value="tree">View: tree</option>
+              </select>
+              <select id="profiledSortSelect">
+                <option value="line">Sort: start line</option>
+                <option value="time">Sort: total time</option>
+                <option value="calls">Sort: calls (desc)</option>
+              </select>
+            </div>
           </div>
           <div id="profiledList"></div>
         </div>
@@ -72,6 +78,6 @@
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
     <script src="/bpf_disasm.js"></script>
-    <script src="/monaco-app.js"></script>
+    <script type="module" src="/js/main.js"></script>
   </body>
 </html>
