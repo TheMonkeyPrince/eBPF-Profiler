@@ -46,17 +46,21 @@ class BPFRecorder:
 
 	def read_profile_file(self, program_name: str) -> list[ProfilingResult]:
 		results = []
-		with open("/tmp/bpf_profile_records", "rb") as f:
-			i = 0
-			while True:
-				pos = f.tell()
-				if not f.read(1):
-					break
-				f.seek(pos)
-				program = self.read_bpf_program(f)
-				trace = self.read_trace_(f)
-				results.append(ProfilingResult(f"{program_name}_{i}", program, trace))
-				i += 1
+		try:
+			with open("/tmp/bpf_profile_records", "rb") as f:
+				i = 0
+				while True:
+					pos = f.tell()
+					if not f.read(1):
+						break
+					f.seek(pos)
+					program = self.read_bpf_program(f)
+					trace = self.read_trace_(f)
+					results.append(ProfilingResult(f"{program_name}_{i}", program, trace))
+					i += 1
+		except FileNotFoundError:
+			print("No profiling data found.")
+			return []
 
 		return results
 

@@ -1,5 +1,6 @@
 import argparse
 from profiler import BPFProfiler
+from programs.kernel_samples import list_kernel_samples
 from programs.kernel_selftests import list_working_selftests
 from storage import result_bin_paths
 
@@ -27,7 +28,8 @@ if __name__ == "__main__":
 	if args.test:
 		tests = [args.test]
 	else:
-		tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
+		tests = list_kernel_samples()
+		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
 		# tests = ["sample_tracex1"]
 		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
 		# tests = ["sample_ibumad"]
