@@ -19,8 +19,8 @@ export function heatAlpha(totalNs, referenceNs) {
   if (!totalNs || !referenceNs) {
     return 0;
   }
-  const score = Math.log1p(totalNs) / Math.log1p(referenceNs);
-  return Math.min(0.85, Math.max(0.05, score));
+  const ratio = Math.min(1, Math.max(0, totalNs / referenceNs));
+  return Math.sqrt(ratio);
 }
 
 export function heatBucket(alpha) {
@@ -33,26 +33,26 @@ export function heatBucket(alpha) {
 export function overviewColor(bucket) {
   const palette = [
     "#00000000",
-    "#ff500030",
-    "#ff500045",
-    "#ff500058",
-    "#ff50006b",
-    "#ff500080",
-    "#ff500095",
-    "#ff5000ad",
-    "#ff5000c2",
-    "#ff5000d6",
-    "#ff5000eb",
-    "#ff5000f2",
-    "#ff5000f4",
-    "#ff5000f6",
-    "#ff5000f8",
-    "#ff5000fa",
-    "#ff5000fc",
-    "#ff5000fd",
-    "#ff5000fe",
-    "#ff5000ff",
-    "#ff3b00ff",
+    "#2dae4b40",
+    "#3fb44752",
+    "#55ba4264",
+    "#6cc03d76",
+    "#83c63888",
+    "#9acc339a",
+    "#b2d12fac",
+    "#c9d72abe",
+    "#e1dd25d0",
+    "#f5d621dc",
+    "#f8bd1fe4",
+    "#faa31dec",
+    "#fc8a1bf2",
+    "#fd7119f6",
+    "#fe5817fa",
+    "#ff4815fc",
+    "#ff3b13fd",
+    "#ff3011fe",
+    "#ff260fff",
+    "#ff1f0dff",
   ];
   return palette[bucket] || palette[HEAT_BUCKETS];
 }

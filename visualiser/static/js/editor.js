@@ -137,14 +137,19 @@ export async function renderCode(data) {
     if (!bucket) {
       return;
     }
+    const markerColor = overviewColor(bucket);
     nextDecorations.push({
       range: new monaco.Range(lineNo, 1, lineNo, 1),
       options: {
         isWholeLine: true,
         className: `heat-line-${bucket}`,
         linesDecorationsClassName: "hot-line-number",
+        minimap: {
+          color: markerColor,
+          position: monaco.editor.MinimapPosition.Inline,
+        },
         overviewRuler: {
-          color: overviewColor(bucket),
+          color: markerColor,
           position: monaco.editor.OverviewRulerLane.Full,
         },
         stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
