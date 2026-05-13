@@ -17752,7 +17752,7 @@ static int do_check(struct bpf_verifier_env *env)
 		}
 
 		if (bpf_prog_is_offloaded(env->prog->aux)) {
-			err = bpf_prog_offload_verify_insn(env, env->insn_idx,
+			err = BPF_PROFILE_CALL_ARG(env->insn_idx, bpf_prog_offload_verify_insn, env, env->insn_idx,
 							   env->prev_insn_idx);
 			if (err)
 				return err;
@@ -17830,7 +17830,7 @@ static int do_check(struct bpf_verifier_env *env)
 				return -EFAULT;
 process_bpf_exit:
 			mark_verifier_state_scratched(env);
-			err = bpf_update_branch_counts(env, env->cur_state);
+			err = BPF_PROFILE_CALL(bpf_update_branch_counts, env, env->cur_state);
 			if (err)
 				return err;
 			err = pop_stack(env, &prev_insn_idx, &env->insn_idx,
