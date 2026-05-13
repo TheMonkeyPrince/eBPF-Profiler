@@ -40,7 +40,7 @@ export function updateHoverDetails(lineNo) {
   const fnSuffix = fnList.length ? ` — ${fnList.join(", ")}` : "";
 
   const header = [
-    `Line ${lineNo}${fnSuffix} (${app.selectedArg === "all" ? "all args" : `arg=${app.selectedArg}`})`,
+    `Line ${lineNo}${fnSuffix} (${app.selectedArg === "all" ? "all BPF insn indexes" : `bpf_insn_idx=${app.selectedArg}`})`,
     `total=${formatNs(stat.total_ns)} (${ratio.toFixed(2)}%) | ref=${formatNs(referenceNs)} (${app.selectedScaleMode})`,
     `samples=${lineStats.count} | min=${formatNs(lineStats.min)} | max=${formatNs(lineStats.max)} | avg=${formatNs(lineStats.avg)} | med=${formatNs(lineStats.med)}`,
   ];

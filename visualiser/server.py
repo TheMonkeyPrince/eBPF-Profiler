@@ -45,7 +45,23 @@ def resolve_analysis_report_path(analysis_dir: Path, stem: str) -> Path | None:
 
 
 def reports_catalog(analysis_dir: Path) -> list[dict]:
-    return [{"id": s, "label": s} for s in list_analysis_report_stems(analysis_dir)]
+    catalog = []
+    for stem in list_analysis_report_stems(analysis_dir):
+        entry = {"id": stem, "label": stem, "total_duration_ns": 0}
+        path = resolve_analysis_report_path(analysis_dir, stem)
+        if path is None:
+            catalog.append(entry)
+            continue
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                report = json.load(handle)
+            if isinstance(report, dict):
+                entry["total_duration_ns"] = _total_duration_ns_from_report(report)
+        except (OSError, ValueError, json.JSONDecodeError):
+            # Keep default duration when a report cannot be parsed.
+            pass
+        catalog.append(entry)
+    return catalog
 
 RANGE_RE = re.compile(r"^(?P<file>.+):(?P<start>\d+)-(?P<end>\d+)$")
 

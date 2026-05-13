@@ -66,7 +66,7 @@ function fillProfiledLabelPrimary(labelEl, range, parentSharePct = null) {
  * Row under an arg-group wrapper: one `by_arg` / `no_arg` bucket for this range.
  * @param {HTMLElement} labelEl
  * @param {any} range
- * @param {unknown} argRaw `undefined`/`null` → no-arg samples
+ * @param {unknown} argRaw `undefined`/`null` → no-arg samples; numeric values are BPF insn indexes
  * @param {number | null} [parentSharePct]
  */
 function fillProfiledLabelForArgBranch(labelEl, range, argRaw, parentSharePct = null) {
@@ -82,7 +82,7 @@ function fillProfiledLabelForArgBranch(labelEl, range, argRaw, parentSharePct = 
   spanLoc.textContent = formatLineRangeLabel(range.start, range.end);
   const spanArg = document.createElement("span");
   spanArg.className = "profiled-tree-arg-badge";
-  spanArg.textContent = argKey === null ? " no arg" : ` arg ${argKey}`;
+  spanArg.textContent = argKey === null ? " no arg" : ` insn ${argKey}`;
   labelEl.appendChild(spanLoc);
   labelEl.appendChild(spanArg);
   if (range.function && String(range.function).trim()) {
@@ -123,7 +123,7 @@ function fillCallTreeContextLabel(labelEl, node, nk, parentSharePct = null) {
   }
   if (node._visualiser_arg_branch) {
     const av = node.arg;
-    const tag = av === undefined || av === null ? "no arg" : `arg ${av}`;
+    const tag = av === undefined || av === null ? "no arg" : `insn ${av}`;
     labelEl.appendChild(document.createTextNode(`  ·  ${tag}`));
   }
   const inc = treeNodeDisplayTotalNs(node);
@@ -311,7 +311,7 @@ export function renderProfiledList() {
   if (!app.profiledRanges.length) {
     const empty = document.createElement("div");
     empty.className = "profiled-item-empty";
-    empty.textContent = "No profiled boxes for current arg filter.";
+    empty.textContent = "No profiled boxes for current BPF insn index filter.";
     profiledListEl.appendChild(empty);
     return;
   }

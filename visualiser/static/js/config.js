@@ -23,8 +23,8 @@ export function buildArgOptions(globalArgs) {
   for (const arg of globalArgs) {
     const option = document.createElement("option");
     option.value = arg;
-    option.textContent = arg;
-    option.dataset.baseLabel = String(arg);
+    option.textContent = `insn ${arg}`;
+    option.dataset.baseLabel = `insn ${arg}`;
     argFilterEl.appendChild(option);
   }
   const knownValues = new Set(["all", "__no_arg__", ...globalArgs.map(String)]);
@@ -150,7 +150,17 @@ export function buildReportSelect(reports, currentId) {
     reportSelectEl.appendChild(opt);
     return;
   }
-  for (const r of reports) {
+  const sortedReports = [...reports].sort((a, b) => {
+    const aDuration = Number(a?.total_duration_ns ?? a?.total_duration ?? 0);
+    const bDuration = Number(b?.total_duration_ns ?? b?.total_duration ?? 0);
+    if (bDuration !== aDuration) {
+      return bDuration - aDuration;
+    }
+    const aId = String(a?.id ?? a ?? "");
+    const bId = String(b?.id ?? b ?? "");
+    return aId.localeCompare(bId);
+  });
+  for (const r of sortedReports) {
     const id = r.id ?? r;
     const label = r.label ?? id;
     const opt = document.createElement("option");
