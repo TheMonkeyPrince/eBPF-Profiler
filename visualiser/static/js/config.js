@@ -11,17 +11,20 @@ export function buildArgOptions(globalArgs) {
   const allOption = document.createElement("option");
   allOption.value = "all";
   allOption.textContent = "all";
+  allOption.dataset.baseLabel = "all";
   argFilterEl.appendChild(allOption);
 
   const noArgOption = document.createElement("option");
   noArgOption.value = "__no_arg__";
   noArgOption.textContent = "no arg";
+  noArgOption.dataset.baseLabel = "no arg";
   argFilterEl.appendChild(noArgOption);
 
   for (const arg of globalArgs) {
     const option = document.createElement("option");
     option.value = arg;
     option.textContent = arg;
+    option.dataset.baseLabel = String(arg);
     argFilterEl.appendChild(option);
   }
   const knownValues = new Set(["all", "__no_arg__", ...globalArgs.map(String)]);
@@ -29,6 +32,108 @@ export function buildArgOptions(globalArgs) {
     app.selectedArg = "all";
   }
   argFilterEl.value = app.selectedArg;
+}
+
+function sumSamples(samples) {
+  if (!Array.isArray(samples) || !samples.length) {
+    return 0;
+  }
+  return samples.reduce((acc, value) => acc + Number(value || 0), 0);
+}
+
+function computeArgTotalsByValue(ranges) {
+  const totals = new Map();
+  let grandTotal = 0;
+  for (const range of ranges || []) {
+    const noArgTotal = sumSamples(range?.no_arg);
+    if (noArgTotal > 0) {
+      totals.set("__no_arg__", (totals.get("__no_arg__") || 0) + noArgTotal);
+      grandTotal += noArgTotal;
+    }
+    const byArg = range?.by_arg || {};
+    for (const [argKey, samples] of Object.entries(byArg)) {
+      const argTotal = sumSamples(samples);
+      if (argTotal <= 0) {
+        continue;
+      }
+      totals.set(String(argKey), (totals.get(String(argKey)) || 0) + argTotal);
+      grandTotal += argTotal;
+    }
+  }
+  return { totals, grandTotal };
+}
+
+export function applyArgTimingToOptions(data) {
+  const argFilterEl = ui?.argFilterEl;
+  if (!argFilterEl) {
+    return;
+  }
+
+  const options = [...argFilterEl.options];
+  if (!options.length) {
+    return;
+  }
+
+  const selected = argFilterEl.value;
+  const { totals, grandTotal } = computeArgTotalsByValue(data?.ranges || []);
+  const rankedValues = options
+    .map((opt) => opt.value)
+    .filter((value) => value !== "all")
+    .sort((a, b) => {
+      const diff = (totals.get(b) || 0) - (totals.get(a) || 0);
+      if (diff !== 0) {
+        return diff;
+      }
+      if (a === "__no_arg__") {
+        return -1;
+      }
+      if (b === "__no_arg__") {
+        return 1;
+      }
+      return Number(a) - Number(b);
+    });
+  const rankByValue = new Map(rankedValues.map((value, idx) => [value, idx + 1]));
+
+  for (const option of options) {
+    const baseLabel = option.dataset.baseLabel || option.value;
+    if (option.value === "all") {
+      option.textContent = baseLabel;
+      continue;
+    }
+    const total = totals.get(option.value) || 0;
+    const pct = grandTotal > 0 ? (100 * total) / grandTotal : 0;
+    const rank = rankByValue.get(option.value) || 0;
+    if (total <= 0) {
+      option.textContent = `${baseLabel} (0%)`;
+      continue;
+    }
+    const rankTag = rank > 0 && rank <= 3 ? ` #${rank}` : "";
+    option.textContent = `${baseLabel}${rankTag} (${pct.toFixed(1)}%, ${formatNs(total)})`;
+  }
+
+  const allOption = options.find((option) => option.value === "all");
+  const noArgOption = options.find((option) => option.value === "__no_arg__");
+  const argOptions = options
+    .filter((option) => option.value !== "all" && option.value !== "__no_arg__")
+    .sort((a, b) => {
+      const diff = (totals.get(b.value) || 0) - (totals.get(a.value) || 0);
+      if (diff !== 0) {
+        return diff;
+      }
+      return Number(a.value) - Number(b.value);
+    });
+
+  argFilterEl.innerHTML = "";
+  if (allOption) {
+    argFilterEl.appendChild(allOption);
+  }
+  if (noArgOption) {
+    argFilterEl.appendChild(noArgOption);
+  }
+  for (const option of argOptions) {
+    argFilterEl.appendChild(option);
+  }
+  argFilterEl.value = selected;
 }
 
 export function buildReportSelect(reports, currentId) {

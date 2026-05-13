@@ -1,4 +1,5 @@
 import { apiGet } from "./api.js";
+import { applyArgTimingToOptions } from "./config.js";
 import { updateHoverDetails } from "./details.js";
 import { ensureTreePathExpanded, renderTree } from "./explorer.js";
 import { formatNs, heatAlpha, heatBucket, overviewColor } from "./formatting.js";
@@ -103,6 +104,7 @@ export async function renderCode(data) {
   app.model.setValue(data.lines.join("\n"));
   monaco.editor.setModelLanguage(app.model, "c");
   app.currentFileData = data;
+  applyArgTimingToOptions(data);
   buildLineRangesIndex(data);
   buildProfiledRanges(data);
   const cursorLine = app.editor && app.editor.getPosition() ? app.editor.getPosition().lineNumber : 1;

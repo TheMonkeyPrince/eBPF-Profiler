@@ -39,11 +39,33 @@ function relayoutEditor() {
   app.editor?.layout();
 }
 
+function syncBpfDisasmViewport() {
+  const details = document.getElementById("bpfProgramDetails");
+  const pre = document.getElementById("bpfDisasmPre");
+  if (!details || !pre || !details.open) {
+    if (pre) {
+      pre.style.maxHeight = "";
+      pre.style.height = "";
+    }
+    return;
+  }
+  const summary = details.querySelector("summary");
+  const summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
+  const styles = window.getComputedStyle(pre);
+  const marginTop = Number.parseFloat(styles.marginTop || "0") || 0;
+  const marginBottom = Number.parseFloat(styles.marginBottom || "0") || 0;
+  const panelHeight = details.getBoundingClientRect().height;
+  const target = Math.max(48, panelHeight - summaryHeight - marginTop - marginBottom - 2);
+  pre.style.height = `${Math.floor(target)}px`;
+  pre.style.maxHeight = `${Math.floor(target)}px`;
+}
+
 function applyLayout() {
   const root = document.documentElement;
   root.style.setProperty("--sidebar-width", `${Math.round(layout.sidebarWidth)}px`);
   root.style.setProperty("--tree-height", `${clamp(layout.treeRatio, 0.18, 0.82) * 100}%`);
   root.style.setProperty("--bpf-panel-height", `${Math.round(layout.bpfHeight)}px`);
+  syncBpfDisasmViewport();
   relayoutEditor();
 }
 
@@ -182,7 +204,10 @@ function setupEditorSplitter() {
     }
   });
 
-  details.addEventListener("toggle", relayoutEditor);
+  details.addEventListener("toggle", () => {
+    syncBpfDisasmViewport();
+    relayoutEditor();
+  });
 }
 
 export function initResizableLayout() {
