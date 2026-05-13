@@ -38,10 +38,18 @@
         <div id="hoverDetails">Hover a line to see detailed profiling data.</div>
       </div>
     </header>
-    <main>
-      <aside>
+    <main id="appLayout">
+      <aside id="sidebarPane">
         <h2>Explorer</h2>
         <div id="tree"></div>
+        <div
+          id="sidebarSplitter"
+          class="splitter splitter-horizontal"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize explorer and profiled boxes"
+          tabindex="0"
+        ></div>
         <div id="profiledPanel">
           <div id="profiledPanelHeader">
             <span>Profiled boxes</span>
@@ -60,7 +68,15 @@
           <div id="profiledList"></div>
         </div>
       </aside>
-      <section>
+      <div
+        id="mainSplitter"
+        class="splitter splitter-vertical"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        tabindex="0"
+      ></div>
+      <section id="editorPane">
         <div id="fileTitle">Select a file</div>
         <div id="legend">
           <span>Cold</span>
@@ -70,6 +86,14 @@
         <div id="codePane">
           <div id="monacoEditor"></div>
         </div>
+        <div
+          id="editorSplitter"
+          class="splitter splitter-horizontal"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize editor and BPF program"
+          tabindex="0"
+        ></div>
         <details id="bpfProgramDetails">
           <summary>BPF program (disassembly)</summary>
           <pre id="bpfDisasmPre" class="bpf-disasm"></pre>

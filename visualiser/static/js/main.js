@@ -8,6 +8,7 @@ import {
   renderCode,
 } from "./editor.js";
 import { ensureTreePathExpanded, renderTree } from "./explorer.js";
+import { initResizableLayout } from "./layout.js";
 import { buildProfiledRanges } from "./ranges.js";
 import { renderProfiledList, updateProfileNavUI } from "./profiled-ui.js";
 import { app, bindUi, ui } from "./state.js";
@@ -40,6 +41,8 @@ bindUi({
 if (!ui) {
   throw new Error("bindUi failed");
 }
+
+initResizableLayout();
 
 async function refreshAfterReportChange() {
   app.treeChildrenCache = {};
