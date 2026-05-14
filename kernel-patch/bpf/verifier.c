@@ -17575,28 +17575,28 @@ static int do_check_insn(struct bpf_verifier_env *env, bool *do_print_state)
 	switch (class) {
 	case BPF_ALU:
 	case BPF_ALU64:
-		return check_alu_op(env, insn);
+		return BPF_PROFILE_CALL(check_alu_op, env, insn);
 
 	case BPF_LDX:
-		return check_load_mem(env, insn, false,
+		return BPF_PROFILE_CALL(check_load_mem, env, insn, false,
 				      BPF_MODE(insn->code) == BPF_MEMSX,
 				      true, "ldx");
 
 	case BPF_STX:
 		if (BPF_MODE(insn->code) == BPF_ATOMIC)
-			return check_atomic(env, insn);
-		return check_store_reg(env, insn, false);
+			return BPF_PROFILE_CALL(check_atomic, env, insn);
+		return BPF_PROFILE_CALL(check_store_reg, env, insn, false);
 
 	case BPF_ST: {
 		enum bpf_reg_type dst_reg_type;
 
-		err = check_reg_arg(env, insn->dst_reg, SRC_OP);
+		err = BPF_PROFILE_CALL(check_reg_arg, env, insn->dst_reg, SRC_OP);
 		if (err)
 			return err;
 
 		dst_reg_type = cur_regs(env)[insn->dst_reg].type;
 
-		err = check_mem_access(env, env->insn_idx, insn->dst_reg,
+		err = BPF_PROFILE_CALL(check_mem_access, env, env->insn_idx, insn->dst_reg,
 				       insn->off, BPF_SIZE(insn->code),
 				       BPF_WRITE, -1, false, false);
 		if (err)
@@ -17623,13 +17623,13 @@ static int do_check_insn(struct bpf_verifier_env *env, bool *do_print_state)
 			}
 			mark_reg_scratched(env, BPF_REG_0);
 			if (insn->src_reg == BPF_PSEUDO_CALL)
-				return check_func_call(env, insn, &env->insn_idx);
+				return BPF_PROFILE_CALL(check_func_call, env, insn, &env->insn_idx);
 			if (insn->src_reg == BPF_PSEUDO_KFUNC_CALL)
-				return check_kfunc_call(env, insn, &env->insn_idx);
-			return check_helper_call(env, insn, &env->insn_idx);
+				return BPF_PROFILE_CALL(check_kfunc_call, env, insn, &env->insn_idx);
+			return BPF_PROFILE_CALL(check_helper_call, env, insn, &env->insn_idx);
 		} else if (opcode == BPF_JA) {
 			if (BPF_SRC(insn->code) == BPF_X)
-				return check_indirect_jump(env, insn);
+				return BPF_PROFILE_CALL(check_indirect_jump, env, insn);
 
 			if (class == BPF_JMP)
 				env->insn_idx += insn->off + 1;
@@ -17637,18 +17637,18 @@ static int do_check_insn(struct bpf_verifier_env *env, bool *do_print_state)
 				env->insn_idx += insn->imm + 1;
 			return INSN_IDX_UPDATED;
 		} else if (opcode == BPF_EXIT) {
-			return process_bpf_exit_full(env, do_print_state, false);
+			return BPF_PROFILE_CALL(process_bpf_exit_full, env, do_print_state, false);
 		}
-		return check_cond_jmp_op(env, insn, &env->insn_idx);
+		return BPF_PROFILE_CALL(check_cond_jmp_op, env, insn, &env->insn_idx);
 	}
 	case BPF_LD: {
 		u8 mode = BPF_MODE(insn->code);
 
 		if (mode == BPF_ABS || mode == BPF_IND)
-			return check_ld_abs(env, insn);
+			return BPF_PROFILE_CALL(check_ld_abs, env, insn);
 
 		if (mode == BPF_IMM) {
-			err = check_ld_imm(env, insn);
+			err = BPF_PROFILE_CALL(check_ld_imm, env, insn);
 			if (err)
 				return err;
 
