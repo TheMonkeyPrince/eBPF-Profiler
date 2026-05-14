@@ -87,7 +87,7 @@ export function computeReferenceNs(data) {
   if (app.selectedScaleMode === "absolute") {
     return Math.max(1, app.totalDurationNs || 0);
   }
-  const ranges = data.ranges || [];
+  const ranges = mergeProfiledRangesForSameSite(data?.ranges || []);
   let profiledTotal = 0;
   for (const range of ranges) {
     profiledTotal += rangeTotalForCurrentArg(range);
@@ -99,6 +99,90 @@ export function computeReferenceNs(data) {
 export function profiledRangeMergeKey(range) {
   const fn = range.function && String(range.function).trim() ? String(range.function).trim() : "";
   return `${range.start}:${range.end}:${fn}`;
+}
+
+/**
+ * @param {unknown[]} list
+ */
+function mergeOneProfileRangeGroup(list) {
+  if (list.length === 1) {
+    return list[0];
+  }
+  const first = /** @type {Record<string, unknown>} */ (list[0]);
+  const merged = { ...first };
+  const no_arg = [];
+  const no_arg_exclusive = [];
+  /** @type {Record<string, unknown[]>} */
+  const byArg = {};
+  /** @type {Record<string, unknown[]>} */
+  const byArgExc = {};
+  for (const r of list) {
+    const rec = /** @type {Record<string, unknown>} */ (r);
+    no_arg.push(...(rec.no_arg || []));
+    no_arg_exclusive.push(...(rec.no_arg_exclusive || []));
+    for (const [ak, samples] of Object.entries(/** @type {Record<string, unknown[]>} */ (rec.by_arg || {}))) {
+      if (!byArg[ak]) {
+        byArg[ak] = [];
+      }
+      byArg[ak].push(...(samples || []));
+    }
+    for (const [ak, samples] of Object.entries(/** @type {Record<string, unknown[]>} */ (rec.by_arg_exclusive || {}))) {
+      if (!byArgExc[ak]) {
+        byArgExc[ak] = [];
+      }
+      byArgExc[ak].push(...(samples || []));
+    }
+  }
+  merged.no_arg = no_arg;
+  if (no_arg_exclusive.length) {
+    merged.no_arg_exclusive = no_arg_exclusive;
+  } else {
+    delete merged.no_arg_exclusive;
+  }
+  if (Object.keys(byArg).length) {
+    merged.by_arg = byArg;
+  } else {
+    delete merged.by_arg;
+  }
+  if (Object.keys(byArgExc).length) {
+    merged.by_arg_exclusive = byArgExc;
+  } else {
+    delete merged.by_arg_exclusive;
+  }
+  const allInc = [...no_arg];
+  for (const xs of Object.values(byArg)) {
+    allInc.push(...xs);
+  }
+  merged.total_ns = allInc.reduce((acc, v) => acc + sampleInclusiveNs(v), 0);
+  merged.count = allInc.length;
+  merged.max_ns = merged.count ? Math.max(...allInc.map((v) => sampleInclusiveNs(v))) : 0;
+  return merged;
+}
+
+/**
+ * Merge duplicate `ranges` entries for the same line span + function (e.g. split per-arg rows from the report).
+ * @param {unknown[]} ranges
+ */
+function mergeProfiledRangesForSameSite(ranges) {
+  if (!Array.isArray(ranges) || ranges.length <= 1) {
+    return Array.isArray(ranges) ? ranges : [];
+  }
+  const orderKeys = [];
+  const groups = new Map();
+  for (const r of ranges) {
+    const k = profiledRangeMergeKey(r);
+    if (!groups.has(k)) {
+      groups.set(k, []);
+      orderKeys.push(k);
+    }
+    groups.get(k).push(r);
+  }
+  const out = [];
+  for (const k of orderKeys) {
+    const list = groups.get(k);
+    out.push(list.length === 1 ? list[0] : mergeOneProfileRangeGroup(list));
+  }
+  return out;
 }
 
 /** @param {string} loc `path/file.c:start:end` */
@@ -394,26 +478,16 @@ function mergeCallTreeNodeGroup(group) {
     return collapseSameArgDuplicates(buckets.get(argOrder[0]), false);
   }
 
-  const first = /** @type {Record<string, unknown>} */ (sorted[0]);
-  const wrapper = { ...first };
-  let sumInc = 0;
-  let sumExc = 0;
-  for (const g of sorted) {
-    const r = /** @type {Record<string, unknown>} */ (g);
-    sumInc += Number(r.inclusive_ns) || 0;
-    sumExc += Number(r.exclusive_ns) || 0;
+  const flatMembers = [];
+  for (const key of argOrder) {
+    flatMembers.push(...buckets.get(key));
   }
-  wrapper.inclusive_ns = sumInc;
-  wrapper.exclusive_ns = sumExc;
-  delete wrapper.arg;
-  delete wrapper.children;
-  wrapper._visualiser_arg_group_wrapper = true;
-  delete wrapper._visualiser_merged_args;
-  delete wrapper._visualiser_arg_branch;
-
-  const branchChildren = argOrder.map((key) => collapseSameArgDuplicates(buckets.get(key), true));
-  wrapper.children = branchChildren;
-  return wrapper;
+  const single = /** @type {Record<string, unknown>} */ (collapseSameArgDuplicates(flatMembers, false));
+  delete single.arg;
+  delete single._visualiser_arg_group_wrapper;
+  delete single._visualiser_arg_branch;
+  delete single._visualiser_merged_args;
+  return single;
 }
 
 /**
@@ -485,6 +559,9 @@ function orderFilteredByCallTree(filtered, callTree, filePath, sortFn) {
 
 export function buildProfiledRanges(data) {
   const currentRange = app.profiledRanges[app.currentProfiledRangeIndex] || null;
+  if (data && Array.isArray(data.ranges)) {
+    data.ranges = mergeProfiledRangesForSameSite(data.ranges);
+  }
   const filtered = (data.ranges || []).filter((range) => rangeSamplesForCurrentArg(range).length > 0);
 
   const sortFn = (a, b) => {

@@ -3,7 +3,6 @@ import {
   callTreeNodeMergeKey,
   computeReferenceNs,
   profiledRangeMergeKey,
-  rangeSamplesForArgKey,
   rangeSamplesForCurrentArg,
   rangeTotalForArgKey,
   rangeTotalForCurrentArg,
@@ -63,41 +62,6 @@ function fillProfiledLabelPrimary(labelEl, range, parentSharePct = null) {
 }
 
 /**
- * Row under an arg-group wrapper: one `by_arg` / `no_arg` bucket for this range.
- * @param {HTMLElement} labelEl
- * @param {any} range
- * @param {unknown} argRaw `undefined`/`null` → no-arg samples; numeric values are BPF insn indexes
- * @param {number | null} [parentSharePct]
- */
-function fillProfiledLabelForArgBranch(labelEl, range, argRaw, parentSharePct = null) {
-  labelEl.textContent = "";
-  const argKey = argRaw === undefined || argRaw === null ? null : Number(argRaw);
-  const total = rangeTotalForArgKey(range, argKey);
-  const samples = rangeSamplesForArgKey(range, argKey);
-  const referenceNs = app.currentFileData ? computeReferenceNs(app.currentFileData) : 0;
-  const ratio = referenceNs ? (total / referenceNs) * 100 : 0;
-  const count = samples.length;
-  const spanLoc = document.createElement("span");
-  spanLoc.className = "profiled-loc";
-  spanLoc.textContent = formatLineRangeLabel(range.start, range.end);
-  const spanArg = document.createElement("span");
-  spanArg.className = "profiled-tree-arg-badge";
-  spanArg.textContent = argKey === null ? " no arg" : ` insn ${argKey}`;
-  labelEl.appendChild(spanLoc);
-  labelEl.appendChild(spanArg);
-  if (range.function && String(range.function).trim()) {
-    const spanFn = document.createElement("span");
-    spanFn.className = "profiled-fn";
-    spanFn.textContent = ` ${String(range.function).trim()}`;
-    labelEl.appendChild(spanFn);
-  }
-  labelEl.appendChild(
-    document.createTextNode(`  ·  ${formatNs(total)}  ·  ${ratio.toFixed(1)}%  ·  ${count} samples`),
-  );
-  appendParentShareFragment(labelEl, parentSharePct);
-}
-
-/**
  * @param {HTMLElement} labelEl
  * @param {Record<string, unknown>} node
  * @param {{ file: string, start: number, end: number, key: string } | null} nk
@@ -143,13 +107,6 @@ function findProfiledIndexForCallTreeNode(node) {
 function treeNodeDisplayTotalNs(node) {
   const rec = /** @type {Record<string, unknown>} */ (node);
   const idx = findProfiledIndexForCallTreeNode(rec);
-  if (rec._visualiser_arg_group_wrapper) {
-    if (idx >= 0) {
-      return rangeTotalForCurrentArg(app.profiledRanges[idx]);
-    }
-    const w = Number(rec.inclusive_ns);
-    return Number.isFinite(w) ? w : 0;
-  }
   if (idx >= 0) {
     const range = app.profiledRanges[idx];
     if (rec._visualiser_arg_branch && app.selectedArg === "all") {
@@ -184,6 +141,8 @@ function renderCallTreeRows(nodes, pathPrefix, depth, parentDisplayTotalNs) {
     const children = rec.children;
     const hasCh = Array.isArray(children) && children.length > 0;
     const expanded = app.profiledTreeExpanded[id] !== false;
+    const treeExpandable = hasCh;
+    const showChildrenBlock = hasCh && expanded;
 
     const nk = callTreeNodeMergeKey(rec);
     const inFile = !!(nk && nk.file === app.selectedPath);
@@ -198,9 +157,7 @@ function renderCallTreeRows(nodes, pathPrefix, depth, parentDisplayTotalNs) {
 
     const row = document.createElement("div");
     row.className = "list-tree-row explorer-row";
-    if (rec._visualiser_arg_group_wrapper) {
-      row.classList.add("list-tree-row--arg-wrapper");
-    } else if (rec._visualiser_arg_branch) {
+    if (rec._visualiser_arg_branch) {
       row.classList.add("list-tree-row--arg-branch");
     }
     if (isActive) {
@@ -214,7 +171,7 @@ function renderCallTreeRows(nodes, pathPrefix, depth, parentDisplayTotalNs) {
     const chev = document.createElement("button");
     chev.type = "button";
     chev.className = "explorer-chevron list-tree-twistie";
-    if (hasCh) {
+    if (treeExpandable) {
       chev.textContent = expanded ? "▾" : "▸";
       chev.setAttribute("aria-expanded", String(expanded));
       chev.addEventListener("click", (e) => {
@@ -229,25 +186,21 @@ function renderCallTreeRows(nodes, pathPrefix, depth, parentDisplayTotalNs) {
       chev.disabled = true;
       chev.setAttribute("aria-hidden", "true");
     }
-    row.appendChild(chev);
-
     const icon = document.createElement("span");
     icon.className = "explorer-icon list-tree-icon";
-    icon.textContent = hasCh ? "📁" : "📄";
-    row.appendChild(icon);
+    icon.textContent = treeExpandable ? "📁" : "📄";
 
     const label = document.createElement("div");
     label.className = "list-tree-label profiled-range-label";
-    if (rec._visualiser_arg_group_wrapper && rangeIdx >= 0) {
-      fillProfiledLabelPrimary(label, app.profiledRanges[rangeIdx], parentSharePct);
-    } else if (rec._visualiser_arg_branch && rangeIdx >= 0 && app.selectedArg === "all") {
-      fillProfiledLabelForArgBranch(label, app.profiledRanges[rangeIdx], rec.arg, parentSharePct);
-    } else if (rangeIdx >= 0) {
+    if (rangeIdx >= 0) {
       fillProfiledLabelPrimary(label, app.profiledRanges[rangeIdx], parentSharePct);
     } else {
       label.classList.add("list-tree-label--context");
       fillCallTreeContextLabel(label, rec, nk, parentSharePct);
     }
+
+    row.appendChild(chev);
+    row.appendChild(icon);
     row.appendChild(label);
 
     row.addEventListener("click", async (e) => {
@@ -262,7 +215,7 @@ function renderCallTreeRows(nodes, pathPrefix, depth, parentDisplayTotalNs) {
 
     bucket.appendChild(row);
 
-    if (hasCh && expanded) {
+    if (showChildrenBlock) {
       const wrap = document.createElement("div");
       wrap.className = "list-tree-children";
       wrap.appendChild(renderCallTreeRows(children, id, depth + 1, ownDisplayTotal));

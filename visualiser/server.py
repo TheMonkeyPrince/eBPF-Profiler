@@ -167,6 +167,10 @@ def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
     if isinstance(ps, dict):
         indexed["profile_stats"] = ps
 
+    trc = report.get("trace_record_count")
+    if isinstance(trc, int) and trc >= 0:
+        indexed["trace_record_count"] = trc
+
 
 def _total_duration_ns_from_report(report):
     if "verification_ns" in report:
@@ -688,6 +692,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "bpf_insns": STATE.index.get("bpf_insns"),
                     "kernel_compiler": STATE.index.get("kernel_compiler"),
                     "profile_stats": STATE.index.get("profile_stats"),
+                    "trace_record_count": STATE.index.get("trace_record_count"),
                 }
             )
             return

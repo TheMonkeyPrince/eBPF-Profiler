@@ -104,9 +104,9 @@ export async function renderCode(data) {
   app.model.setValue(data.lines.join("\n"));
   monaco.editor.setModelLanguage(app.model, "c");
   app.currentFileData = data;
-  applyArgTimingToOptions(data);
-  buildLineRangesIndex(data);
   buildProfiledRanges(data);
+  buildLineRangesIndex(data);
+  applyArgTimingToOptions(data);
   const cursorLine = app.editor && app.editor.getPosition() ? app.editor.getPosition().lineNumber : 1;
   updateHoverDetails(cursorLine);
 

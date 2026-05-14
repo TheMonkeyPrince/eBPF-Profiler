@@ -43,14 +43,16 @@ if __name__ == "__main__":
 	runned_tests = []
 	try:
 		profiler = BPFProfiler()
-		if not args.trace_only:
+		if not args.analysis_only:
 			for test in tests:
 				print(f"Running test: {test}")
 				results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
 				if len(results) > 0:
 					runned_tests.append(test)
+		else:
+			runned_tests = tests
 
-		if not args.analysis_only:
+		if not args.trace_only:
 			for test in runned_tests:
 				print(f"Analysing test: {test}")
 				if result_bin_paths(test):

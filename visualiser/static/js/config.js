@@ -256,6 +256,10 @@ export async function loadConfig() {
   if (insnCount != null) {
     parts.push(`bpf insns: ${insnCount}`);
   }
+  const traceRecords = config.trace_record_count;
+  if (typeof traceRecords === "number" && traceRecords >= 0) {
+    parts.push(`records: ${traceRecords}`);
+  }
   if (config.kernel_compiler) {
     parts.push(`compiler: ${config.kernel_compiler}`);
   }

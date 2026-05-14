@@ -142,6 +142,7 @@ class TraceAnalyser:
             "program_name": self.program_name,
             "verification_ns": self.total_duration_ns,
             "kernel_compiler": self.kernel_compiler,
+            "trace_record_count": len(self.trace),
             "call_tree": [self._node(r) for r in self._roots],
         }
         if self._program:
