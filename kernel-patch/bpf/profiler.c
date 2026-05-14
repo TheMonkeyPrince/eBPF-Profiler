@@ -4,6 +4,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
+// #include <linux/bpf_verifier.h>
 
 
 static DEFINE_SPINLOCK(bpf_profiler_lock);
@@ -68,7 +69,21 @@ out:
     return ret;
 }
 
-int bpf_profiler_end(void) {
+void bpf_profiler_capture_stats(struct bpf_verifier_env *env, bpf_verification_profile_stats_t *stats)
+{
+    if (!env || !stats)
+        return;
+
+    stats->subprog_cnt = env->subprog_cnt;
+    stats->insn_processed = env->insn_processed;
+    stats->complexity_limit_insns = BPF_COMPLEXITY_LIMIT_INSNS;
+    stats->max_states_per_insn = env->max_states_per_insn;
+    stats->total_states = env->total_states;
+    stats->peak_states = env->peak_states;
+    stats->longest_mark_read_walk = env->longest_mark_read_walk;
+}
+
+int bpf_profiler_end(struct bpf_verifier_env *env) {
     struct file *file;
     loff_t pos = 0;
     ssize_t ret;
@@ -78,7 +93,12 @@ int bpf_profiler_end(void) {
     file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (IS_ERR(file))
         return PTR_ERR(file);
-        
+   
+    bpf_profiler_capture_stats(env, &stats_snap);
+    ret = kernel_write(file, &stats_snap, sizeof(stats_snap), &pos);
+    if (ret < 0)
+        goto out;
+
     ret = kernel_write(file, &bpf_profile_records.count,
                        sizeof(bpf_profile_records.count), &pos);
     if (ret < 0)

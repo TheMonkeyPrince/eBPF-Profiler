@@ -20203,8 +20203,8 @@ err_free_env:
 	kvfree(env->scc_info);
 	kvfree(env->succ);
 	kvfree(env->gotox_tmp_buf);
-	kvfree(env);
 
 	BPF_PROFILE_END();
+	kvfree(env);
 	return ret;
 }

@@ -28,6 +28,17 @@ typedef struct __attribute__((packed)) {
     bpf_profile_record_t records[BPF_PROFILE_MAX_RECORDS];
 } bpf_profile_record_list_t;
 
+/* Mirrors print_verification_stats(): */
+typedef struct __attribute__((packed)) {
+    u32 subprog_cnt;
+    u32 insn_processed;
+    u32 complexity_limit_insns;
+    u32 max_states_per_insn;
+    u32 total_states;
+    u32 peak_states;
+    u32 longest_mark_read_walk;
+} bpf_verification_profile_stats_t;
+
 #define BPF_PROFILE_BLOCK_END() \
     do { \
         u64 __bpf_timer_end = ktime_get_ns(); \
@@ -88,7 +99,7 @@ void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,
                                    u64 start_time, u64 end_time);
 
 int bpf_profiler_start(struct bpf_prog *prog);
-int bpf_profiler_end(void);
+int bpf_profiler_end(struct bpf_verifier_env *env);
 
 
 #endif
