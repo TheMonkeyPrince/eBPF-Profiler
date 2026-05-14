@@ -115,12 +115,50 @@ class BPFInsn(ct.Structure):
 		
 	def __hash__(self):
 		return hash(ct.string_at(ct.addressof(self), ct.sizeof(self)))
-	
+
+class ProfileStats(ct.Structure):
+	_pack_ = 1
+	_fields_ = [
+		("subprog_cnt", u32),
+		("insn_processed", u32),
+		("complexity_limit_insns", u32),
+		("max_states_per_insn", u32),
+		("total_states", u32),
+		("peak_states", u32),
+		("longest_mark_read_walk", u32),
+	]
+
+	def __str__(self) -> str:
+		return (
+			f"ProfileStats(subprog_cnt={self.subprog_cnt}, "
+			f"insn_processed={self.insn_processed}, "
+			f"complexity_limit_insns={self.complexity_limit_insns}, "
+			f"max_states_per_insn={self.max_states_per_insn}, "
+			f"total_states={self.total_states}, "
+			f"peak_states={self.peak_states}, "
+			f"longest_mark_read_walk={self.longest_mark_read_walk})"
+		)
+
+	@staticmethod
+	def from_bytes(data: bytes):
+		if len(data) != ct.sizeof(ProfileStats):
+			raise ValueError(
+				f"Invalid data size: expected {ct.sizeof(ProfileStats)}, got {len(data)}"
+			)
+		s = ProfileStats()
+		ct.memmove(ct.addressof(s), data, ct.sizeof(ProfileStats))
+		return s
+
+	@staticmethod
+	def size() -> int:
+		return ct.sizeof(ProfileStats)
+
 class ProfilingResult:
-	def __init__(self, program_name: str, program: list[BPFInsn], trace: list[Record]):
+	def __init__(self, program_name: str, program: list[BPFInsn], stats: ProfileStats, trace: list[Record]):
 		self.program_name = program_name
 		self.program = program
+		self.stats = stats
 		self.trace = trace
 
 	def __str__(self):
-		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], trace=[{len(self.trace)} records])"
+		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, trace=[{len(self.trace)} records])"

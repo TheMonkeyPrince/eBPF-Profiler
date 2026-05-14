@@ -1,9 +1,9 @@
 import os
 import threading
-from time import time, sleep
-import struct
+from time import sleep
 
-from profiler_types import ProfilingResult, Record, BPFInsn
+from profiler_types import ProfilingResult
+from storage import read_profile
 
 RECORD_FILE_PATH = "/tmp/bpf_profile_records"
 
@@ -26,7 +26,7 @@ class BPFRecorder:
 
 	def wait_for_completion(self, program_name: str) -> list[ProfilingResult]:
 		self.record_thread.join()
-		results = self.read_profile_file(program_name)
+		results = self.read_results(program_name)
 		seen = set()
 		filtered_results = []
 		
@@ -42,9 +42,8 @@ class BPFRecorder:
 				print(result)
 
 		return filtered_results if results else []
-		# return list(sorted(trace, key=lambda e: e.timestamp))
 
-	def read_profile_file(self, program_name: str) -> list[ProfilingResult]:
+	def read_results(self, program_name: str) -> list[ProfilingResult]:
 		results = []
 		try:
 			with open("/tmp/bpf_profile_records", "rb") as f:
@@ -54,48 +53,10 @@ class BPFRecorder:
 					if not f.read(1):
 						break
 					f.seek(pos)
-					program = self.read_bpf_program(f)
-					trace = self.read_trace_(f)
-					results.append(ProfilingResult(f"{program_name}_{i}", program, trace))
+					results.append(read_profile(f, f"{program_name}_{i}"))
 					i += 1
 		except FileNotFoundError:
 			print("No profiling data found.")
 			return []
 
 		return results
-
-	def read_bpf_program(self, file) -> list[BPFInsn]:
-		len_bytes = file.read(4)
-		if len(len_bytes) != 4:
-			raise ValueError("Corrupted file: partial count")
-
-		(program_len,) = struct.unpack("<I", len_bytes)
-		insn_size = BPFInsn.size()
-		raw = file.read(program_len * insn_size)
-		if len(raw) != program_len * insn_size:
-			raise ValueError("Corrupted file: truncated BPF program block")
-
-		program = []
-		for i in range(program_len):
-			chunk = raw[i * insn_size : (i + 1) * insn_size]
-			program.append(BPFInsn.from_bytes(chunk))
-
-		return program
-
-	def read_trace_(self, file) -> list[Record]:
-		len_bytes = file.read(4)
-		if len(len_bytes) != 4:
-			raise ValueError("Corrupted file: partial count")
-
-		(record_count,) = struct.unpack("<I", len_bytes)
-		record_size = Record.size()
-		raw = file.read(record_count * record_size)
-		if len(raw) != record_count * record_size:
-			raise ValueError("Corrupted file: truncated record block")
-
-		records = []
-		for i in range(record_count):
-			chunk = raw[i * record_size : (i + 1) * record_size]
-			records.append(Record.from_bytes(chunk))
-
-		return records

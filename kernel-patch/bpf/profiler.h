@@ -2,6 +2,7 @@
 #define BPF_PROFILER_H
 #include <linux/types.h>
 #include <linux/bpf.h>
+#include <linux/bpf_verifier.h>
 
 #define BPF_PROFILE_NO_ARG ((u32)-1)
 #define BPF_PROFILE_MAX_RECORDS 4096
@@ -91,7 +92,7 @@ do {                                                                            
 #define BPF_PROFILE_END() \
 do {                                                                                               \
     bpf_profiler_add_record(END, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, 0, ktime_get_ns()); \
-    bpf_profiler_end();                                                                            \
+    bpf_profiler_end(env);                                                                            \
 } while (0)
 
 void bpf_profiler_add_record(bpf_profile_record_type_t type, const char *file,

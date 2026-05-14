@@ -4,7 +4,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
-// #include <linux/bpf_verifier.h>
+
 
 
 static DEFINE_SPINLOCK(bpf_profiler_lock);
@@ -69,7 +69,7 @@ out:
     return ret;
 }
 
-void bpf_profiler_capture_stats(struct bpf_verifier_env *env, bpf_verification_profile_stats_t *stats)
+static void bpf_profiler_capture_stats(struct bpf_verifier_env *env, bpf_verification_profile_stats_t *stats)
 {
     if (!env || !stats)
         return;
@@ -87,15 +87,15 @@ int bpf_profiler_end(struct bpf_verifier_env *env) {
     struct file *file;
     loff_t pos = 0;
     ssize_t ret;
-
+    bpf_verification_profile_stats_t stats;
     unsigned long flags;
 
     file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (IS_ERR(file))
         return PTR_ERR(file);
    
-    bpf_profiler_capture_stats(env, &stats_snap);
-    ret = kernel_write(file, &stats_snap, sizeof(stats_snap), &pos);
+    bpf_profiler_capture_stats(env, &stats);
+    ret = kernel_write(file, &stats, sizeof(stats), &pos);
     if (ret < 0)
         goto out;
 
