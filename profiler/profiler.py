@@ -1,4 +1,4 @@
-from profiler_types import BPFInsn, ProfilingResult, Record
+from profiler_types import BPFInsn, ProfilingResult, ProfileStats, Record
 from analyser import TraceAnalyser
 from programs.launcher import launch_bpf_program
 from recorder import BPFRecorder
@@ -35,8 +35,9 @@ class BPFProfiler:
         trace: list[Record],
         save: bool = True,
         program: list[BPFInsn] | None = None,
+        stats: ProfileStats | None = None,
     ) -> TraceAnalyser:
-        a = TraceAnalyser(program_name, trace, program=program)
+        a = TraceAnalyser(program_name, trace, program=program, stats=stats)
         a.analyse()
         if save:
             save_analysis(program_name, a)
@@ -49,5 +50,9 @@ class BPFProfiler:
         out: list[TraceAnalyser] = []
         for p in paths:
             r = read_profile_file(p, p.stem)
-            out.append(self.analyse_trace(r.program_name, r.trace, save, program=r.program))
+            out.append(
+                self.analyse_trace(
+                    r.program_name, r.trace, save, program=r.program, stats=r.stats
+                )
+            )
         return out

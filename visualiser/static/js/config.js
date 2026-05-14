@@ -195,6 +195,46 @@ export function renderBpfDisasm(config) {
       : JSON.stringify(insns, null, 2);
 }
 
+/** @param {Record<string, unknown>} config */
+export function renderVerifierProfileStats(config) {
+  const detailsEl = document.getElementById("verifierProfileStats");
+  const preEl = document.getElementById("verifierProfileStatsPre");
+  if (!detailsEl || !preEl) {
+    return;
+  }
+  const ps = config.profile_stats;
+  if (!ps || typeof ps !== "object") {
+    preEl.textContent =
+      "(No verifier profile stats in this report — re-save analysis from a profile .bin that includes ProfileStats.)";
+    detailsEl.open = false;
+    return;
+  }
+  const lines = [
+    `subprog_cnt: ${ps.subprog_cnt}`,
+    `insn_processed: ${ps.insn_processed}`,
+    `complexity_limit_insns: ${ps.complexity_limit_insns}`,
+    `max_states_per_insn: ${ps.max_states_per_insn}`,
+    `total_states: ${ps.total_states}`,
+    `peak_states: ${ps.peak_states}`,
+    `longest_mark_read_walk: ${ps.longest_mark_read_walk}`,
+  ];
+  preEl.textContent = lines.join("\n");
+}
+
+/** @param {Record<string, unknown> | null | undefined} ps */
+export function formatProfileStatsSummary(ps) {
+  if (!ps || typeof ps !== "object") {
+    return "";
+  }
+  const ip = ps.insn_processed;
+  const ts = ps.total_states;
+  const pk = ps.peak_states;
+  if (ip == null && ts == null && pk == null) {
+    return "";
+  }
+  return `verify stats: insn_processed=${ip} total_states=${ts} peak_states=${pk}`;
+}
+
 export async function loadConfig() {
   const metaEl = ui?.metaEl;
   const scaleModeSelectEl = ui?.scaleModeSelectEl;
@@ -219,11 +259,16 @@ export async function loadConfig() {
   if (config.kernel_compiler) {
     parts.push(`compiler: ${config.kernel_compiler}`);
   }
+  const statsSummary = formatProfileStatsSummary(config.profile_stats);
+  if (statsSummary) {
+    parts.push(statsSummary);
+  }
   parts.push(`KERNEL_PATH: ${config.kernel_path}`, `ANALYSIS_DIR: ${config.analysis_dir || "—"}`);
   if (metaEl) {
     metaEl.textContent = parts.join(" | ") + warnings;
   }
   renderBpfDisasm(config);
+  renderVerifierProfileStats(config);
   buildReportSelect(config.reports || [], config.current_report);
   buildArgOptions(config.global_args || []);
   if (scaleModeSelectEl) {

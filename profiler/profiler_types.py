@@ -153,6 +153,17 @@ class ProfileStats(ct.Structure):
 	def size() -> int:
 		return ct.sizeof(ProfileStats)
 
+	def to_json_dict(self) -> dict:
+		return {
+			"subprog_cnt": int(self.subprog_cnt),
+			"insn_processed": int(self.insn_processed),
+			"complexity_limit_insns": int(self.complexity_limit_insns),
+			"max_states_per_insn": int(self.max_states_per_insn),
+			"total_states": int(self.total_states),
+			"peak_states": int(self.peak_states),
+			"longest_mark_read_walk": int(self.longest_mark_read_walk),
+		}
+
 class ProfilingResult:
 	def __init__(self, program_name: str, program: list[BPFInsn], stats: ProfileStats, trace: list[Record]):
 		self.program_name = program_name

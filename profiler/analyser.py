@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from profiler_types import BPFInsn, Record, RecordType
+from profiler_types import BPFInsn, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start
 
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
@@ -69,10 +69,12 @@ class TraceAnalyser:
         program_name: str,
         trace: list[Record],
         program: list[BPFInsn] | None = None,
+        stats: ProfileStats | None = None,
     ):
         self.program_name = program_name
         self.trace = trace
         self._program = list(program) if program else []
+        self._stats = stats
         self.kernel_compiler = "clang"
         self.total_duration_ns = 0
         self._timed: list[Record] = []
@@ -144,4 +146,6 @@ class TraceAnalyser:
         }
         if self._program:
             out["bpf_insns"] = [_insn_dict(i) for i in self._program]
+        if self._stats is not None:
+            out["profile_stats"] = self._stats.to_json_dict()
         return json.dumps(out, indent=2)

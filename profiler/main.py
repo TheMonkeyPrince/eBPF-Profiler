@@ -19,8 +19,13 @@ if __name__ == "__main__":
 		default=25,
 	)
 	parser.add_argument(
-		"--no-analysis",
-		help="Only run the profiler without analysing the trace",
+		"--trace-only",
+		help="Only run the profiler and save the trace without analysing it",
+		action="store_true",
+	)
+	parser.add_argument(
+		"--analysis-only",
+		help="Only analyse the trace without running the profiler",
 		action="store_true",
 	)
 	args = parser.parse_args()
@@ -38,13 +43,14 @@ if __name__ == "__main__":
 	runned_tests = []
 	try:
 		profiler = BPFProfiler()
-		for test in tests:
-			print(f"Running test: {test}")
-			results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
-			if len(results) > 0:
-				runned_tests.append(test)
+		if not args.trace_only:
+			for test in tests:
+				print(f"Running test: {test}")
+				results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
+				if len(results) > 0:
+					runned_tests.append(test)
 
-		if not args.no_analysis:
+		if not args.analysis_only:
 			for test in runned_tests:
 				print(f"Analysing test: {test}")
 				if result_bin_paths(test):
