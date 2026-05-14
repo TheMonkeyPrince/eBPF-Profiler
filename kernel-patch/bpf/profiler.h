@@ -5,7 +5,7 @@
 #include <linux/bpf_verifier.h>
 
 #define BPF_PROFILE_NO_ARG ((u32)-1)
-#define BPF_PROFILE_MAX_RECORDS 4096
+#define BPF_PROFILE_MAX_RECORDS 40960
 
 typedef enum {
     START,

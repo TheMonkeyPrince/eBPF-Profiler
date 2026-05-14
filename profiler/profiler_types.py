@@ -4,6 +4,7 @@ from enum import Enum
 u64 = ct.c_uint64
 u32 = ct.c_uint32
 NO_ARG = u32(-1).value
+BPF_PROFILE_MAX_RECORDS = 40960
 
 class RecordType(Enum):
 	START = 0
@@ -170,6 +171,9 @@ class ProfilingResult:
 		self.program = program
 		self.stats = stats
 		self.trace = trace
+
+		if len(self.trace) == BPF_PROFILE_MAX_RECORDS:
+			print(f"Warning: trace for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
 
 	def __str__(self):
 		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, trace=[{len(self.trace)} records])"
