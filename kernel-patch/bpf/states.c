@@ -974,7 +974,7 @@ static bool states_equal(struct bpf_verifier_env *env,
 		insn_idx = bpf_frame_insn_idx(old, i);
 		if (old->frame[i]->callsite != cur->frame[i]->callsite)
 			return false;
-		if (!func_states_equal(env, old->frame[i], cur->frame[i], insn_idx, exact))
+		if (!BPF_PROFILE_CALL_ARG(insn_idx, func_states_equal,env, old->frame[i], cur->frame[i], insn_idx, exact))
 			return false;
 	}
 	return true;
