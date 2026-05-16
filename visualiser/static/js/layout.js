@@ -51,11 +51,16 @@ function syncBpfDisasmViewport() {
   }
   const summary = details.querySelector("summary");
   const summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
+  const controls = details.querySelector(".bpf-disasm-controls");
+  const controlsHeight = controls ? controls.getBoundingClientRect().height : 0;
   const styles = window.getComputedStyle(pre);
   const marginTop = Number.parseFloat(styles.marginTop || "0") || 0;
   const marginBottom = Number.parseFloat(styles.marginBottom || "0") || 0;
   const panelHeight = details.getBoundingClientRect().height;
-  const target = Math.max(48, panelHeight - summaryHeight - marginTop - marginBottom - 2);
+  const target = Math.max(
+    48,
+    panelHeight - summaryHeight - controlsHeight - marginTop - marginBottom - 4,
+  );
   pre.style.height = `${Math.floor(target)}px`;
   pre.style.maxHeight = `${Math.floor(target)}px`;
 }

@@ -131,19 +131,26 @@
     return `(raw) code=0x${code.toString(16)} dst=${dst} src=${src} off=${off} imm=${imm}`;
   }
 
-  function disasmProgram(insns) {
+  function disasmProgramLines(insns) {
     if (!Array.isArray(insns) || insns.length === 0) {
-      return "";
+      return [];
     }
     const lines = [];
     for (let pc = 0; pc < insns.length; pc += 1) {
       const insn = insns[pc];
       const asm = disasmOne(insn, pc);
       const pad = String(pc).padStart(4, "0");
-      lines.push(`${pad}: ${asm}`);
+      lines.push({ pc, text: `${pad}: ${asm}` });
     }
-    return lines.join("\n");
+    return lines;
+  }
+
+  function disasmProgram(insns) {
+    return disasmProgramLines(insns)
+      .map((line) => line.text)
+      .join("\n");
   }
 
   window.disasmBpfProgram = disasmProgram;
+  window.disasmBpfProgramLines = disasmProgramLines;
 })();
