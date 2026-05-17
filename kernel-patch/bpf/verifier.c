@@ -19904,6 +19904,18 @@ int bpf_fixup_kfunc_call(struct bpf_verifier_env *env, struct bpf_insn *insn,
 int bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, __u32 uattr_size)
 {
 	BPF_PROFILE_START();
+
+	BPF_PROFILE_BLOCK({
+	});
+	BPF_PROFILE_BLOCK({
+	});
+	BPF_PROFILE_BLOCK({
+	});
+	BPF_PROFILE_BLOCK({
+	});
+	BPF_PROFILE_BLOCK({
+	});
+
 	u64 start_time = ktime_get_ns();
 	struct bpf_verifier_env *env;
 	int i, len, ret = -EINVAL, err;
