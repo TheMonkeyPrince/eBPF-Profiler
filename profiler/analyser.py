@@ -83,6 +83,7 @@ class TraceAnalyser:
         self._exclusive: list[int] = []
         self._children: list[list[int]] = []
         self._roots: list[int] = []
+        self._overhead_model: tuple[float, float] = (0, 0)
 
     def analyse(self, verbose: bool = True, kernel_compiler: str = "clang"):
         if verbose:
@@ -117,11 +118,12 @@ class TraceAnalyser:
         self._children = ch
         self._roots = roots
         self.total_duration_ns = (v1 - v0) if v0 is not None and v1 is not None else 0
-        self.estimate_overhead()
+        self._model_overhead()
+        self._apply_overhead_model()
         if verbose:
             print(f"Total verification time: {self.total_duration_ns / 1e6:.2f} ms")
 
-    def estimate_overhead(self):
+    def _model_overhead(self):
         def t(nodes: list[int]):
             x = []
             for i in nodes:
@@ -137,8 +139,13 @@ class TraceAnalyser:
         for a, b in zip(n1, n2):
             avg.append((self._timed[a].duration() + self._timed[b].duration()) / 2)
 
-        m, b = linear_fit(x, avg)
-        print(f"Estimated overhead: {m:.2f} ns per child + {b:.2f} ns")
+        self._overhead_model = linear_fit(x, avg)
+        print(f"Estimated overhead model: {self._overhead_model[0]:.2f} ns per child + {self._overhead_model[1]:.2f} ns")
+
+    def _apply_overhead_model(self,):
+        for i in range(len(self._timed)):
+            self._exclusive[i] -= self._overhead_model[0] * len(self._children[i]) + self._overhead_model[1]
+        self.total_duration_ns -= self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
 
     def _node(self, i: int) -> dict:
         ev, sk = self._timed[i], self._sites[i]
