@@ -1295,7 +1295,7 @@ int bpf_is_state_visited(struct bpf_verifier_env *env, int insn_idx)
 			 * => unsafe memory access at 11 would not be caught.
 			 */
 			if (is_iter_next_insn(env, insn_idx)) {
-				if (states_equal(env, &sl->state, cur, RANGE_WITHIN)) {
+				if (BPF_PROFILE_CALL_ARG(insn_idx, states_equal, env, &sl->state, cur, RANGE_WITHIN)) {
 					struct bpf_func_state *cur_frame;
 					struct bpf_reg_state *iter_state, *iter_reg;
 					int spi;
@@ -1320,13 +1320,13 @@ int bpf_is_state_visited(struct bpf_verifier_env *env, int insn_idx)
 			}
 			if (is_may_goto_insn_at(env, insn_idx)) {
 				if (sl->state.may_goto_depth != cur->may_goto_depth &&
-				    states_equal(env, &sl->state, cur, RANGE_WITHIN)) {
+				    BPF_PROFILE_CALL_ARG(insn_idx, states_equal, env, &sl->state, cur, RANGE_WITHIN)) {
 					loop = true;
 					goto hit;
 				}
 			}
 			if (bpf_calls_callback(env, insn_idx)) {
-				if (states_equal(env, &sl->state, cur, RANGE_WITHIN)) {
+				if (BPF_PROFILE_CALL_ARG(insn_idx, states_equal, env, &sl->state, cur, RANGE_WITHIN)) {
 					loop = true;
 					goto hit;
 				}
@@ -1334,7 +1334,7 @@ int bpf_is_state_visited(struct bpf_verifier_env *env, int insn_idx)
 			}
 			/* attempt to detect infinite loop to avoid unnecessary doomed work */
 			if (states_maybe_looping(&sl->state, cur) &&
-			    states_equal(env, &sl->state, cur, EXACT) &&
+			    BPF_PROFILE_CALL_ARG(insn_idx, states_equal, env, &sl->state, cur, EXACT) &&
 			    !iter_active_depths_differ(&sl->state, cur) &&
 			    sl->state.may_goto_depth == cur->may_goto_depth &&
 			    sl->state.callback_unroll_depth == cur->callback_unroll_depth) {
@@ -1367,7 +1367,7 @@ skip_inf_loop_check:
 		}
 		/* See comments for mark_all_regs_read_and_precise() */
 		loop = incomplete_read_marks(env, &sl->state);
-		if (states_equal(env, &sl->state, cur, loop ? RANGE_WITHIN : NOT_EXACT)) {
+		if (BPF_PROFILE_CALL_ARG(insn_idx, states_equal, env, &sl->state, cur, loop ? RANGE_WITHIN : NOT_EXACT)) {
 hit:
 			sl->hit_cnt++;
 
@@ -1379,7 +1379,7 @@ hit:
 			err = 0;
 			if (bpf_is_jmp_point(env, env->insn_idx))
 				err = bpf_push_jmp_history(env, cur, 0, 0);
-			err = err ? : propagate_precision(env, &sl->state, cur, NULL);
+			err = err ? : BPF_PROFILE_CALL_ARG(insn_idx, propagate_precision, env, &sl->state, cur, NULL);
 			if (err)
 				return err;
 			/* When processing iterator based loops above propagate_liveness and
