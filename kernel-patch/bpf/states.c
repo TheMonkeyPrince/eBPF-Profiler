@@ -950,6 +950,7 @@ static bool states_equal(struct bpf_verifier_env *env,
 	u32 insn_idx;
 	int i;
 
+	BPF_PROFILE_BLOCK({
 	if (old->curframe != cur->curframe)
 		return false;
 
@@ -958,25 +959,36 @@ static bool states_equal(struct bpf_verifier_env *env,
 	/* Verification state from speculative execution simulation
 	 * must never prune a non-speculative execution one.
 	 */
-	if (old->speculative && !cur->speculative)
+	if (old->speculative && !cur->speculative) {
+		BPF_PROFILE_BLOCK_END();
 		return false;
+	}
 
-	if (old->in_sleepable != cur->in_sleepable)
+	if (old->in_sleepable != cur->in_sleepable) {
+		BPF_PROFILE_BLOCK_END();
 		return false;
+	}
 
-	if (!BPF_PROFILE_CALL(refsafe, old, cur, &env->idmap_scratch))
+	if (!BPF_PROFILE_CALL(refsafe, old, cur, &env->idmap_scratch)) {
+		BPF_PROFILE_BLOCK_END();
 		return false;
+	}
 
 	/* for states to be equal callsites have to be the same
 	 * and all frame states need to be equivalent
 	 */
 	for (i = 0; i <= old->curframe; i++) {
 		insn_idx = bpf_frame_insn_idx(old, i);
-		if (old->frame[i]->callsite != cur->frame[i]->callsite)
+		if (old->frame[i]->callsite != cur->frame[i]->callsite) {
+			BPF_PROFILE_BLOCK_END();
 			return false;
-		if (!BPF_PROFILE_CALL_ARG(insn_idx, func_states_equal,env, old->frame[i], cur->frame[i], insn_idx, exact))
+		}
+		if (!BPF_PROFILE_CALL_ARG(insn_idx, func_states_equal,env, old->frame[i], cur->frame[i], insn_idx, exact)) {
+			BPF_PROFILE_BLOCK_END();
 			return false;
+		}
 	}
+	});
 	return true;
 }
 
