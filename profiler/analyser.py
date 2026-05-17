@@ -117,9 +117,28 @@ class TraceAnalyser:
         self._children = ch
         self._roots = roots
         self.total_duration_ns = (v1 - v0) if v0 is not None and v1 is not None else 0
-
+        self.estimate_overhead()
         if verbose:
             print(f"Total verification time: {self.total_duration_ns / 1e6:.2f} ms")
+
+    def estimate_overhead(self):
+        def t(nodes: list[int]):
+            x = []
+            for i in nodes:
+                x.append(len(self._children[i]))
+            return x
+
+        n1 = self._roots[:5]
+        n2 = self._roots[-5:]
+        x = t(n1)
+        if x != t(n2):
+            raise ValueError("unexpected tree structure, cannot estimate overhead")
+        avg = []
+        for a, b in zip(n1, n2):
+            avg.append((self._timed[a].duration() + self._timed[b].duration()) / 2)
+
+        m, b = linear_fit(x, avg)
+        print(f"Estimated overhead: {m:.2f} ns per child + {b:.2f} ns")
 
     def _node(self, i: int) -> dict:
         ev, sk = self._timed[i], self._sites[i]
@@ -150,3 +169,19 @@ class TraceAnalyser:
         if self._stats is not None:
             out["profile_stats"] = self._stats.to_json_dict()
         return json.dumps(out, indent=2)
+
+def linear_fit(x, y):
+    n = len(x)
+
+    x_mean = sum(x) / n
+    y_mean = sum(y) / n
+
+    numerator = sum((xi - x_mean) * (yi - y_mean)
+                    for xi, yi in zip(x, y))
+
+    denominator = sum((xi - x_mean) ** 2 for xi in x)
+
+    m = numerator / denominator
+    b = y_mean - m * x_mean
+
+    return m, b
