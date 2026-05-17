@@ -96,6 +96,17 @@
         ></div>
         <details id="bpfProgramDetails">
           <summary>BPF program (disassembly)</summary>
+          <div class="bpf-disasm-controls" aria-label="BPF disassembly heatmap settings">
+            <label for="bpfInsnFileFilter">File</label>
+            <select id="bpfInsnFileFilter" title="Kernel source file for insn-indexed samples">
+              <option value="all">all files</option>
+            </select>
+            <label for="bpfInsnScaleSelect">Scale</label>
+            <select id="bpfInsnScaleSelect" title="Colors use hottest insn in scope as max heat (insn-indexed samples only)">
+              <option value="profiled">profiled</option>
+              <option value="absolute">absolute</option>
+            </select>
+          </div>
           <pre id="bpfDisasmPre" class="bpf-disasm"></pre>
         </details>
         <details id="verifierProfileStats">

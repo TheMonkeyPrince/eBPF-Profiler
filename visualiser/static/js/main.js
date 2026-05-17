@@ -1,5 +1,5 @@
 import { apiGet } from "./api.js";
-import { loadConfig } from "./config.js";
+import { loadConfig, refreshBpfDisasmHeatmap } from "./config.js";
 import {
   applyTheme,
   ensureEditor,
@@ -36,6 +36,8 @@ bindUi({
   profiledListEl: /** @type {HTMLElement} */ (document.getElementById("profiledList")),
   bpfDisasmPreEl: document.getElementById("bpfDisasmPre"),
   bpfProgramDetailsEl: document.getElementById("bpfProgramDetails"),
+  bpfInsnFileFilterEl: document.getElementById("bpfInsnFileFilter"),
+  bpfInsnScaleSelectEl: document.getElementById("bpfInsnScaleSelect"),
 });
 
 if (!ui) {
@@ -116,6 +118,7 @@ ui.profiledDisplaySelectEl.addEventListener("change", async (event) => {
 ui.argFilterEl.addEventListener("change", async (ev) => {
   app.selectedArg = ev.target.value;
   updateUrlState();
+  refreshBpfDisasmHeatmap();
   if (app.selectedPath) {
     await loadFile();
   }
@@ -128,6 +131,22 @@ ui.scaleModeSelectEl.addEventListener("change", async (ev) => {
     await renderCode(app.currentFileData);
   }
 });
+
+if (ui.bpfInsnFileFilterEl) {
+  ui.bpfInsnFileFilterEl.addEventListener("change", (ev) => {
+    app.bpfInsnFileFilter = ev.target.value || "all";
+    updateUrlState();
+    refreshBpfDisasmHeatmap();
+  });
+}
+
+if (ui.bpfInsnScaleSelectEl) {
+  ui.bpfInsnScaleSelectEl.addEventListener("change", (ev) => {
+    app.bpfInsnScaleMode = ev.target.value === "absolute" ? "absolute" : "profiled";
+    updateUrlState();
+    refreshBpfDisasmHeatmap();
+  });
+}
 
 ui.prevProfiledBtnEl.addEventListener("click", async () => {
   await focusProfiledRange(app.currentProfiledRangeIndex - 1, true);

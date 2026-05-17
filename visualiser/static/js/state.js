@@ -1,4 +1,4 @@
-/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledDisplaySelectEl: HTMLSelectElement, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null }} UiRefs */
+/** @typedef {{ metaEl: HTMLElement, treeEl: HTMLElement, fileTitleEl: HTMLElement, monacoEditorEl: HTMLElement, hoverDetailsEl: HTMLElement, copyDetailsBtnEl: HTMLElement, argFilterEl: HTMLSelectElement, scaleModeSelectEl: HTMLSelectElement, reloadButtonEl: HTMLButtonElement, reportSelectEl: HTMLSelectElement | null, themeToggleEl: HTMLInputElement, prevProfiledBtnEl: HTMLButtonElement, nextProfiledBtnEl: HTMLButtonElement, profileNavStatusEl: HTMLElement, toggleMetaBtnEl: HTMLButtonElement, toggleDetailsBtnEl: HTMLButtonElement, profiledSortSelectEl: HTMLSelectElement, profiledDisplaySelectEl: HTMLSelectElement, profiledListEl: HTMLElement, bpfDisasmPreEl: HTMLElement | null, bpfProgramDetailsEl: HTMLDetailsElement | null, bpfInsnFileFilterEl: HTMLSelectElement | null, bpfInsnScaleSelectEl: HTMLSelectElement | null }} UiRefs */
 
 export const HEAT_BUCKETS = 20;
 
@@ -38,5 +38,15 @@ export const app = {
   treeState: /** @type {Record<string, boolean>} */ ({}),
   treeChildrenCache: /** @type {Record<string, unknown>} */ ({}),
   totalDurationNs: 0,
+  /** @type {unknown[] | null} */
+  bpfDisasmInsns: null,
+  /** @type {Record<string, number>} */
+  insnTiming: {},
+  /** @type {Record<string, Record<string, number>>} */
+  insnTimingByFile: {},
+  /** @type {string[]} */
+  bpfProfiledFiles: [],
+  bpfInsnFileFilter: "all",
+  bpfInsnScaleMode: "profiled",
   lastDetailsText: "Hover a line to see detailed profiling data.",
 };

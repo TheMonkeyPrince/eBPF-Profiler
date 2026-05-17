@@ -23,6 +23,16 @@ export function updateUrlState(replace = false) {
   } else {
     url.searchParams.delete("pview");
   }
+  if (app.bpfInsnFileFilter && app.bpfInsnFileFilter !== "all") {
+    url.searchParams.set("bpfFile", app.bpfInsnFileFilter);
+  } else {
+    url.searchParams.delete("bpfFile");
+  }
+  if (app.bpfInsnScaleMode === "absolute") {
+    url.searchParams.set("bpfScale", "absolute");
+  } else {
+    url.searchParams.delete("bpfScale");
+  }
 
   const reportSelectEl = ui?.reportSelectEl;
   if (reportSelectEl && reportSelectEl.value && !reportSelectEl.selectedOptions[0]?.disabled) {
@@ -59,5 +69,13 @@ export function readUrlState() {
   const maybePview = url.searchParams.get("pview");
   if (maybePview === "tree" || maybePview === "flat") {
     app.profiledListDisplayMode = maybePview;
+  }
+  const maybeBpfFile = url.searchParams.get("bpfFile");
+  if (maybeBpfFile) {
+    app.bpfInsnFileFilter = maybeBpfFile;
+  }
+  const maybeBpfScale = url.searchParams.get("bpfScale");
+  if (maybeBpfScale === "absolute" || maybeBpfScale === "profiled") {
+    app.bpfInsnScaleMode = maybeBpfScale;
   }
 }

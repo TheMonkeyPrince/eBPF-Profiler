@@ -326,6 +326,65 @@ def _index_append_range(
                 arg_stat["max_ns"] = max(arg_stat["max_ns"], max(samples))
 
 
+def _sample_list_total_ns(samples):
+    total = 0
+    for item in samples or []:
+        if isinstance(item, dict):
+            total += int(item.get("inclusive_ns", item.get("ns", 0)))
+        elif isinstance(item, (int, float)):
+            total += int(item)
+    return total
+
+
+def insn_timing_from_index(indexed: dict, rel_file: str | None = None) -> dict[str, int]:
+    """Aggregate inclusive time per bpf_insn_idx (by_arg samples only)."""
+    summary = bpf_insn_profiling_from_index(indexed)
+    if rel_file is None:
+        return summary["insn_timing"]
+    return summary["insn_timing_by_file"].get(rel_file, {})
+
+
+def bpf_insn_profiling_from_index(indexed: dict) -> dict:
+    """Per-file and report-wide timing keyed by bpf_insn_idx, plus profiled totals."""
+    insn_timing_by_file: dict[str, dict[str, int]] = {}
+    profiled_total_ns_by_file: dict[str, int] = {}
+    profiled_insn_total_ns_by_file: dict[str, int] = {}
+
+    for rel_file, file_entry in indexed.get("files", {}).items():
+        insn_map: dict[str, int] = {}
+        profiled_total = 0
+        insn_total = 0
+        for range_entry in file_entry.get("ranges", []):
+            profiled_total += _sample_list_total_ns(range_entry.get("no_arg"))
+            for arg, samples in (range_entry.get("by_arg") or {}).items():
+                added = _sample_list_total_ns(samples)
+                profiled_total += added
+                if added > 0:
+                    sk = str(arg)
+                    insn_map[sk] = insn_map.get(sk, 0) + added
+                    insn_total += added
+        if not insn_map and profiled_total <= 0:
+            continue
+        insn_timing_by_file[rel_file] = insn_map
+        profiled_total_ns_by_file[rel_file] = profiled_total
+        profiled_insn_total_ns_by_file[rel_file] = insn_total
+
+    insn_timing: dict[str, int] = {}
+    for per_file in insn_timing_by_file.values():
+        for arg, total in per_file.items():
+            insn_timing[arg] = insn_timing.get(arg, 0) + total
+
+    return {
+        "insn_timing": insn_timing,
+        "insn_timing_by_file": insn_timing_by_file,
+        "profiled_files": sorted(insn_timing_by_file.keys()),
+        "profiled_total_ns": sum(profiled_total_ns_by_file.values()),
+        "profiled_insn_total_ns": sum(profiled_insn_total_ns_by_file.values()),
+        "profiled_total_ns_by_file": profiled_total_ns_by_file,
+        "profiled_insn_total_ns_by_file": profiled_insn_total_ns_by_file,
+    }
+
+
 def _split_timing_sample_pairs(items):
     inclusive = []
     exclusive = []
@@ -686,6 +745,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "total_duration": int(STATE.index.get("total_duration", 0)),
                     "total_duration_ns": int(STATE.index.get("total_duration", 0)),
                     "global_args": STATE.index.get("global_args", []),
+                    **bpf_insn_profiling_from_index(STATE.index),
                     "load_error": STATE.load_error,
                     "profiled_files_count": len(STATE.index.get("files", {})),
                     "bpf_insn_count": STATE.index.get("bpf_insn_count"),
