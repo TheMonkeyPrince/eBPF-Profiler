@@ -143,9 +143,17 @@ class TraceAnalyser:
         print(f"Estimated overhead model: {self._overhead_model[0]:.2f} ns per child + {self._overhead_model[1]:.2f} ns")
 
     def _apply_overhead_model(self,):
-        for i in range(len(self._timed)):
-            self._exclusive[i] -= self._overhead_model[0] * len(self._children[i]) + self._overhead_model[1]
-        self.total_duration_ns -= self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
+        def apply(i: int) -> float:
+            estimated_overhead = self._overhead_model[0] * len(self._children[i]) + self._overhead_model[1]
+            for c in self._children[i]:
+                estimated_overhead += apply(c)
+            self._exclusive[i] -= estimated_overhead
+            return estimated_overhead
+        
+        total_overhead = self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
+        for r in self._roots:
+            total_overhead += apply(r)
+        self.total_duration_ns = self.total_duration_ns - total_overhead
 
     def _node(self, i: int) -> dict:
         ev, sk = self._timed[i], self._sites[i]
