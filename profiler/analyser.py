@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from time import time
 
 from profiler_types import BPFInsn, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start
@@ -93,6 +94,7 @@ class TraceAnalyser:
 		if verbose:
 			print(f"Analysing trace for {self.program_name!r} with {len(self.trace)} records and {len(self._program)} BPF instructions...")
 		
+		analysis_start_time = time()
 		self.kernel_compiler = kernel_compiler
 		v0 = v1 = None
 		timed: list[Record] = []
@@ -122,8 +124,10 @@ class TraceAnalyser:
 		self._children = ch
 		self._roots = roots
 		self.total_duration_ns = (v1 - v0) if v0 is not None and v1 is not None else 0
+		analysis_end_time = time()
 		if verbose:
 			print(f"Total verification time: {self.total_duration_ns / 1e6:.2f} ms")
+			print(f"Analysis time: {analysis_end_time - analysis_start_time:.2f} s")
 		if estimate_overhead:
 			self._model_overhead()
 			self._apply_overhead_model()
