@@ -87,12 +87,10 @@ do {                                                                            
 do {                                                                                                 \
     bpf_profiler_start(*prog);                                                                       \
     bpf_profiler_add_record(START, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, ktime_get_ns(), 0); \
-    bpf_profile_estimate_overhead();                                                                 \
 } while (0)   
 
 #define BPF_PROFILE_END() \
 do {                                                                                               \
-    bpf_profile_estimate_overhead();                                                               \
     bpf_profiler_add_record(END, __FILE__, __LINE__, NULL, BPF_PROFILE_NO_ARG, 0, ktime_get_ns()); \
     bpf_profiler_end(env);                                                                         \
 } while (0)

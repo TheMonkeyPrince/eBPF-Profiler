@@ -1210,7 +1210,7 @@ int bpf_is_state_visited(struct bpf_verifier_env *env, int insn_idx)
 	int n, err, states_cnt = 0;
 	struct list_head *pos, *tmp, *head;
 
-	force_new_state = env->test_state_freq || BPF_PROFILE_CALL_ARG(insn_idx, bpf_is_force_checkpoint, env, insn_idx) ||
+	force_new_state = env->test_state_freq || bpf_is_force_checkpoint(env, insn_idx) ||
 			  /* Avoid accumulating infinitely long jmp history */
 			  cur->jmp_history_cnt > 40;
 
