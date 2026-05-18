@@ -141,7 +141,7 @@ _site_cache: dict[tuple[str, int, str], tuple[str, int, int, str | None]] = {}
 
 def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
 	if ev.get_record_type() == RecordType.CALL:
-		return (str(ev.file_id), int(ev.line), int(ev.line), None)
+		return (str(ev.file_id), int(ev.line), int(ev.line), "test")
 	if ev.get_record_type() != RecordType.BLOCK:
 		raise ValueError(f"timed record expected, got {ev.get_record_type()}")
 
