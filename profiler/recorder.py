@@ -18,7 +18,7 @@ class BPFRecorder:
 		os.remove(RECORD_FILE_PATH) if os.path.exists(RECORD_FILE_PATH) else None
 
 		def recording_loop():
-			duration = 2  # seconds
+			duration = 1  # seconds
 			sleep(duration)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)

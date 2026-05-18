@@ -38,13 +38,22 @@ if __name__ == "__main__":
 		help="Disable analysis progress bars",
 		action="store_true",
 	)
+	parser.add_argument(
+		"--direct",
+		help="Run the profiler and analyse traces directly without saving them",
+		action="store_true",
+	)
 	args = parser.parse_args()
 
 	if args.test:
-		tests = [args.test]
+		if args.test == "samples":
+			tests = list_kernel_samples()
+		elif args.test == "selftests":
+			tests = list_kernel_selftests()
+		else:
+			tests = [args.test]
 	else:
-		tests = list_kernel_selftests()
-		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
+		tests = list_kernel_selftests() + list_kernel_samples()
 		# tests = ["sample_tracex1"]
 		# tests = ["sample_hbm", "sample_ibumad", "sample_cpustat"]
 		# tests = ["sample_ibumad"]
@@ -53,20 +62,27 @@ if __name__ == "__main__":
 	runned_tests = []
 	try:
 		profiler = BPFProfiler(verbose=args.verbose, show_progress=not args.no_progress)
-		if not args.analysis_only:
-			for test in tests:
-				print(f"Running test: {test}")
-				results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
-				if len(results) > 0:
-					runned_tests.append(test)
-		else:
-			runned_tests = tests
+		if not args.direct:
+			if not args.analysis_only:
+				for i, test in enumerate(tests):
+					print(f"Running test: {test} ({i+1}/{len(tests)})")
+					results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save)
+					if len(results) > 0:
+						runned_tests.append(test)
+			else:
+				runned_tests = tests
 
-		if not args.trace_only:
-			for test in runned_tests:
-				print(f"Analysing test: {test}")
-				if result_bin_paths(test):
-					profiler.analyse_trace_from_file(test)
+			if not args.trace_only:
+				for i, test in enumerate(runned_tests):
+					print(f"Analysing test: {test} ({i+1}/{len(runned_tests)})")
+					if result_bin_paths(test):
+						profiler.analyse_trace_from_file(test)
+		else:
+			for i, test in enumerate(tests):
+				print(f"Running and analysing test: {test} ({i+1}/{len(tests)})")
+				results = profiler.profile_program(test, min_insns_to_save=args.min_insns_to_save, save=False)
+				if len(results) > 0:
+					profiler.analyse_traces(results)
 	except KeyboardInterrupt:
 		print("Stopped")
 

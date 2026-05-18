@@ -24,11 +24,11 @@ class BPFProfiler:
         results = self.recorder.wait_for_completion(program_name)
         proc.terminate()
         proc.wait()
-        if save and results:
-            for r in results:
-                if len(r.program) > min_insns_to_save:
-                    save_result(r)
-        return results
+        filtered_results = [r for r in results if len(r.program) > min_insns_to_save and r.is_valid()]
+        if save and filtered_results:
+            for r in filtered_results:
+                save_result(r)
+        return filtered_results
 
     def analyse_trace(
         self,
@@ -43,6 +43,15 @@ class BPFProfiler:
         if save:
             save_analysis(program_name, a)
         return a
+    
+    def analyse_traces(
+        self,
+        results: list[ProfilingResult],
+    ):
+        for result in results:
+            a = TraceAnalyser(f"{result.program_name}", result.trace, program=result.program, stats=result.stats)
+            a.analyse(verbose=self.verbose, show_progress=self.show_progress)
+            save_analysis(f"{result.program_name}", a)
 
     def analyse_trace_from_file(self, program_name: str, save: bool = True) -> list[TraceAnalyser]:
         paths = result_bin_paths(program_name)

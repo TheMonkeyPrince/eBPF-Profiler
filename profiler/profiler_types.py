@@ -177,5 +177,8 @@ class ProfilingResult:
 	def __str__(self):
 		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, trace=[{len(self.trace)} records])"
 	
+	def is_valid(self):
+		return len(self.trace) < BPF_PROFILE_MAX_RECORDS
+	
 if __name__ == "__main__":
 	print(Record.size())
