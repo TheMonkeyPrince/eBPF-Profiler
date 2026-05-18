@@ -16,7 +16,7 @@ if __name__ == "__main__":
 		"--min-insns-to-save",
 		help="Only write out/results/*.bin when the BPF program has more than this many insns (default: 50)",
 		type=int,
-		default=25,
+		default=200,
 	)
 	parser.add_argument(
 		"--trace-only",

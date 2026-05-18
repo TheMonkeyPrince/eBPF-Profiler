@@ -58,5 +58,8 @@ class BPFRecorder:
 		except FileNotFoundError:
 			print("No profiling data found.")
 			return []
+		except ValueError as e:
+			print(f"Error reading profiling data: {e}")
+			return []
 
 		return results
