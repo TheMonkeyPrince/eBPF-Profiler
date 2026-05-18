@@ -1,6 +1,5 @@
 import json
 import os
-import re
 from collections import defaultdict
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -63,9 +62,6 @@ def reports_catalog(analysis_dir: Path) -> list[dict]:
         catalog.append(entry)
     return catalog
 
-RANGE_RE = re.compile(r"^(?P<file>.+):(?P<start>\d+)-(?P<end>\d+)$")
-
-
 def to_rel_kernel_path(path: Path) -> str:
     return path.relative_to(KERNEL_PATH).as_posix()
 
@@ -119,23 +115,6 @@ def tree_entries_from_report(base_rel: str, profiled_files):
     return entries[:MAX_TREE_ENTRIES]
 
 
-def parse_samples(value):
-    if isinstance(value, list):
-        if not all(isinstance(item, (int, float)) for item in value):
-            raise ValueError("sample list contains non-numeric values")
-        return {"no_arg": [int(v) for v in value], "by_arg": {}}
-    if isinstance(value, dict):
-        parsed = {}
-        for arg, samples in value.items():
-            if not isinstance(samples, list) or not all(
-                isinstance(item, (int, float)) for item in samples
-            ):
-                raise ValueError("arg sample list is malformed")
-            parsed[str(arg)] = [int(v) for v in samples]
-        return {"no_arg": [], "by_arg": parsed}
-    raise ValueError("invalid execution_times entry")
-
-
 def empty_line_stats():
     return {
         "total_ns": 0,
@@ -149,19 +128,11 @@ def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
     kc = report.get("kernel_compiler")
     if isinstance(kc, str) and kc:
         indexed["kernel_compiler"] = kc
-    else:
-        meta = report.get("meta")
-        if isinstance(meta, dict) and isinstance(meta.get("kernel_compiler"), str):
-            indexed["kernel_compiler"] = meta["kernel_compiler"]
 
     insns = report.get("bpf_insns")
     if isinstance(insns, list):
         indexed["bpf_insns"] = insns
         indexed["bpf_insn_count"] = len(insns)
-    else:
-        meta = report.get("meta")
-        if isinstance(meta, dict) and meta.get("bpf_insn_count") is not None:
-            indexed["bpf_insn_count"] = int(meta["bpf_insn_count"])
 
     ps = report.get("profile_stats")
     if isinstance(ps, dict):
@@ -173,24 +144,63 @@ def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
 
 
 def _total_duration_ns_from_report(report):
-    if "verification_ns" in report:
-        return int(report["verification_ns"])
-    if "total_duration_ns" in report:
-        return int(report["total_duration_ns"])
-    td = report.get("total_duration")
-    if td is not None:
-        return int(td)
-    ver = report.get("verification") or {}
-    return int(ver.get("duration_ns", 0))
+    if "verification_ns" not in report:
+        raise ValueError("verification_ns is required")
+    return int(report["verification_ns"])
 
 
 def _parse_file_colon_location(loc: str):
-    """Parse `path/to/file.c:start:end` (split from the right)."""
+    """Parse `file_id_or_path:start:end` (split from the right)."""
     try:
         path, start_s, end_s = loc.rsplit(":", 2)
     except ValueError as err:
         raise ValueError(f"invalid file location string: {loc!r}") from err
     return path, int(start_s), int(end_s)
+
+
+def _resolve_file_id(file_ids: dict, file_id: str) -> str:
+    rel = file_ids.get(file_id)
+    if rel is None:
+        rel = file_ids.get(str(file_id))
+    if not isinstance(rel, str) or not rel:
+        raise ValueError(f"unknown file id in call_tree: {file_id!r}")
+    return rel
+
+
+def _resolve_site_loc(loc: str, file_ids: dict) -> str:
+    file_id, start, end = _parse_file_colon_location(loc)
+    rel_file = _resolve_file_id(file_ids, file_id)
+    return f"{rel_file}:{start}:{end}"
+
+
+def normalize_call_tree_node(node: dict, file_ids: dict) -> dict:
+    """Expand compact analyser nodes (f/i/e/a/c) for the visualiser API."""
+    if not isinstance(node, dict):
+        raise ValueError("call_tree node must be an object")
+    loc = node.get("f")
+    if not isinstance(loc, str):
+        raise ValueError('call_tree node needs compact "f" (file_id:start:end)')
+
+    out: dict = {
+        "file": _resolve_site_loc(loc, file_ids),
+        "inclusive_ns": int(node["i"]),
+        "exclusive_ns": int(node["e"]),
+    }
+    if "a" in node:
+        out["arg"] = node["a"]
+    children = node.get("c")
+    if children is not None:
+        if not isinstance(children, list):
+            raise ValueError("call_tree node children must be an array")
+        if children:
+            out["children"] = [normalize_call_tree_node(ch, file_ids) for ch in children]
+    return out
+
+
+def normalize_call_tree(roots: list, file_ids: dict) -> list:
+    if not isinstance(roots, list):
+        raise ValueError("call_tree must be an array")
+    return [normalize_call_tree_node(node, file_ids) for node in roots]
 
 
 def _node_matches_arg_filter(node: dict, arg_filter: str) -> bool:
@@ -209,7 +219,7 @@ def _prune_call_tree_node_for_file_arg(
     node: dict, rel_path: str, arg_filter: str
 ) -> dict | None:
     """Keep branches that touch rel_path, with arg filtering like the flat profiled list."""
-    loc = node.get("file") or node.get("site")
+    loc = node.get("file")
     if not isinstance(loc, str):
         return None
     try:
@@ -385,206 +395,22 @@ def bpf_insn_profiling_from_index(indexed: dict) -> dict:
     }
 
 
-def _split_timing_sample_pairs(items):
-    inclusive = []
-    exclusive = []
-    for item in items:
-        if isinstance(item, dict):
-            inclusive.append(int(item["inclusive_ns"]))
-            exclusive.append(
-                int(item.get("exclusive_ns", item["inclusive_ns"]))
-            )
-        elif isinstance(item, (int, float)):
-            v = int(item)
-            inclusive.append(v)
-            exclusive.append(v)
-        else:
-            raise ValueError("timing sample must be a number or object")
-    return inclusive, exclusive
-
-
-def ingest_regions_schema_v2(report):
+def ingest_call_tree(report, roots: list):
     indexed = {
         "program_name": report.get("program_name"),
         "total_duration": _total_duration_ns_from_report(report),
         "files": {},
         "global_args": set(),
     }
-    regions = report.get("regions")
-    if not isinstance(regions, list):
-        raise ValueError("regions must be an array")
-
-    for region in regions:
-        if not isinstance(region, dict):
-            raise ValueError("each region must be an object")
-        rel_file = region.get("file")
-        if not isinstance(rel_file, str):
-            raise ValueError("region.file must be a string")
-        start = int(region["start_line"])
-        end = int(region["end_line"])
-        if start > end:
-            start, end = end, start
-
-        timing = region.get("timing")
-        timing_by_arg = region.get("timing_by_arg")
-        if timing is None and timing_by_arg is None:
-            continue
-
-        no_arg, no_arg_exclusive = [], []
-        if timing is not None:
-            if not isinstance(timing, list):
-                raise ValueError("region.timing must be a list")
-            no_arg, no_arg_exclusive = _split_timing_sample_pairs(timing)
-
-        by_arg = {}
-        by_arg_exclusive = {}
-        if timing_by_arg is not None:
-            if not isinstance(timing_by_arg, dict):
-                raise ValueError("region.timing_by_arg must be an object")
-            for arg_key, samples in timing_by_arg.items():
-                if not isinstance(samples, list):
-                    raise ValueError("timing_by_arg values must be lists")
-                inc, exc = _split_timing_sample_pairs(samples)
-                sk = str(arg_key)
-                by_arg[sk] = inc
-                by_arg_exclusive[sk] = exc
-
-        if not no_arg and not by_arg:
-            continue
-
-        for arg in by_arg:
-            indexed["global_args"].add(arg)
-
-        fn = region.get("function")
-        fn_str = fn if isinstance(fn, str) and fn else None
-        _index_append_range(
-            indexed,
-            rel_file,
-            start,
-            end,
-            no_arg,
-            no_arg_exclusive,
-            by_arg,
-            by_arg_exclusive,
-            fn_str,
-        )
-
-    indexed["global_args"] = sorted(indexed["global_args"], key=lambda a: int(a))
-    _merge_visualiser_meta_from_report(indexed, report)
-    return indexed
-
-
-def ingest_legacy_execution_times(report):
-    indexed = {
-        "program_name": report.get("program_name"),
-        "total_duration": int(report.get("total_duration", 0)),
-        "files": {},
-        "global_args": set(),
-    }
-
-    execution_times = report.get("execution_times", {})
-    if not isinstance(execution_times, dict):
-        raise ValueError("execution_times must be an object")
-
-    for key, value in execution_times.items():
-        match = RANGE_RE.match(key)
-        if not match:
-            continue
-
-        rel_file = match.group("file")
-        start = int(match.group("start"))
-        end = int(match.group("end"))
-        if start > end:
-            start, end = end, start
-
-        parsed = parse_samples(value)
-        no_arg = parsed["no_arg"]
-        by_arg = parsed["by_arg"]
-        for arg in by_arg:
-            indexed["global_args"].add(arg)
-
-        file_entry = indexed["files"].setdefault(
-            rel_file,
-            {
-                "line_stats": {},
-                "ranges": [],
-            },
-        )
-
-        range_total = sum(no_arg) + sum(sum(samples) for samples in by_arg.values())
-        range_count = len(no_arg) + sum(len(samples) for samples in by_arg.values())
-        range_max = 0
-        if no_arg:
-            range_max = max(range_max, max(no_arg))
-        for samples in by_arg.values():
-            if samples:
-                range_max = max(range_max, max(samples))
-
-        file_entry["ranges"].append(
-            {
-                "start": start,
-                "end": end,
-                "no_arg": no_arg,
-                "by_arg": by_arg,
-                "total_ns": range_total,
-                "count": range_count,
-                "max_ns": range_max,
-            }
-        )
-
-        for line in range(start, end + 1):
-            line_stat = file_entry["line_stats"].setdefault(line, empty_line_stats())
-
-            line_stat["total_ns"] += range_total
-            line_stat["count"] += range_count
-            line_stat["max_ns"] = max(line_stat["max_ns"], range_max)
-
-            if no_arg:
-                no_arg_stat = line_stat["by_arg"].setdefault(
-                    "__no_arg__", {"total_ns": 0, "count": 0, "max_ns": 0}
-                )
-                no_arg_stat["total_ns"] += sum(no_arg)
-                no_arg_stat["count"] += len(no_arg)
-                no_arg_stat["max_ns"] = max(no_arg_stat["max_ns"], max(no_arg))
-
-            for arg, samples in by_arg.items():
-                arg_stat = line_stat["by_arg"].setdefault(
-                    arg, {"total_ns": 0, "count": 0, "max_ns": 0}
-                )
-                arg_stat["total_ns"] += sum(samples)
-                arg_stat["count"] += len(samples)
-                if samples:
-                    arg_stat["max_ns"] = max(arg_stat["max_ns"], max(samples))
-
-    indexed["global_args"] = sorted(indexed["global_args"], key=lambda a: int(a))
-    _merge_visualiser_meta_from_report(indexed, report)
-    return indexed
-
-
-def ingest_call_tree_schema_v3(report):
-    indexed = {
-        "program_name": report.get("program_name"),
-        "total_duration": _total_duration_ns_from_report(report),
-        "files": {},
-        "global_args": set(),
-    }
-
-    roots = report.get("call_tree")
-    if roots is None:
-        raise ValueError("call_tree is required")
-    if not isinstance(roots, list):
-        raise ValueError("call_tree must be an array")
 
     acc = {}
 
     def merge_node(node):
         if not isinstance(node, dict):
             raise ValueError("call_tree node must be an object")
-        loc = node.get("file") or node.get("site")
+        loc = node.get("file")
         if not isinstance(loc, str):
-            raise ValueError(
-                'call_tree node needs a compact "path:start:end" string in file (or legacy site)'
-            )
+            raise ValueError('call_tree node needs "file" as path:start:end')
         rel_file, start, end = _parse_file_colon_location(loc)
         if start > end:
             start, end = end, start
@@ -647,12 +473,14 @@ def ingest_call_tree_schema_v3(report):
 def ingest_report(report):
     if not isinstance(report, dict):
         raise ValueError("report must be an object")
-    if isinstance(report.get("call_tree"), list):
-        return ingest_call_tree_schema_v3(report)
-    schema = int(report.get("schema_version", 1))
-    if schema >= 2 and "regions" in report:
-        return ingest_regions_schema_v2(report)
-    return ingest_legacy_execution_times(report)
+    file_ids = report.get("file_ids")
+    if not isinstance(file_ids, dict):
+        raise ValueError("file_ids must be an object")
+    roots = report.get("call_tree")
+    if not isinstance(roots, list):
+        raise ValueError("call_tree must be an array")
+    normalized = normalize_call_tree(roots, file_ids)
+    return ingest_call_tree(report, normalized), normalized
 
 
 class AppState:
@@ -667,14 +495,14 @@ class AppState:
         self._load_current_report_from_disk()
 
     def _empty_index_report(self):
-        return {"call_tree": []}
+        return {"call_tree": [], "file_ids": {}, "verification_ns": 0}
 
     def _load_current_report_from_disk(self):
         empty = self._empty_index_report()
         self.call_tree_roots = None
         try:
             if not self.current_report:
-                self.index = ingest_report(empty)
+                self.index, self.call_tree_roots = ingest_report(empty)
                 if not self.analysis_dir.is_dir():
                     self.load_error = f"Analysis directory not found: {self.analysis_dir}"
                 else:
@@ -683,7 +511,7 @@ class AppState:
 
             path = resolve_analysis_report_path(self.analysis_dir, self.current_report)
             if path is None:
-                self.index = ingest_report(empty)
+                self.index, self.call_tree_roots = ingest_report(empty)
                 self.load_error = (
                     f"Report file missing or invalid name for {self.current_report!r}"
                 )
@@ -691,13 +519,10 @@ class AppState:
 
             with path.open("r", encoding="utf-8") as handle:
                 report = json.load(handle)
-            self.index = ingest_report(report)
-            ct = report.get("call_tree")
-            self.call_tree_roots = ct if isinstance(ct, list) else None
+            self.index, self.call_tree_roots = ingest_report(report)
             self.load_error = None
         except Exception as exc:  # pylint: disable=broad-except
-            self.index = ingest_report(empty)
-            self.call_tree_roots = None
+            self.index, self.call_tree_roots = ingest_report(empty)
             self.load_error = f"Failed to parse report: {exc}"
 
     def reload_report(self, report_stem: str | None = None):

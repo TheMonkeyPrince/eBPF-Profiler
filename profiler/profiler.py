@@ -38,7 +38,7 @@ class BPFProfiler:
         stats: ProfileStats | None = None,
     ) -> TraceAnalyser:
         a = TraceAnalyser(program_name, trace, program=program, stats=stats)
-        a.analyse()
+        a.analyse(verbose=self.verbose)
         if save:
             save_analysis(program_name, a)
         return a

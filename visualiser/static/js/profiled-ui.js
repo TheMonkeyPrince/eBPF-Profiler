@@ -69,7 +69,7 @@ function fillProfiledLabelPrimary(labelEl, range, parentSharePct = null) {
  */
 function fillCallTreeContextLabel(labelEl, node, nk, parentSharePct = null) {
   labelEl.textContent = "";
-  const loc = node.file || node.site;
+  const loc = node.file;
   const shortFile = nk ? nk.file.split("/").pop() || nk.file : typeof loc === "string" ? loc : "";
   const fn = node.function && String(node.function).trim() ? String(node.function) : "";
   const spanFile = document.createElement("span");
@@ -274,7 +274,7 @@ export function renderProfiledList() {
     if (!Array.isArray(rawCt) || !rawCt.length) {
       const note = document.createElement("div");
       note.className = "profiled-tree-unavailable";
-      note.textContent = "This report has no call_tree field; showing a sorted list.";
+      note.textContent = "No call tree for this file; showing a sorted list.";
       profiledListEl.appendChild(note);
     } else {
       const ct =

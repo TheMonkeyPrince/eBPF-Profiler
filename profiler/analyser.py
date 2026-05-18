@@ -1,9 +1,48 @@
 import json
+import sys
 from pathlib import Path
 from time import time
 
 from profiler_types import BPFInsn, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start
+
+
+class _ProgressBar:
+	def __init__(self, total: int, desc: str = "", enabled: bool = True, width: int = 36):
+		self.total = max(int(total), 1)
+		self.desc = desc
+		self.enabled = enabled
+		self.width = width
+		self.n = 0
+
+	def update(self, n: int = 1) -> None:
+		if not self.enabled:
+			return
+		self.n = min(self.n + n, self.total)
+		pct = self.n / self.total
+		filled = int(self.width * pct)
+		bar = "#" * filled + "-" * (self.width - filled)
+		sys.stderr.write(f"\r{self.desc} |{bar}| {self.n}/{self.total} ({100 * pct:.0f}%)")
+		sys.stderr.flush()
+
+	def close(self) -> None:
+		if self.enabled:
+			sys.stderr.write("\n")
+			sys.stderr.flush()
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, *_args) -> None:
+		self.close()
+
+	def iter(self, iterable):
+		if not self.enabled:
+			yield from iterable
+			return
+		for item in iterable:
+			yield item
+			self.update(1)
 
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
 
@@ -14,7 +53,9 @@ def _contains(outer: Record, inner: Record) -> bool:
 	return outer.start_time < inner.start_time and outer.end_time > inner.end_time
 
 
-def _exclusive_and_children(records: list[Record]) -> tuple[list[int], list[list[int]]]:
+def _exclusive_and_children(
+	records: list[Record], *, progress: _ProgressBar | None = None
+) -> tuple[list[int], list[list[int]]]:
 	n = len(records)
 	children: list[list[int]] = [[] for _ in range(n)]
 	for i in range(n):
@@ -28,6 +69,8 @@ def _exclusive_and_children(records: list[Record]) -> tuple[list[int], list[list
 				best_start, best_j = ej.start_time, j
 		if best_j >= 0:
 			children[best_j].append(i)
+		if progress is not None:
+			progress.update(1)
 	exclusive = []
 	for i in range(n):
 		inc = records[i].duration()
@@ -89,28 +132,35 @@ class TraceAnalyser:
 		self._children: list[list[int]] = []
 		self._roots: list[int] = []
 		self._overhead_model: tuple[float, float] = (0, 0)
+		self._show_progress = False
 
 	def analyse(self, verbose: bool = True, kernel_compiler: str = "clang", estimate_overhead: bool = False):
+		self._show_progress = verbose
 		if verbose:
-			print(f"Analysing trace for {self.program_name!r} with {len(self.trace)} records and {len(self._program)} BPF instructions...")
-		
+			print(
+				f"Analysing trace for {self.program_name!r} with {len(self.trace)} records "
+				f"and {len(self._program)} BPF instructions..."
+			)
+
 		analysis_start_time = time()
 		self.kernel_compiler = kernel_compiler
 		v0 = v1 = None
 		timed: list[Record] = []
 		args: list[int | None] = []
 
-		for ev in self.trace:
-			match ev.get_record_type():
-				case RecordType.START:
-					v0 = ev.start_time
-				case RecordType.END:
-					v1 = ev.end_time
-				case RecordType.BLOCK | RecordType.CALL:
-					timed.append(ev)
-					args.append(ev.arg if ev.has_arg() else None)
+		with _ProgressBar(len(self.trace), "Scanning trace", self._show_progress) as scan_bar:
+			for ev in scan_bar.iter(self.trace):
+				match ev.get_record_type():
+					case RecordType.START:
+						v0 = ev.start_time
+					case RecordType.END:
+						v1 = ev.end_time
+					case RecordType.BLOCK | RecordType.CALL:
+						timed.append(ev)
+						args.append(ev.arg if ev.has_arg() else None)
 
-		exc, ch = _exclusive_and_children(timed)
+		with _ProgressBar(len(timed), "Building call tree", self._show_progress) as tree_bar:
+			exc, ch = _exclusive_and_children(timed, progress=tree_bar)
 		mark = [False] * len(timed)
 		for row in ch:
 			for c in row:
@@ -118,7 +168,11 @@ class TraceAnalyser:
 		roots = [i for i in range(len(timed)) if not mark[i]]
 
 		self._timed = timed
-		self._sites = [_site(e, kernel_compiler) for e in timed]
+		sites: list[tuple[str, int, int, str | None]] = []
+		with _ProgressBar(len(timed), "Resolving source sites", self._show_progress) as site_bar:
+			for e in site_bar.iter(timed):
+				sites.append(_site(e, kernel_compiler))
+		self._sites = sites
 		self._args = args
 		self._exclusive = exc
 		self._children = ch
@@ -130,7 +184,7 @@ class TraceAnalyser:
 			print(f"Analysis time: {analysis_end_time - analysis_start_time:.2f} s")
 		if estimate_overhead:
 			self._model_overhead()
-			self._apply_overhead_model()
+			self._apply_overhead_model(verbose=self._show_progress)
 			if verbose:
 				print(f"Total verification time after overhead estimation: {self.total_duration_ns / 1e6:.2f} ms")
 
@@ -153,19 +207,23 @@ class TraceAnalyser:
 		self._overhead_model = linear_fit(x, avg)
 		print(f"Estimated overhead model: {self._overhead_model[0]:.2f} ns per child + {self._overhead_model[1]:.2f} ns")
 
-	def _apply_overhead_model(self,):
-		def apply(i: int) -> float:
+	def _apply_overhead_model(self, verbose: bool = False):
+		n_timed = len(self._timed)
+
+		def apply(i: int, bar: _ProgressBar) -> float:
 			estimated_overhead = self._overhead_model[0] * len(self._children[i]) + self._overhead_model[1]
 			for c in self._children[i]:
-				estimated_overhead += apply(c)
+				estimated_overhead += apply(c, bar)
 			if estimated_overhead > self._exclusive[i]:
 				estimated_overhead = self._exclusive[i]
 			self._exclusive[i] -= estimated_overhead
+			bar.update(1)
 			return estimated_overhead
-		
-		total_overhead = self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
-		for r in self._roots:
-			total_overhead += apply(r)
+
+		with _ProgressBar(n_timed, "Applying overhead model", verbose) as overhead_bar:
+			total_overhead = self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
+			for r in self._roots:
+				total_overhead += apply(r, overhead_bar)
 		self.total_duration_ns = self.total_duration_ns - total_overhead
 
 	def _node(self, i: int) -> dict:
@@ -185,6 +243,10 @@ class TraceAnalyser:
 		return d
 
 	def to_json(self) -> str:
+		call_tree: list[dict] = []
+		with _ProgressBar(len(self._roots), "Serializing call tree", self._show_progress) as json_bar:
+			for r in json_bar.iter(self._roots):
+				call_tree.append(self._node(r))
 		out: dict = {
 			"program_name": self.program_name,
 			"verification_ns": self.total_duration_ns,
@@ -193,7 +255,7 @@ class TraceAnalyser:
 			"file_ids": file_ids,
 			"profile_stats": self._stats.to_json_dict(),
 			"bpf_insns": [_insn_dict(i) for i in self._program],
-			"call_tree": [self._node(r) for r in self._roots],
+			"call_tree": call_tree,
 		}
 		return json.dumps(out, separators=(",", ":"))
 

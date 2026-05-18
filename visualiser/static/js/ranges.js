@@ -206,7 +206,7 @@ export function parseCallTreeLocation(loc) {
 
 /** @param {Record<string, unknown>} node */
 export function callTreeNodeMergeKey(node) {
-  const loc = node.file || node.site;
+  const loc = node.file;
   if (typeof loc !== "string") {
     return null;
   }
@@ -323,7 +323,7 @@ function compareCallTreeSiblings(a, b, filteredByKey) {
 /** Same call/block site (path:start:end + function); `arg` is ignored so variants merge. */
 function callTreeSiteMergeGroupKey(node) {
   const rec = /** @type {Record<string, unknown>} */ (node);
-  const loc = rec.file || rec.site;
+  const loc = rec.file;
   if (typeof loc !== "string") {
     return `\0__bad__\0${String(typeof node)}`;
   }
