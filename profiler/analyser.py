@@ -4,7 +4,7 @@ from pathlib import Path
 from time import time
 
 from profiler_types import BPFInsn, NO_ARG, ProfileStats, Record, RecordType
-from utils import find_block_end, find_block_start
+from utils import find_block_end, find_block_start, find_call_name
 
 
 class _NoopProgress:
@@ -140,9 +140,7 @@ _site_cache: dict[tuple[str, int, str], tuple[str, int, int, str | None]] = {}
 
 
 def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
-	if ev.get_record_type() == RecordType.CALL:
-		return (str(ev.file_id), int(ev.line), int(ev.line), "test")
-	if ev.get_record_type() != RecordType.BLOCK:
+	if ev.get_record_type() != RecordType.BLOCK and ev.get_record_type() != RecordType.CALL:
 		raise ValueError(f"timed record expected, got {ev.get_record_type()}")
 
 	cache_key = (str(ev.file_id), int(ev.line), kernel)
@@ -150,15 +148,22 @@ def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
 	if cached is not None:
 		return cached
 
-	file_name = file_ids.get(str(ev.file_id), f"<unknown:{ev.file_id}>")
+	if str(ev.file_id) not in file_ids:
+		raise ValueError(f"unknown file_id {ev.file_id}")
+
+	file_name = file_ids[str(ev.file_id)]
 	path = str(_KERNEL_ROOT / file_name)
-	if kernel == "clang":
-		lo, hi = find_block_start(path, ev.line), ev.line
-	elif kernel == "gcc":
-		lo, hi = ev.line, find_block_end(path, ev.line)
+	if ev.get_record_type() == RecordType.CALL:
+		result = (str(ev.file_id), int(ev.line), int(ev.line), find_call_name(path, ev.line))
 	else:
-		raise ValueError(f"unsupported kernel compiler: {kernel}")
-	result = (str(ev.file_id), int(lo), int(hi), None)
+		if kernel == "clang":
+			lo, hi = find_block_start(path, ev.line), ev.line
+		elif kernel == "gcc":
+			lo, hi = ev.line, find_block_end(path, ev.line)
+		else:
+			raise ValueError(f"unsupported kernel compiler: {kernel}")
+		result = (str(ev.file_id), int(lo), int(hi), None)
+
 	_site_cache[cache_key] = result
 	return result
 

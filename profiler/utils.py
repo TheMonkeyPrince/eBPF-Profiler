@@ -1,4 +1,5 @@
-saved_results: dict[tuple[str, int], int] = {}
+saved_block_results: dict[tuple[str, int], int] = {}
+saved_call_results: dict[tuple[str, int], str] = {}
 cached_files: dict[str, list[str]] = {}
 
 def find_block_end(filename, start_line):
@@ -9,14 +10,11 @@ def find_block_end(filename, start_line):
     Nested braces, string literals, character literals, and comments are handled.
     """
 
-    if (filename, start_line) in saved_results:
-        return saved_results[(filename, start_line)]
-
-
+    if (filename, start_line) in saved_block_results:
+        return saved_block_results[(filename, start_line)]
     if filename not in cached_files:
         with open(filename, 'r') as f:
             cached_files[filename] = f.readlines()
-
     lines = cached_files[filename]
 
     # Adjust for 0-based index
@@ -79,7 +77,7 @@ def find_block_end(filename, start_line):
                     brace_count -= 1
                     if brace_count == 0:
                         # Return 1-based line number
-                        saved_results[(filename, start_line)] = i + 1
+                        saved_block_results[(filename, start_line)] = i + 1
                         return i + 1
             j += 1
 
@@ -108,6 +106,37 @@ def find_block_start(filename, end_line):
 
     raise ValueError(f"No opening brace matches the given end line {filename}:{end_line}")
 
+def find_call_name(filename, line):
+    if (filename, line) in saved_call_results:
+        return saved_call_results[(filename, line)]
+    if filename not in cached_files:
+        with open(filename, 'r') as f:
+            cached_files[filename] = f.readlines()
+    lines = cached_files[filename]
+
+    text = lines[line-1].strip()
+    if "BPF_PROFILE_CALL" not in text:
+        # look for the call in the previous lines, as it may be split across multiple lines
+        for i in range(line-2, max(line-10, -1), -1):
+            text = lines[i].strip() + text
+            if "BPF_PROFILE_CALL" in text:
+                break
+        else:
+            raise ValueError(f"No BPF_PROFILE_CALL found on line {filename}:{line}")    
+    
+    result = text.split("BPF_PROFILE_CALL", 1)[1]
+    if result.startswith('(') or result.startswith('_VOID('):
+        arg_index = 1
+    elif result.startswith('_ARG(') or result.startswith('_VOID_ARG('):
+        arg_index = 2
+    else:
+        raise ValueError(f"Unexpected format for BPF_PROFILE_CALL on line {filename}:{line}")
+    result = result.split('(', 1)[1].removesuffix(');')
+    args = result.split(',')
+    result = args[arg_index].strip()
+
+    return result
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 4:
@@ -124,4 +153,5 @@ if __name__ == "__main__":
     else:
         print("Invalid direction. Use 'up' or 'down'.")
         sys.exit(1)
-    
+
+    # print(find_call_name("/mnt/linux/kernel/bpf/verifier.c", 17583))
