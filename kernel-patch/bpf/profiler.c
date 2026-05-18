@@ -12,8 +12,7 @@ static DEFINE_SPINLOCK(bpf_profiler_lock);
 static bpf_profile_record_list_t bpf_profile_records = {0};
 
 void bpf_profiler_add_record(
-    bpf_profile_record_type_t type, const char *file, int line,
-    const char *func_name, u32 arg, u64 start_time, u64 end_time)
+    bpf_profile_record_type_t type, unsigned char file_id, int line, u32 arg, u64 start_time, u64 end_time)
 {
     unsigned long flags;
     u32 idx;
@@ -23,13 +22,8 @@ void bpf_profiler_add_record(
     if (idx < BPF_PROFILE_MAX_RECORDS)
     {
         bpf_profile_records.records[idx].type = type;
-        if (file) {
-            strscpy(bpf_profile_records.records[idx].file, file, sizeof(bpf_profile_records.records[idx].file));
-        }
+        bpf_profile_records.records[idx].file_id = file_id;
         bpf_profile_records.records[idx].line = line;
-        if (func_name) {
-            strscpy(bpf_profile_records.records[idx].func_name, func_name, sizeof(bpf_profile_records.records[idx].func_name));
-        }
         bpf_profile_records.records[idx].arg = arg;
         bpf_profile_records.records[idx].start_time = start_time;
         bpf_profile_records.records[idx].end_time = end_time;
@@ -125,98 +119,98 @@ void bpf_profile_estimate_overhead(void) {
      * measuring the time taken to execute an empty profiling block.
      */
     
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        });
-    });
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-    });
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-    });
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-    });
-    BPF_PROFILE_BLOCK({
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-        BPF_PROFILE_BLOCK({
-        });
-    });
+    // BPF_PROFILE_BLOCK({
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    // });
+    // BPF_PROFILE_BLOCK({
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    // });
+    // BPF_PROFILE_BLOCK({
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    // });
+    // BPF_PROFILE_BLOCK({
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    // });
+    // BPF_PROFILE_BLOCK({
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    //     BPF_PROFILE_BLOCK({
+    //     });
+    // });
 }

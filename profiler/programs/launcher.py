@@ -13,16 +13,16 @@ import sys
 import subprocess
 
 try:
-	from .kernel_selftests import run_selftest
+	from .kernel_selftests import run_kernel_selftest
 	from .kernel_samples import run_kernel_samples
 except ImportError:
-	from kernel_selftests import run_selftest
+	from kernel_selftests import run_kernel_selftest
 	from kernel_samples import run_kernel_samples
 
 def launch_bpf_program(program_name: str) -> subprocess.Popen[str]:
 
 	if program_name.startswith("selftest_"):
-		process = run_selftest(program_name)
+		process = run_kernel_selftest(program_name)
 		if process:
 			return process
 

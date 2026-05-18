@@ -4,7 +4,7 @@ from enum import Enum
 u64 = ct.c_uint64
 u32 = ct.c_uint32
 NO_ARG = u32(-1).value
-BPF_PROFILE_MAX_RECORDS = 40960
+BPF_PROFILE_MAX_RECORDS = 819200
 
 class RecordType(Enum):
 	START = 0
@@ -16,10 +16,9 @@ class RecordType(Enum):
 class Record(ct.Structure):
 	_pack_ = 1
 	_fields_ = [
-		("type", ct.c_int),
-		("file", ct.c_char * 64),
+		("type", ct.c_uint8),
+		("file_id", ct.c_uint8),
 		("line", ct.c_int),
-		("func_name", ct.c_char * 32),
 		("arg", u32),
 		("start_time", u64),
 		("end_time", u64),
@@ -41,8 +40,8 @@ class Record(ct.Structure):
 
 	def __str__(self):
 		return (
-			f"[type={self.get_record_type().name}, file={self._decode_cstr(self.file)}, "
-			f"line={self.line}, func_name={self._decode_cstr(self.func_name)}, "
+			f"[type={self.get_record_type().name}, file_id={self.file_id}, "
+			f"line={self.line}, "
 			f"arg={self.arg}, start_time={self.start_time}, end_time={self.end_time}]"
 		)
 
@@ -172,8 +171,11 @@ class ProfilingResult:
 		self.stats = stats
 		self.trace = trace
 
-		if len(self.trace) == BPF_PROFILE_MAX_RECORDS:
+		if len(self.trace) >= BPF_PROFILE_MAX_RECORDS:
 			print(f"Warning: trace for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
 
 	def __str__(self):
 		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, trace=[{len(self.trace)} records])"
+	
+if __name__ == "__main__":
+	print(Record.size())

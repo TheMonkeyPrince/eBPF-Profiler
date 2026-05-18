@@ -2156,7 +2156,7 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 	}
 
 	for (i = 0; i < insn_cnt; ++i)
-		BPF_PROFILE_CALL_VOID_ARG(i, compute_insn_live_regs, env, &insns[i], &state[i]);
+		compute_insn_live_regs(env, &insns[i], &state[i]);
 
 	/* Forward pass: resolve stack access through FP-derived pointers */
 	err = bpf_compute_subprog_arg_access(env);

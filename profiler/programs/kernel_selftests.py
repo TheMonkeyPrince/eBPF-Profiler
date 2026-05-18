@@ -14,6 +14,7 @@
 # # or numeric test/subtest
 # sudo ./test_progs -n 45/2
 
+import sys
 import os
 import sys
 import subprocess
@@ -22,8 +23,7 @@ KERNEL_SOURCE_PATH = "/mnt/linux/"
 if not os.path.isdir(KERNEL_SOURCE_PATH):
     KERNEL_SOURCE_PATH = "../linux/"
 
-
-def list_selftests():
+def list_kernel_selftests():
 	result = subprocess.run(
 		["./test_progs", "-l"],
 		cwd=f"{KERNEL_SOURCE_PATH}/tools/testing/selftests/bpf",
@@ -37,17 +37,7 @@ def list_selftests():
 	selftests = map(lambda test: "selftest_" + test, result.stdout.splitlines())
 	return list(selftests)
 
-def list_working_selftests():
-	try:
-		with open("working_selftests.txt", "r") as file:
-			return file.read().splitlines()
-	except:
-		working_selftests = find_working_selftests()
-		with open("working_selftests.txt", "w") as file:
-			file.write("\n".join(working_selftests))
-		return working_selftests
-
-def run_selftest(test_name) -> subprocess.Popen[str]:
+def run_kernel_selftest(test_name) -> subprocess.Popen[str]:
 	if test_name.startswith("selftest_"):
 		test_name = test_name[len("selftest_"):]
 
@@ -58,62 +48,22 @@ def run_selftest(test_name) -> subprocess.Popen[str]:
 		stderr=subprocess.PIPE,
 		text=True
 	)
-	return process
-
-def extract_working_subtests(test_name) -> list[str]:
-	process = run_selftest(test_name)
-	stdout, stderr = process.communicate()
-	if process.returncode == 0:	
-		print(stdout)	
-		lines = stdout.splitlines()
-		lines.pop()
-		if len(lines) == 0:
-			return []
-		
-		def extract_subtest_name(line):
-			try:
-				test_name, status = line.rsplit(":", 1)
-				test_name = test_name.strip()
-				if status.strip() == "OK":
-					return "selftest_" + test_name.split()[1]
-			except:
-				return False
-			return False
-
-		if len(lines) == 1:
-			test_name = extract_subtest_name(lines[0])
-			if test_name:
-				return [test_name]
-			return []
-		else:
-			lines.pop()
-			subtests = []
-			for line in lines:
-				subtest_name = extract_subtest_name(line)
-				if subtest_name:
-					subtests.append(subtest_name)
-			return subtests
-	return []
-
-def find_working_selftests():
-	selftests = list_selftests()
-	working_subtests = []
-	for test in selftests:
-		subtests = extract_working_subtests(test)
-		working_subtests.extend(subtests)
-
-	return working_subtests
-
+	return process	
 
 if __name__ == "__main__":
-	# process = run_selftest("cls_redirect/IPv4 UDP accept known (one hop, flags: none)")
 	if len(sys.argv) < 2:
-		print("Usage: python selftests.py <test_name>")
+		print("Usage: python kernel_selftests.py <test_name/list>")
 		sys.exit(1)
 
-	process = run_selftest(sys.argv[1])
+	if sys.argv[1] == "list":
+		for sample in list_kernel_selftests():
+			print(sample)
+		sys.exit(0)
+
+	selftest_name = sys.argv[1]
+	process = run_kernel_selftest(selftest_name)
 	stdout, stderr = process.communicate()
-	print("STDOUT:")
-	print(stdout)
-	print("STDERR:")
-	print(stderr)
+	if process.returncode == 0:
+		print(stdout)
+	else:
+		print(stderr)

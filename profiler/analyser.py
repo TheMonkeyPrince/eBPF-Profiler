@@ -6,6 +6,8 @@ from utils import find_block_end, find_block_start
 
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
 
+with open(_KERNEL_ROOT / "kernel/bpf/file_ids.json") as f:
+	file_ids = json.load(f)
 
 def _contains(outer: Record, inner: Record) -> bool:
 	return outer.start_time < inner.start_time and outer.end_time > inner.end_time
@@ -35,17 +37,19 @@ def _exclusive_and_children(records: list[Record]) -> tuple[list[int], list[list
 
 def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
 	if ev.get_record_type() == RecordType.CALL:
-		return (ev.file.decode(), int(ev.line), int(ev.line), ev.func_name.decode())
+		# return (ev.file.decode(), int(ev.line), int(ev.line), ev.func_name.decode())
+		return (str(ev.file_id), int(ev.line), int(ev.line), None)  # func_name is not available in the current profiler version
 	if ev.get_record_type() != RecordType.BLOCK:
 		raise ValueError(f"timed record expected, got {ev.get_record_type()}")
-	path = str(_KERNEL_ROOT / ev.file.decode())
+	file_name = file_ids.get(str(ev.file_id), f"<unknown:{ev.file_id}>")
+	path = str(_KERNEL_ROOT / file_name)
 	if kernel == "clang":
 		lo, hi = find_block_start(path, ev.line), ev.line
 	elif kernel == "gcc":
 		lo, hi = ev.line, find_block_end(path, ev.line)
 	else:
 		raise ValueError(f"unsupported kernel compiler: {kernel}")
-	return (ev.file.decode(), int(lo), int(hi), None)
+	return (str(ev.file_id), int(lo), int(hi), None)
 
 
 def _site_str(t: tuple[str, int, int, str | None]) -> str:
@@ -68,8 +72,8 @@ class TraceAnalyser:
 		self,
 		program_name: str,
 		trace: list[Record],
-		program: list[BPFInsn] | None = None,
-		stats: ProfileStats | None = None,
+		program: list[BPFInsn],
+		stats: ProfileStats,
 	):
 		self.program_name = program_name
 		self.trace = trace
@@ -163,17 +167,17 @@ class TraceAnalyser:
 	def _node(self, i: int) -> dict:
 		ev, sk = self._timed[i], self._sites[i]
 		d: dict = {
-			"file": _site_str(sk),
-			"inclusive_ns": ev.duration(),
-			"exclusive_ns": self._exclusive[i],
+			"f": _site_str(sk),
+			"i": ev.duration(),
+			"e": self._exclusive[i],
 		}
 		if sk[3]:
-			d["function"] = sk[3]
+			d["f"] = sk[3]
 		if self._args[i] is not None:
-			d["arg"] = self._args[i]
+			d["a"] = self._args[i]
 		ch = self._children[i]
 		if ch:
-			d["children"] = [self._node(c) for c in ch]
+			d["c"] = [self._node(c) for c in ch]
 		return d
 
 	def to_json(self) -> str:
@@ -182,13 +186,12 @@ class TraceAnalyser:
 			"verification_ns": self.total_duration_ns,
 			"kernel_compiler": self.kernel_compiler,
 			"trace_record_count": len(self.trace),
+			"file_ids": file_ids,
+			"profile_stats": self._stats.to_json_dict(),
+			"bpf_insns": [_insn_dict(i) for i in self._program],
 			"call_tree": [self._node(r) for r in self._roots],
 		}
-		if self._program:
-			out["bpf_insns"] = [_insn_dict(i) for i in self._program]
-		if self._stats is not None:
-			out["profile_stats"] = self._stats.to_json_dict()
-		return json.dumps(out, indent=2)
+		return json.dumps(out, separators=(",", ":"))
 
 def linear_fit(x, y):
 	n = len(x)
