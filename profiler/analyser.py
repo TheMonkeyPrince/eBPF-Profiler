@@ -212,6 +212,7 @@ class TraceAnalyser:
 	):
 		self._show_progress = show_progress
 		_site_cache.clear()
+		verbose = True
 		if verbose:
 			print(
 				f"Analysing trace for {self.program_name!r} with {len(self.trace)} records "
