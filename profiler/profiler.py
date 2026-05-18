@@ -6,8 +6,9 @@ from storage import read_profile_file, result_bin_paths, save_analysis, save_res
 
 
 class BPFProfiler:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, show_progress=True):
         self.verbose = verbose
+        self.show_progress = show_progress
         self.recorder = None
 
     def profile_program(
@@ -38,7 +39,7 @@ class BPFProfiler:
         stats: ProfileStats | None = None,
     ) -> TraceAnalyser:
         a = TraceAnalyser(program_name, trace, program=program, stats=stats)
-        a.analyse(verbose=self.verbose)
+        a.analyse(verbose=self.verbose, show_progress=self.show_progress)
         if save:
             save_analysis(program_name, a)
         return a

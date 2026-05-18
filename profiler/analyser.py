@@ -7,30 +7,65 @@ from profiler_types import BPFInsn, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start
 
 
+class _NoopProgress:
+	def update(self, n: int = 1) -> None:
+		pass
+
+	def close(self) -> None:
+		pass
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, *_args) -> None:
+		pass
+
+	def iter(self, iterable):
+		yield from iterable
+
+
 class _ProgressBar:
 	def __init__(self, total: int, desc: str = "", enabled: bool = True, width: int = 36):
-		self.total = max(int(total), 1)
+		self.total = int(total)
 		self.desc = desc
-		self.enabled = enabled
+		self.enabled = enabled and self.total > 0
 		self.width = width
 		self.n = 0
+		self._tty = enabled and sys.stdout.isatty()
+		self._step = max(1, self.total // 50) if self.total else 1
+
+	def _render(self, final: bool = False) -> None:
+		pct = self.n / self.total
+		filled = int(self.width * pct)
+		bar = "#" * filled + "-" * (self.width - filled)
+		line = f"{self.desc} |{bar}| {self.n}/{self.total} ({100 * pct:.0f}%)"
+		if self._tty and not final:
+			sys.stdout.write(f"\r{line}")
+		else:
+			sys.stdout.write(f"{line}\n")
+		sys.stdout.flush()
 
 	def update(self, n: int = 1) -> None:
 		if not self.enabled:
 			return
 		self.n = min(self.n + n, self.total)
-		pct = self.n / self.total
-		filled = int(self.width * pct)
-		bar = "#" * filled + "-" * (self.width - filled)
-		sys.stderr.write(f"\r{self.desc} |{bar}| {self.n}/{self.total} ({100 * pct:.0f}%)")
-		sys.stderr.flush()
+		if self._tty:
+			self._render()
+		elif self.n == self.total or self.n % self._step == 0:
+			self._render(final=self.n == self.total)
 
 	def close(self) -> None:
-		if self.enabled:
-			sys.stderr.write("\n")
-			sys.stderr.flush()
+		if not self.enabled:
+			return
+		if self._tty:
+			self._render(final=True)
+		elif self.n < self.total:
+			self.n = self.total
+			self._render(final=True)
 
 	def __enter__(self):
+		if self.enabled and not self._tty:
+			print(f"{self.desc}:", flush=True)
 		return self
 
 	def __exit__(self, *_args) -> None:
@@ -43,6 +78,12 @@ class _ProgressBar:
 		for item in iterable:
 			yield item
 			self.update(1)
+
+
+def _progress(total: int, desc: str, enabled: bool) -> _ProgressBar | _NoopProgress:
+	if enabled and total > 0:
+		return _ProgressBar(total, desc)
+	return _NoopProgress()
 
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
 
@@ -132,10 +173,16 @@ class TraceAnalyser:
 		self._children: list[list[int]] = []
 		self._roots: list[int] = []
 		self._overhead_model: tuple[float, float] = (0, 0)
-		self._show_progress = False
+		self._show_progress = True
 
-	def analyse(self, verbose: bool = True, kernel_compiler: str = "clang", estimate_overhead: bool = False):
-		self._show_progress = verbose
+	def analyse(
+		self,
+		verbose: bool = True,
+		kernel_compiler: str = "clang",
+		estimate_overhead: bool = False,
+		show_progress: bool = True,
+	):
+		self._show_progress = show_progress
 		if verbose:
 			print(
 				f"Analysing trace for {self.program_name!r} with {len(self.trace)} records "
@@ -148,7 +195,7 @@ class TraceAnalyser:
 		timed: list[Record] = []
 		args: list[int | None] = []
 
-		with _ProgressBar(len(self.trace), "Scanning trace", self._show_progress) as scan_bar:
+		with _progress(len(self.trace), "Scanning trace", self._show_progress) as scan_bar:
 			for ev in scan_bar.iter(self.trace):
 				match ev.get_record_type():
 					case RecordType.START:
@@ -159,8 +206,10 @@ class TraceAnalyser:
 						timed.append(ev)
 						args.append(ev.arg if ev.has_arg() else None)
 
-		with _ProgressBar(len(timed), "Building call tree", self._show_progress) as tree_bar:
-			exc, ch = _exclusive_and_children(timed, progress=tree_bar)
+		with _progress(len(timed), "Building call tree", self._show_progress) as tree_bar:
+			exc, ch = _exclusive_and_children(
+				timed, progress=tree_bar if isinstance(tree_bar, _ProgressBar) else None
+			)
 		mark = [False] * len(timed)
 		for row in ch:
 			for c in row:
@@ -169,7 +218,7 @@ class TraceAnalyser:
 
 		self._timed = timed
 		sites: list[tuple[str, int, int, str | None]] = []
-		with _ProgressBar(len(timed), "Resolving source sites", self._show_progress) as site_bar:
+		with _progress(len(timed), "Resolving source sites", self._show_progress) as site_bar:
 			for e in site_bar.iter(timed):
 				sites.append(_site(e, kernel_compiler))
 		self._sites = sites
@@ -184,7 +233,7 @@ class TraceAnalyser:
 			print(f"Analysis time: {analysis_end_time - analysis_start_time:.2f} s")
 		if estimate_overhead:
 			self._model_overhead()
-			self._apply_overhead_model(verbose=self._show_progress)
+			self._apply_overhead_model(show_progress=self._show_progress)
 			if verbose:
 				print(f"Total verification time after overhead estimation: {self.total_duration_ns / 1e6:.2f} ms")
 
@@ -207,10 +256,10 @@ class TraceAnalyser:
 		self._overhead_model = linear_fit(x, avg)
 		print(f"Estimated overhead model: {self._overhead_model[0]:.2f} ns per child + {self._overhead_model[1]:.2f} ns")
 
-	def _apply_overhead_model(self, verbose: bool = False):
+	def _apply_overhead_model(self, show_progress: bool = False):
 		n_timed = len(self._timed)
 
-		def apply(i: int, bar: _ProgressBar) -> float:
+		def apply(i: int, bar: _ProgressBar | _NoopProgress) -> float:
 			estimated_overhead = self._overhead_model[0] * len(self._children[i]) + self._overhead_model[1]
 			for c in self._children[i]:
 				estimated_overhead += apply(c, bar)
@@ -220,7 +269,7 @@ class TraceAnalyser:
 			bar.update(1)
 			return estimated_overhead
 
-		with _ProgressBar(n_timed, "Applying overhead model", verbose) as overhead_bar:
+		with _progress(n_timed, "Applying overhead model", show_progress) as overhead_bar:
 			total_overhead = self._overhead_model[0] * len(self._roots) + self._overhead_model[1]
 			for r in self._roots:
 				total_overhead += apply(r, overhead_bar)
@@ -244,7 +293,7 @@ class TraceAnalyser:
 
 	def to_json(self) -> str:
 		call_tree: list[dict] = []
-		with _ProgressBar(len(self._roots), "Serializing call tree", self._show_progress) as json_bar:
+		with _progress(len(self._roots), "Serializing call tree", self._show_progress) as json_bar:
 			for r in json_bar.iter(self._roots):
 				call_tree.append(self._node(r))
 		out: dict = {

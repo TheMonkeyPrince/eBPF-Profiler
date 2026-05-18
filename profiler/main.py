@@ -28,6 +28,16 @@ if __name__ == "__main__":
 		help="Only analyse the trace without running the profiler",
 		action="store_true",
 	)
+	parser.add_argument(
+		"--verbose",
+		help="Print extra analysis messages",
+		action="store_true",
+	)
+	parser.add_argument(
+		"--no-progress",
+		help="Disable analysis progress bars",
+		action="store_true",
+	)
 	args = parser.parse_args()
 
 	if args.test:
@@ -42,7 +52,7 @@ if __name__ == "__main__":
 
 	runned_tests = []
 	try:
-		profiler = BPFProfiler()
+		profiler = BPFProfiler(verbose=args.verbose, show_progress=not args.no_progress)
 		if not args.analysis_only:
 			for test in tests:
 				print(f"Running test: {test}")
