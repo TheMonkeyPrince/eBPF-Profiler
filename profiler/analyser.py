@@ -263,7 +263,7 @@ class TraceAnalyser:
 			for e in site_bar.iter(timed):
 				sk = _site(e, kernel_compiler)
 				sites.append(sk)
-				site_strs.append(sk[3] if sk[3] else _site_str(sk))
+				site_strs.append(_site_str(sk))
 		self._sites = sites
 		self._site_strs = site_strs
 		self._args = args
@@ -320,11 +320,14 @@ class TraceAnalyser:
 		self.total_duration_ns = self.total_duration_ns - total_overhead
 
 	def _node(self, i: int) -> dict:
+		sk = self._sites[i]
 		d: dict = {
 			"f": self._site_strs[i],
 			"i": self._durations[i],
 			"e": self._exclusive[i],
 		}
+		if sk[3]:
+			d["fn"] = sk[3]
 		if self._args[i] is not None:
 			d["a"] = self._args[i]
 		ch = self._children[i]

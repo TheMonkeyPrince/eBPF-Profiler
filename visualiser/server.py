@@ -174,7 +174,7 @@ def _resolve_site_loc(loc: str, file_ids: dict) -> str:
 
 
 def normalize_call_tree_node(node: dict, file_ids: dict) -> dict:
-    """Expand compact analyser nodes (f/i/e/a/c) for the visualiser API."""
+    """Expand compact analyser nodes (f/i/e/a/c[/fn]) for the visualiser API."""
     if not isinstance(node, dict):
         raise ValueError("call_tree node must be an object")
     loc = node.get("f")
@@ -186,6 +186,9 @@ def normalize_call_tree_node(node: dict, file_ids: dict) -> dict:
         "inclusive_ns": int(node["i"]),
         "exclusive_ns": int(node["e"]),
     }
+    fn = node.get("fn") or node.get("function")
+    if isinstance(fn, str) and fn.strip():
+        out["function"] = fn.strip()
     if "a" in node:
         out["arg"] = node["a"]
     children = node.get("c")
