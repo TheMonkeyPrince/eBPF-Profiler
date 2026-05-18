@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from time import time
 
-from profiler_types import BPFInsn, ProfileStats, Record, RecordType
+from profiler_types import BPFInsn, NO_ARG, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start
 
 
@@ -24,6 +24,9 @@ class _NoopProgress:
 		yield from iterable
 
 
+_MAX_PROGRESS_UPDATES = 8
+
+
 class _ProgressBar:
 	def __init__(self, total: int, desc: str = "", enabled: bool = True, width: int = 36):
 		self.total = int(total)
@@ -32,7 +35,8 @@ class _ProgressBar:
 		self.width = width
 		self.n = 0
 		self._tty = enabled and sys.stdout.isatty()
-		self._step = max(1, self.total // 50) if self.total else 1
+		self._step = max(1, (self.total + _MAX_PROGRESS_UPDATES - 1) // _MAX_PROGRESS_UPDATES)
+		self._last_render_n = 0
 
 	def _render(self, final: bool = False) -> None:
 		pct = self.n / self.total
@@ -44,15 +48,21 @@ class _ProgressBar:
 		else:
 			sys.stdout.write(f"{line}\n")
 		sys.stdout.flush()
+		self._last_render_n = self.n
+
+	def _should_render(self) -> bool:
+		if self.n >= self.total:
+			return True
+		if self.n - self._last_render_n < self._step:
+			return False
+		return self.n % self._step == 0
 
 	def update(self, n: int = 1) -> None:
 		if not self.enabled:
 			return
 		self.n = min(self.n + n, self.total)
-		if self._tty:
-			self._render()
-		elif self.n == self.total or self.n % self._step == 0:
-			self._render(final=self.n == self.total)
+		if self._should_render():
+			self._render(final=self.n >= self.total)
 
 	def close(self) -> None:
 		if not self.enabled:
@@ -90,42 +100,56 @@ _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../l
 with open(_KERNEL_ROOT / "kernel/bpf/file_ids.json") as f:
 	file_ids = json.load(f)
 
-def _contains(outer: Record, inner: Record) -> bool:
-	return outer.start_time < inner.start_time and outer.end_time > inner.end_time
-
-
 def _exclusive_and_children(
 	records: list[Record], *, progress: _ProgressBar | None = None
-) -> tuple[list[int], list[list[int]]]:
+) -> tuple[list[int], list[list[int]], list[int]]:
+	"""Build parent/child links and exclusive times (intervals assumed properly nested)."""
 	n = len(records)
+	if n == 0:
+		return [], [], []
+
+	starts = [r.start_time for r in records]
+	ends = [r.end_time for r in records]
+	durations = [e - s for s, e in zip(starts, ends)]
+	order = sorted(range(n), key=lambda i: (starts[i], -ends[i]))
+
 	children: list[list[int]] = [[] for _ in range(n)]
-	for i in range(n):
-		ei = records[i]
-		best_j, best_start = -1, -1
-		for j in range(n):
-			if i == j:
-				continue
-			ej = records[j]
-			if _contains(ej, ei) and ej.start_time > best_start:
-				best_start, best_j = ej.start_time, j
-		if best_j >= 0:
-			children[best_j].append(i)
+	stack: list[int] = []
+	for i in order:
+		while stack:
+			j = stack[-1]
+			if starts[j] < starts[i] and ends[j] > ends[i]:
+				break
+			stack.pop()
+		if stack:
+			children[stack[-1]].append(i)
+		stack.append(i)
 		if progress is not None:
 			progress.update(1)
-	exclusive = []
+
+	exclusive = [0] * n
 	for i in range(n):
-		inc = records[i].duration()
-		ch = sum(records[c].duration() for c in children[i])
-		exclusive.append(max(0, inc - ch))
-	return exclusive, children
+		child_total = 0
+		for c in children[i]:
+			child_total += durations[c]
+		exclusive[i] = max(0, durations[i] - child_total)
+	return exclusive, children, durations
+
+
+_site_cache: dict[tuple[str, int, str], tuple[str, int, int, str | None]] = {}
 
 
 def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
 	if ev.get_record_type() == RecordType.CALL:
-		# return (ev.file.decode(), int(ev.line), int(ev.line), ev.func_name.decode())
-		return (str(ev.file_id), int(ev.line), int(ev.line), None)  # func_name is not available in the current profiler version
+		return (str(ev.file_id), int(ev.line), int(ev.line), None)
 	if ev.get_record_type() != RecordType.BLOCK:
 		raise ValueError(f"timed record expected, got {ev.get_record_type()}")
+
+	cache_key = (str(ev.file_id), int(ev.line), kernel)
+	cached = _site_cache.get(cache_key)
+	if cached is not None:
+		return cached
+
 	file_name = file_ids.get(str(ev.file_id), f"<unknown:{ev.file_id}>")
 	path = str(_KERNEL_ROOT / file_name)
 	if kernel == "clang":
@@ -134,7 +158,9 @@ def _site(ev: Record, kernel: str) -> tuple[str, int, int, str | None]:
 		lo, hi = ev.line, find_block_end(path, ev.line)
 	else:
 		raise ValueError(f"unsupported kernel compiler: {kernel}")
-	return (str(ev.file_id), int(lo), int(hi), None)
+	result = (str(ev.file_id), int(lo), int(hi), None)
+	_site_cache[cache_key] = result
+	return result
 
 
 def _site_str(t: tuple[str, int, int, str | None]) -> str:
@@ -172,6 +198,8 @@ class TraceAnalyser:
 		self._exclusive: list[int] = []
 		self._children: list[list[int]] = []
 		self._roots: list[int] = []
+		self._durations: list[int] = []
+		self._site_strs: list[str] = []
 		self._overhead_model: tuple[float, float] = (0, 0)
 		self._show_progress = True
 
@@ -183,6 +211,7 @@ class TraceAnalyser:
 		show_progress: bool = True,
 	):
 		self._show_progress = show_progress
+		_site_cache.clear()
 		if verbose:
 			print(
 				f"Analysing trace for {self.program_name!r} with {len(self.trace)} records "
@@ -195,19 +224,23 @@ class TraceAnalyser:
 		timed: list[Record] = []
 		args: list[int | None] = []
 
+		block_t = RecordType.BLOCK.value
+		call_t = RecordType.CALL.value
+		start_t = RecordType.START.value
+		end_t = RecordType.END.value
 		with _progress(len(self.trace), "Scanning trace", self._show_progress) as scan_bar:
 			for ev in scan_bar.iter(self.trace):
-				match ev.get_record_type():
-					case RecordType.START:
-						v0 = ev.start_time
-					case RecordType.END:
-						v1 = ev.end_time
-					case RecordType.BLOCK | RecordType.CALL:
-						timed.append(ev)
-						args.append(ev.arg if ev.has_arg() else None)
+				t = ev.type
+				if t == start_t:
+					v0 = ev.start_time
+				elif t == end_t:
+					v1 = ev.end_time
+				elif t == block_t or t == call_t:
+					timed.append(ev)
+					args.append(ev.arg if ev.arg != NO_ARG else None)
 
 		with _progress(len(timed), "Building call tree", self._show_progress) as tree_bar:
-			exc, ch = _exclusive_and_children(
+			exc, ch, durations = _exclusive_and_children(
 				timed, progress=tree_bar if isinstance(tree_bar, _ProgressBar) else None
 			)
 		mark = [False] * len(timed)
@@ -217,11 +250,16 @@ class TraceAnalyser:
 		roots = [i for i in range(len(timed)) if not mark[i]]
 
 		self._timed = timed
+		self._durations = durations
 		sites: list[tuple[str, int, int, str | None]] = []
+		site_strs: list[str] = []
 		with _progress(len(timed), "Resolving source sites", self._show_progress) as site_bar:
 			for e in site_bar.iter(timed):
-				sites.append(_site(e, kernel_compiler))
+				sk = _site(e, kernel_compiler)
+				sites.append(sk)
+				site_strs.append(sk[3] if sk[3] else _site_str(sk))
 		self._sites = sites
+		self._site_strs = site_strs
 		self._args = args
 		self._exclusive = exc
 		self._children = ch
@@ -251,7 +289,7 @@ class TraceAnalyser:
 			raise ValueError("unexpected tree structure, cannot estimate overhead")
 		avg = []
 		for a, b in zip(n1, n2):
-			avg.append((self._timed[a].duration() + self._timed[b].duration()) / 2)
+			avg.append((self._durations[a] + self._durations[b]) / 2)
 
 		self._overhead_model = linear_fit(x, avg)
 		print(f"Estimated overhead model: {self._overhead_model[0]:.2f} ns per child + {self._overhead_model[1]:.2f} ns")
@@ -276,14 +314,11 @@ class TraceAnalyser:
 		self.total_duration_ns = self.total_duration_ns - total_overhead
 
 	def _node(self, i: int) -> dict:
-		ev, sk = self._timed[i], self._sites[i]
 		d: dict = {
-			"f": _site_str(sk),
-			"i": ev.duration(),
+			"f": self._site_strs[i],
+			"i": self._durations[i],
 			"e": self._exclusive[i],
 		}
-		if sk[3]:
-			d["f"] = sk[3]
 		if self._args[i] is not None:
 			d["a"] = self._args[i]
 		ch = self._children[i]
