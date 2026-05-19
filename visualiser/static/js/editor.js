@@ -1,5 +1,6 @@
 import { apiGet } from "./api.js";
 import { applyArgTimingToOptions } from "./config.js";
+import { withLoading } from "./loading.js";
 import { updateHoverDetails } from "./details.js";
 import { ensureTreePathExpanded, renderTree } from "./explorer.js";
 import { formatNs, heatAlpha, heatBucket, overviewColor } from "./formatting.js";
@@ -184,23 +185,26 @@ export async function loadFile() {
   if (!app.selectedPath) {
     return;
   }
+  const path = app.selectedPath;
   const fileTitleEl = ui?.fileTitleEl;
   const hoverDetailsEl = ui?.hoverDetailsEl;
   if (fileTitleEl) {
-    fileTitleEl.textContent = app.selectedPath;
+    fileTitleEl.textContent = path;
   }
   try {
-    const data = await apiGet(
-      `/api/file?path=${encodeURIComponent(app.selectedPath)}&arg=${encodeURIComponent(app.selectedArg)}`,
-    );
-    app.profiledTreeExpanded = {};
-    await renderCode(data);
-    await ensureTreePathExpanded(app.selectedPath);
-    await renderTree();
+    await withLoading("editor", `Loading ${path}…`, async () => {
+      const data = await apiGet(
+        `/api/file?path=${encodeURIComponent(path)}&arg=${encodeURIComponent(app.selectedArg)}`,
+      );
+      app.profiledTreeExpanded = {};
+      await renderCode(data);
+      await ensureTreePathExpanded(path);
+      await renderTree();
+    });
   } catch (err) {
     console.error(err);
     if (fileTitleEl) {
-      fileTitleEl.textContent = `${app.selectedPath} (failed to load source)`;
+      fileTitleEl.textContent = `${path} (failed to load source)`;
     }
     app.lastDetailsText = err.message || String(err);
     if (hoverDetailsEl) {

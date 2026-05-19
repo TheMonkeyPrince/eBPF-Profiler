@@ -57,10 +57,15 @@ export function overviewColor(bucket) {
   return palette[bucket] || palette[HEAT_BUCKETS];
 }
 
-export function formatSampleList(samples) {
+/**
+ * @param {unknown[]} samples preview values (may be capped)
+ * @param {number} [totalCount] full sample count when `samples` is only a preview
+ */
+export function formatSampleList(samples, totalCount) {
   if (!samples || samples.length === 0) {
     return "[]";
   }
+  const total = totalCount != null && totalCount >= 0 ? totalCount : samples.length;
   const shown = samples.slice(0, 8).map((v) => {
     const inc = sampleInclusiveNs(v);
     const exc = sampleExclusiveNs(v);
@@ -69,8 +74,8 @@ export function formatSampleList(samples) {
     }
     return Number(inc).toLocaleString();
   });
-  if (samples.length > 8) {
-    shown.push(`... +${samples.length - 8}`);
+  if (total > 8) {
+    shown.push(`... +${total - 8}`);
   }
   return `[${shown.join(", ")}]`;
 }

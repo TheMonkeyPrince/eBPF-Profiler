@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from collections import defaultdict
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +26,11 @@ ANALYSIS_DIR = Path(
     os.environ.get("ANALYSIS_DIR", str(_DEFAULT_ANALYSIS_DIR))
 ).resolve()
 MAX_TREE_ENTRIES = 500
+# Cap values kept per range for median / hover preview (large reports can have millions).
+_MAX_SAMPLE_VALUES_FOR_MEDIAN = 10_000
+_SAMPLE_PREVIEW_LIMIT = 8
+_CATALOG_PEEK_BYTES = 256 * 1024
+_VERIFICATION_NS_RE = re.compile(r'"verification_ns"\s*:\s*(-?\d+)')
 
 
 def list_analysis_report_stems(analysis_dir: Path) -> list[str]:
@@ -43,6 +49,23 @@ def resolve_analysis_report_path(analysis_dir: Path, stem: str) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
+def _peek_verification_ns(report_path: Path) -> int | None:
+    """Read only the report header — avoids parsing multi‑MB call trees for the catalog."""
+    try:
+        with report_path.open("rb") as handle:
+            chunk = handle.read(_CATALOG_PEEK_BYTES)
+    except OSError:
+        return None
+    text = chunk.decode("utf-8", errors="replace")
+    match = _VERIFICATION_NS_RE.search(text)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
 def reports_catalog(analysis_dir: Path) -> list[dict]:
     catalog = []
     for stem in list_analysis_report_stems(analysis_dir):
@@ -51,14 +74,9 @@ def reports_catalog(analysis_dir: Path) -> list[dict]:
         if path is None:
             catalog.append(entry)
             continue
-        try:
-            with path.open("r", encoding="utf-8") as handle:
-                report = json.load(handle)
-            if isinstance(report, dict):
-                entry["total_duration_ns"] = _total_duration_ns_from_report(report)
-        except (OSError, ValueError, json.JSONDecodeError):
-            # Keep default duration when a report cannot be parsed.
-            pass
+        duration = _peek_verification_ns(path)
+        if duration is not None:
+            entry["total_duration_ns"] = duration
         catalog.append(entry)
     return catalog
 
@@ -124,6 +142,57 @@ def empty_line_stats():
     }
 
 
+def _new_sample_agg():
+    return {
+        "count": 0,
+        "total_ns": 0,
+        "min_ns": 0,
+        "max_ns": 0,
+        "_values": [],
+    }
+
+
+def _agg_add(agg: dict, value: int) -> None:
+    value = int(value)
+    if agg["count"] == 0:
+        agg["min_ns"] = value
+        agg["max_ns"] = value
+    else:
+        agg["min_ns"] = min(agg["min_ns"], value)
+        agg["max_ns"] = max(agg["max_ns"], value)
+    agg["count"] += 1
+    agg["total_ns"] += value
+    values = agg["_values"]
+    if len(values) < _MAX_SAMPLE_VALUES_FOR_MEDIAN:
+        values.append(value)
+
+
+def _median_from_agg(agg: dict) -> int:
+    values = agg.get("_values") or []
+    if not values:
+        return 0
+    values = sorted(values)
+    mid = len(values) // 2
+    if len(values) % 2:
+        return int(values[mid])
+    return int((values[mid - 1] + values[mid]) / 2)
+
+
+def _finalize_sample_agg(agg: dict | None) -> dict | None:
+    if not agg or agg["count"] <= 0:
+        return None
+    preview = list(agg["_values"][:_SAMPLE_PREVIEW_LIMIT])
+    out = {
+        "count": agg["count"],
+        "total_ns": agg["total_ns"],
+        "min_ns": agg["min_ns"],
+        "max_ns": agg["max_ns"],
+        "med_ns": _median_from_agg(agg),
+        "preview": preview,
+    }
+    return out
+
+
 def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
     kc = report.get("kernel_compiler")
     if isinstance(kc, str) and kc:
@@ -131,7 +200,6 @@ def _merge_visualiser_meta_from_report(indexed: dict, report: dict) -> None:
 
     insns = report.get("bpf_insns")
     if isinstance(insns, list):
-        indexed["bpf_insns"] = insns
         indexed["bpf_insn_count"] = len(insns)
 
     ps = report.get("profile_stats")
@@ -264,6 +332,86 @@ def prune_call_tree_for_file_arg(roots: list, rel_path: str, arg_filter: str) ->
     return out
 
 
+def _compact_node_matches_arg_filter(node: dict, arg_filter: str) -> bool:
+    if arg_filter == "all":
+        return True
+    arg_val = node.get("a")
+    if arg_filter == "__no_arg__":
+        return arg_val is None
+    try:
+        return arg_val is not None and str(int(arg_val)) == str(arg_filter)
+    except (TypeError, ValueError):
+        return False
+
+
+def _prune_compact_call_tree_node(
+    node: dict, file_ids: dict, rel_path: str, arg_filter: str
+) -> dict | None:
+    loc = node.get("f")
+    if not isinstance(loc, str):
+        return None
+    try:
+        rel_file, _start, _end = _parse_file_colon_location(
+            _resolve_site_loc(loc, file_ids)
+        )
+    except ValueError:
+        return None
+
+    children_in = []
+    for ch in node.get("c") or []:
+        if not isinstance(ch, dict):
+            continue
+        pruned = _prune_compact_call_tree_node(ch, file_ids, rel_path, arg_filter)
+        if pruned is not None:
+            children_in.append(pruned)
+
+    in_file = rel_file == rel_path
+    arg_ok = _compact_node_matches_arg_filter(node, arg_filter)
+    if children_in:
+        out = dict(node)
+        out["c"] = children_in
+        return out
+    if in_file and arg_ok:
+        out = dict(node)
+        out["c"] = []
+        return out
+    return None
+
+
+def prune_compact_call_tree_for_file_arg(
+    roots: list, file_ids: dict, rel_path: str, arg_filter: str
+) -> list:
+    if not isinstance(roots, list) or not rel_path:
+        return []
+    out = []
+    for node in roots:
+        if not isinstance(node, dict):
+            continue
+        pruned = _prune_compact_call_tree_node(node, file_ids, rel_path, arg_filter)
+        if pruned is not None:
+            out.append(pruned)
+    return out
+
+
+def compact_call_tree_to_api_nodes(roots: list, file_ids: dict) -> list:
+    """Expand compact analyser nodes for the file API without retaining a full normalized tree."""
+    if not isinstance(roots, list):
+        return []
+    return [normalize_call_tree_node(node, file_ids) for node in roots]
+
+
+def _agg_total_ns(agg: dict | None) -> int:
+    return int(agg["total_ns"]) if agg else 0
+
+
+def _agg_count(agg: dict | None) -> int:
+    return int(agg["count"]) if agg else 0
+
+
+def _agg_max_ns(agg: dict | None) -> int:
+    return int(agg["max_ns"]) if agg else 0
+
+
 def _index_append_range(
     indexed,
     rel_file,
@@ -275,18 +423,14 @@ def _index_append_range(
     by_arg_exclusive,
     function,
 ):
-    """Append one logical range (already merged sample lists) to the profile index."""
+    """Append one logical range (aggregated sample stats) to the profile index."""
     if not no_arg and not by_arg:
         return
 
-    range_total = sum(no_arg) + sum(sum(samples) for samples in by_arg.values())
-    range_count = len(no_arg) + sum(len(samples) for samples in by_arg.values())
-    range_max = 0
-    if no_arg:
-        range_max = max(range_max, max(no_arg))
-    for samples in by_arg.values():
-        if samples:
-            range_max = max(range_max, max(samples))
+    range_total = _agg_total_ns(no_arg) + sum(_agg_total_ns(a) for a in by_arg.values())
+    range_count = _agg_count(no_arg) + sum(_agg_count(a) for a in by_arg.values())
+    max_candidates = [_agg_max_ns(no_arg), *(_agg_max_ns(a) for a in by_arg.values())]
+    range_max = max(max_candidates) if max_candidates else 0
 
     file_entry = indexed["files"].setdefault(
         rel_file,
@@ -299,12 +443,14 @@ def _index_append_range(
     range_entry = {
         "start": start,
         "end": end,
-        "no_arg": no_arg,
-        "by_arg": by_arg,
         "total_ns": range_total,
         "count": range_count,
         "max_ns": range_max,
     }
+    if no_arg:
+        range_entry["no_arg"] = no_arg
+    if by_arg:
+        range_entry["by_arg"] = by_arg
     if isinstance(function, str) and function:
         range_entry["function"] = function
     if no_arg_exclusive:
@@ -325,23 +471,24 @@ def _index_append_range(
             no_arg_stat = line_stat["by_arg"].setdefault(
                 "__no_arg__", {"total_ns": 0, "count": 0, "max_ns": 0}
             )
-            no_arg_stat["total_ns"] += sum(no_arg)
-            no_arg_stat["count"] += len(no_arg)
-            no_arg_stat["max_ns"] = max(no_arg_stat["max_ns"], max(no_arg))
+            no_arg_stat["total_ns"] += _agg_total_ns(no_arg)
+            no_arg_stat["count"] += _agg_count(no_arg)
+            no_arg_stat["max_ns"] = max(no_arg_stat["max_ns"], _agg_max_ns(no_arg))
 
-        for arg, samples in by_arg.items():
+        for arg, arg_agg in by_arg.items():
             arg_stat = line_stat["by_arg"].setdefault(
                 arg, {"total_ns": 0, "count": 0, "max_ns": 0}
             )
-            arg_stat["total_ns"] += sum(samples)
-            arg_stat["count"] += len(samples)
-            if samples:
-                arg_stat["max_ns"] = max(arg_stat["max_ns"], max(samples))
+            arg_stat["total_ns"] += _agg_total_ns(arg_agg)
+            arg_stat["count"] += _agg_count(arg_agg)
+            arg_stat["max_ns"] = max(arg_stat["max_ns"], _agg_max_ns(arg_agg))
 
 
-def _sample_list_total_ns(samples):
+def _sample_block_total_ns(block) -> int:
+    if isinstance(block, dict) and "total_ns" in block and "count" in block:
+        return int(block["total_ns"])
     total = 0
-    for item in samples or []:
+    for item in block or []:
         if isinstance(item, dict):
             total += int(item.get("inclusive_ns", item.get("ns", 0)))
         elif isinstance(item, (int, float)):
@@ -368,9 +515,9 @@ def bpf_insn_profiling_from_index(indexed: dict) -> dict:
         profiled_total = 0
         insn_total = 0
         for range_entry in file_entry.get("ranges", []):
-            profiled_total += _sample_list_total_ns(range_entry.get("no_arg"))
+            profiled_total += _sample_block_total_ns(range_entry.get("no_arg"))
             for arg, samples in (range_entry.get("by_arg") or {}).items():
-                added = _sample_list_total_ns(samples)
+                added = _sample_block_total_ns(samples)
                 profiled_total += added
                 if added > 0:
                     sk = str(arg)
@@ -398,7 +545,68 @@ def bpf_insn_profiling_from_index(indexed: dict) -> dict:
     }
 
 
-def ingest_call_tree(report, roots: list):
+def _ingest_compact_node(
+    node: dict,
+    file_ids: dict,
+    indexed: dict,
+    acc: dict,
+    *,
+    normalized: bool,
+) -> None:
+    if not isinstance(node, dict):
+        raise ValueError("call_tree node must be an object")
+
+    if normalized:
+        loc = node.get("file")
+        if not isinstance(loc, str):
+            raise ValueError('call_tree node needs "file" as path:start:end')
+        rel_file, start, end = _parse_file_colon_location(loc)
+        inclusive = int(node["inclusive_ns"])
+        exclusive = int(node["exclusive_ns"])
+        fn_raw = node.get("function")
+        arg = node.get("arg")
+        children = node.get("children")
+    else:
+        loc = node.get("f")
+        if not isinstance(loc, str):
+            raise ValueError('call_tree node needs compact "f" (file_id:start:end)')
+        rel_file, start, end = _parse_file_colon_location(_resolve_site_loc(loc, file_ids))
+        inclusive = int(node["i"])
+        exclusive = int(node["e"])
+        fn_raw = node.get("fn") or node.get("function")
+        arg = node.get("a")
+        children = node.get("c")
+
+    if start > end:
+        start, end = end, start
+
+    fn_key = fn_raw if isinstance(fn_raw, str) and fn_raw.strip() else None
+    key = (rel_file, start, end, fn_key)
+    if key not in acc:
+        acc[key] = {
+            "no_arg": _new_sample_agg(),
+            "no_arg_exclusive": _new_sample_agg(),
+            "by_arg": {},
+            "by_arg_exclusive": {},
+        }
+    bucket = acc[key]
+
+    if arg is not None:
+        k = str(int(arg))
+        arg_agg = bucket["by_arg"].setdefault(k, _new_sample_agg())
+        exc_agg = bucket["by_arg_exclusive"].setdefault(k, _new_sample_agg())
+        _agg_add(arg_agg, inclusive)
+        _agg_add(exc_agg, exclusive)
+        indexed["global_args"].add(k)
+    else:
+        _agg_add(bucket["no_arg"], inclusive)
+        _agg_add(bucket["no_arg_exclusive"], exclusive)
+
+    for ch in children or []:
+        _ingest_compact_node(ch, file_ids, indexed, acc, normalized=normalized)
+
+
+def ingest_call_tree(report, roots: list, *, normalized: bool = False):
     indexed = {
         "program_name": report.get("program_name"),
         "total_duration": _total_duration_ns_from_report(report),
@@ -407,53 +615,24 @@ def ingest_call_tree(report, roots: list):
     }
 
     acc = {}
-
-    def merge_node(node):
-        if not isinstance(node, dict):
-            raise ValueError("call_tree node must be an object")
-        loc = node.get("file")
-        if not isinstance(loc, str):
-            raise ValueError('call_tree node needs "file" as path:start:end')
-        rel_file, start, end = _parse_file_colon_location(loc)
-        if start > end:
-            start, end = end, start
-
-        inclusive = int(node["inclusive_ns"])
-        exclusive = int(node["exclusive_ns"])
-        fn_raw = node.get("function")
-        fn_key = fn_raw if isinstance(fn_raw, str) and fn_raw else None
-
-        key = (rel_file, start, end, fn_key)
-        if key not in acc:
-            acc[key] = {
-                "no_arg": [],
-                "no_arg_exclusive": [],
-                "by_arg": defaultdict(list),
-                "by_arg_exclusive": defaultdict(list),
-            }
-        bucket = acc[key]
-
-        arg = node.get("arg")
-        if arg is not None:
-            k = str(int(arg))
-            bucket["by_arg"][k].append(inclusive)
-            bucket["by_arg_exclusive"][k].append(exclusive)
-            indexed["global_args"].add(k)
-        else:
-            bucket["no_arg"].append(inclusive)
-            bucket["no_arg_exclusive"].append(exclusive)
-
-        for ch in node.get("children") or []:
-            merge_node(ch)
-
     for root in roots:
-        merge_node(root)
+        _ingest_compact_node(root, report.get("file_ids") or {}, indexed, acc, normalized=normalized)
 
     for key_tuple in sorted(acc, key=lambda k: (k[0], k[1], k[2], k[3] or "")):
         rel_file, start, end, fn_key = key_tuple
         bucket = acc[key_tuple]
-        by_arg = {k: list(v) for k, v in bucket["by_arg"].items()}
-        by_arg_exclusive = {k: list(bucket["by_arg_exclusive"][k]) for k in by_arg}
+        no_arg = _finalize_sample_agg(bucket["no_arg"])
+        no_arg_exclusive = _finalize_sample_agg(bucket["no_arg_exclusive"])
+        by_arg = {
+            k: finalized
+            for k, agg in bucket["by_arg"].items()
+            if (finalized := _finalize_sample_agg(agg)) is not None
+        }
+        by_arg_exclusive = {
+            k: finalized
+            for k, agg in bucket["by_arg_exclusive"].items()
+            if k in by_arg and (finalized := _finalize_sample_agg(agg)) is not None
+        }
 
         fn_str = fn_key if fn_key else None
         _index_append_range(
@@ -461,8 +640,8 @@ def ingest_call_tree(report, roots: list):
             rel_file,
             start,
             end,
-            bucket["no_arg"],
-            bucket["no_arg_exclusive"],
+            no_arg,
+            no_arg_exclusive,
             by_arg,
             by_arg_exclusive,
             fn_str,
@@ -482,8 +661,15 @@ def ingest_report(report):
     roots = report.get("call_tree")
     if not isinstance(roots, list):
         raise ValueError("call_tree must be an array")
-    normalized = normalize_call_tree(roots, file_ids)
-    return ingest_call_tree(report, normalized), normalized
+
+    uses_compact = bool(roots) and isinstance(roots[0], dict) and "f" in roots[0]
+    if uses_compact:
+        indexed = ingest_call_tree(report, roots, normalized=False)
+        return indexed, roots, file_ids
+
+    normalized = normalize_call_tree(roots, file_ids) if roots else []
+    indexed = ingest_call_tree(report, normalized, normalized=True)
+    return indexed, normalized, file_ids
 
 
 class AppState:
@@ -492,7 +678,9 @@ class AppState:
         self.current_report: str | None = None
         self.index = None
         self.load_error = None
-        self.call_tree_roots: list | None = None
+        self.call_tree_compact: list | None = None
+        self.file_ids: dict = {}
+        self.bpf_insns: list | None = None
         stems = list_analysis_report_stems(self.analysis_dir)
         self.current_report = stems[0] if stems else None
         self._load_current_report_from_disk()
@@ -500,12 +688,25 @@ class AppState:
     def _empty_index_report(self):
         return {"call_tree": [], "file_ids": {}, "verification_ns": 0}
 
+    def _clear_report_payload(self):
+        self.call_tree_compact = None
+        self.file_ids = {}
+        self.bpf_insns = None
+
+    def _apply_loaded_report(self, report: dict, indexed: dict, compact: list, file_ids: dict):
+        self.index = indexed
+        self.call_tree_compact = compact
+        self.file_ids = file_ids
+        insns = report.get("bpf_insns")
+        self.bpf_insns = insns if isinstance(insns, list) else None
+
     def _load_current_report_from_disk(self):
         empty = self._empty_index_report()
-        self.call_tree_roots = None
+        self._clear_report_payload()
         try:
             if not self.current_report:
-                self.index, self.call_tree_roots = ingest_report(empty)
+                indexed, compact, file_ids = ingest_report(empty)
+                self._apply_loaded_report(empty, indexed, compact, file_ids)
                 if not self.analysis_dir.is_dir():
                     self.load_error = f"Analysis directory not found: {self.analysis_dir}"
                 else:
@@ -514,7 +715,8 @@ class AppState:
 
             path = resolve_analysis_report_path(self.analysis_dir, self.current_report)
             if path is None:
-                self.index, self.call_tree_roots = ingest_report(empty)
+                indexed, compact, file_ids = ingest_report(empty)
+                self._apply_loaded_report(empty, indexed, compact, file_ids)
                 self.load_error = (
                     f"Report file missing or invalid name for {self.current_report!r}"
                 )
@@ -522,10 +724,12 @@ class AppState:
 
             with path.open("r", encoding="utf-8") as handle:
                 report = json.load(handle)
-            self.index, self.call_tree_roots = ingest_report(report)
+            indexed, compact, file_ids = ingest_report(report)
+            self._apply_loaded_report(report, indexed, compact, file_ids)
             self.load_error = None
         except Exception as exc:  # pylint: disable=broad-except
-            self.index, self.call_tree_roots = ingest_report(empty)
+            indexed, compact, file_ids = ingest_report(empty)
+            self._apply_loaded_report(empty, indexed, compact, file_ids)
             self.load_error = f"Failed to parse report: {exc}"
 
     def reload_report(self, report_stem: str | None = None):
@@ -577,7 +781,6 @@ class Handler(SimpleHTTPRequestHandler):
                     "load_error": STATE.load_error,
                     "profiled_files_count": len(STATE.index.get("files", {})),
                     "bpf_insn_count": STATE.index.get("bpf_insn_count"),
-                    "bpf_insns": STATE.index.get("bpf_insns"),
                     "kernel_compiler": STATE.index.get("kernel_compiler"),
                     "profile_stats": STATE.index.get("profile_stats"),
                     "trace_record_count": STATE.index.get("trace_record_count"),
@@ -594,6 +797,16 @@ class Handler(SimpleHTTPRequestHandler):
                     "ok": True,
                     "load_error": STATE.load_error,
                     "current_report": STATE.current_report,
+                }
+            )
+            return
+
+        if parsed.path == "/api/bpf_insns":
+            insns = STATE.bpf_insns
+            self._write_json(
+                {
+                    "bpf_insns": insns if isinstance(insns, list) else [],
+                    "bpf_insn_count": len(insns) if isinstance(insns, list) else 0,
                 }
             )
             return
@@ -676,10 +889,19 @@ class Handler(SimpleHTTPRequestHandler):
                     max_total = total_ns
 
             call_tree_payload: list = []
-            if STATE.call_tree_roots:
-                call_tree_payload = prune_call_tree_for_file_arg(
-                    STATE.call_tree_roots, rel_path, arg
-                )
+            if STATE.call_tree_compact:
+                first = STATE.call_tree_compact[0]
+                if isinstance(first, dict) and "f" in first and STATE.file_ids:
+                    pruned = prune_compact_call_tree_for_file_arg(
+                        STATE.call_tree_compact, STATE.file_ids, rel_path, arg
+                    )
+                    call_tree_payload = compact_call_tree_to_api_nodes(
+                        pruned, STATE.file_ids
+                    )
+                else:
+                    call_tree_payload = prune_call_tree_for_file_arg(
+                        STATE.call_tree_compact, rel_path, arg
+                    )
 
             self._write_json(
                 {

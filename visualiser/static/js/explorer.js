@@ -1,4 +1,5 @@
 import { apiGet } from "./api.js";
+import { withLoading } from "./loading.js";
 import { app, ui } from "./state.js";
 import { updateUrlState } from "./url.js";
 
@@ -81,18 +82,20 @@ export async function renderTree() {
   if (!treeEl) {
     return;
   }
-  treeEl.innerHTML = "";
-  const root = await fetchTreeChildren("");
+  await withLoading("tree", "Loading explorer…", async () => {
+    treeEl.innerHTML = "";
+    const root = await fetchTreeChildren("");
 
-  const renderEntries = async (entries, depth) => {
-    for (const entry of entries) {
-      treeEl.appendChild(makeTreeNode(entry, depth));
-      if (entry.is_dir && app.treeState[entry.path]) {
-        const child = await fetchTreeChildren(entry.path);
-        await renderEntries(child.entries, depth + 1);
+    const renderEntries = async (entries, depth) => {
+      for (const entry of entries) {
+        treeEl.appendChild(makeTreeNode(entry, depth));
+        if (entry.is_dir && app.treeState[entry.path]) {
+          const child = await fetchTreeChildren(entry.path);
+          await renderEntries(child.entries, depth + 1);
+        }
       }
-    }
-  };
+    };
 
-  await renderEntries(root.entries, 0);
+    await renderEntries(root.entries, 0);
+  });
 }

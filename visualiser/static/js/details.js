@@ -2,10 +2,11 @@ import { formatLineRangeLabel, formatNs, formatSampleList } from "./formatting.j
 import {
   computeReferenceNs,
   lineSampleStats,
-  rangeExclusiveSamplesForCurrentArg,
+  rangeCallCountForCurrentArg,
+  rangeExclusiveStatsForCurrentArg,
   rangeSamplesForCurrentArg,
+  rangeStatsForCurrentArg,
 } from "./ranges.js";
-import { computeSampleStats } from "./samples.js";
 import { app, ui } from "./state.js";
 
 export function updateHoverDetails(lineNo) {
@@ -52,21 +53,21 @@ export function updateHoverDetails(lineNo) {
   }
 
   const rangeLines = touching.slice(0, 6).map((range) => {
-    const samples = rangeSamplesForCurrentArg(range);
-    const stats = computeSampleStats(samples);
+    const stats = rangeStatsForCurrentArg(range);
     const share = referenceNs ? (stats.total / referenceNs) * 100 : 0;
-    const exSamples = rangeExclusiveSamplesForCurrentArg(range);
+    const sampleCount = rangeCallCountForCurrentArg(range);
+    const samples = rangeSamplesForCurrentArg(range);
     let exclusiveChunk = "";
-    if (exSamples.length && exSamples.length === samples.length) {
-      const ex = computeSampleStats(exSamples);
-      exclusiveChunk = ` | excl total=${formatNs(ex.total)} ex avg=${formatNs(ex.avg)}`;
+    const exStats = rangeExclusiveStatsForCurrentArg(range);
+    if (exStats.count > 0 && exStats.count === sampleCount) {
+      exclusiveChunk = ` | excl total=${formatNs(exStats.total)} ex avg=${formatNs(exStats.avg)}`;
     }
     return (
       `range ${formatLineRangeLabel(range.start, range.end)}${range.function ? ` ${range.function}` : ""} ` +
       `| total=${formatNs(stats.total)} (${share.toFixed(2)}%) | count=${stats.count} ` +
       `| min=${formatNs(stats.min)} | max=${formatNs(stats.max)} ` +
       `| avg=${formatNs(stats.avg)} | med=${formatNs(stats.med)}${exclusiveChunk} ` +
-      `| samples=${formatSampleList(samples)}`
+      `| samples=${formatSampleList(samples, sampleCount)}`
     );
   });
 

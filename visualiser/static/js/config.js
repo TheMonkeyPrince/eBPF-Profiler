@@ -1,5 +1,7 @@
 import { apiGet } from "./api.js";
 import { formatNs, heatAlpha, heatBucket } from "./formatting.js";
+import { beginLoading, endLoading } from "./loading.js";
+import { sampleBlockTotalNs } from "./samples.js";
 import { app, ui } from "./state.js";
 
 function escapeHtml(text) {
@@ -209,25 +211,18 @@ export function buildArgOptions(globalArgs) {
   argFilterEl.value = app.selectedArg;
 }
 
-function sumSamples(samples) {
-  if (!Array.isArray(samples) || !samples.length) {
-    return 0;
-  }
-  return samples.reduce((acc, value) => acc + Number(value || 0), 0);
-}
-
 function computeArgTotalsByValue(ranges) {
   const totals = new Map();
   let grandTotal = 0;
   for (const range of ranges || []) {
-    const noArgTotal = sumSamples(range?.no_arg);
+    const noArgTotal = sampleBlockTotalNs(range?.no_arg);
     if (noArgTotal > 0) {
       totals.set("__no_arg__", (totals.get("__no_arg__") || 0) + noArgTotal);
       grandTotal += noArgTotal;
     }
     const byArg = range?.by_arg || {};
     for (const [argKey, samples] of Object.entries(byArg)) {
-      const argTotal = sumSamples(samples);
+      const argTotal = sampleBlockTotalNs(samples);
       if (argTotal <= 0) {
         continue;
       }
@@ -426,14 +421,33 @@ export function formatProfileStatsSummary(ps) {
 export async function loadConfig() {
   const metaEl = ui?.metaEl;
   const scaleModeSelectEl = ui?.scaleModeSelectEl;
-  const config = await apiGet("/api/config");
+  beginLoading("global", "Loading report metadata…");
+  let config;
+  try {
+    config = await apiGet("/api/config");
+  } finally {
+    endLoading("global");
+  }
+  let bpfPayload = config;
+  const insnCount = config.bpf_insn_count != null ? config.bpf_insn_count : null;
+  if (insnCount != null && insnCount > 0) {
+    beginLoading("global", "Loading BPF disassembly…");
+    try {
+      const bpf = await apiGet("/api/bpf_insns");
+      bpfPayload = { ...config, bpf_insns: bpf.bpf_insns };
+    } catch {
+      bpfPayload = config;
+    } finally {
+      endLoading("global");
+    }
+  }
   app.totalDurationNs = Number(config.total_duration_ns ?? config.total_duration ?? 0);
   const warnings = config.load_error ? ` | warning: ${config.load_error}` : "";
-  const insnCount =
-    config.bpf_insn_count != null
-      ? config.bpf_insn_count
-      : Array.isArray(config.bpf_insns)
-        ? config.bpf_insns.length
+  const insnCountDisplay =
+    insnCount != null
+      ? insnCount
+      : Array.isArray(bpfPayload.bpf_insns)
+        ? bpfPayload.bpf_insns.length
         : null;
   const parts = [
     `report: ${config.current_report || "—"}`,
@@ -441,8 +455,8 @@ export async function loadConfig() {
     `duration: ${formatNs(config.total_duration || 0)}`,
     `profiled files: ${config.profiled_files_count}`,
   ];
-  if (insnCount != null) {
-    parts.push(`bpf insns: ${insnCount}`);
+  if (insnCountDisplay != null) {
+    parts.push(`bpf insns: ${insnCountDisplay}`);
   }
   const traceRecords = config.trace_record_count;
   if (typeof traceRecords === "number" && traceRecords >= 0) {
@@ -459,7 +473,7 @@ export async function loadConfig() {
   if (metaEl) {
     metaEl.textContent = parts.join(" | ") + warnings;
   }
-  renderBpfDisasm(config);
+  renderBpfDisasm(bpfPayload);
   renderVerifierProfileStats(config);
   buildReportSelect(config.reports || [], config.current_report);
   buildArgOptions(config.global_args || []);

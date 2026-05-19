@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="show-meta show-details">
+    <div id="globalLoadingBar" class="loading-bar loading-bar--global" hidden aria-hidden="true">
+      <span class="loading-bar__track">
+        <span class="loading-bar__indeterminate"></span>
+      </span>
+      <span id="globalLoadingLabel" class="loading-bar__label"></span>
+    </div>
     <header>
       <div id="topBar">
         <div id="topBarTitle">Kernel Source Heatmap</div>
@@ -41,6 +47,12 @@
     <main id="appLayout">
       <aside id="sidebarPane">
         <h2>Explorer</h2>
+        <div id="treeLoadingBar" class="loading-bar loading-bar--tree" hidden aria-hidden="true">
+          <span class="loading-bar__track">
+            <span class="loading-bar__indeterminate"></span>
+          </span>
+          <span id="treeLoadingLabel" class="loading-bar__label">Loading tree…</span>
+        </div>
         <div id="tree"></div>
         <div
           id="sidebarSplitter"
@@ -77,6 +89,14 @@
         tabindex="0"
       ></div>
       <section id="editorPane">
+        <div id="editorLoading" class="pane-loading" hidden aria-hidden="true">
+          <div class="loading-bar loading-bar--pane">
+            <span class="loading-bar__track">
+              <span class="loading-bar__indeterminate"></span>
+            </span>
+            <span id="editorLoadingLabel" class="loading-bar__label">Loading file…</span>
+          </div>
+        </div>
         <div id="fileTitle">Select a file</div>
         <div id="legend">
           <span>Cold</span>

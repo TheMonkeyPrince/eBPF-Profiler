@@ -663,3 +663,140 @@ body.show-details #hoverDetailsWrap {
   margin-left: 6px;
   border-radius: 999px;
 }
+
+/* —— Loading bars —— */
+:root {
+  --loading-accent: #4a9eff;
+  --loading-accent-dim: rgba(74, 158, 255, 0.35);
+}
+
+body.light-theme {
+  --loading-accent: #2563eb;
+  --loading-accent-dim: rgba(37, 99, 235, 0.28);
+}
+
+.loading-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.loading-bar[hidden] {
+  display: none !important;
+}
+
+.loading-bar__track {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: var(--border);
+  overflow: hidden;
+  border-radius: 999px;
+  position: relative;
+}
+
+.loading-bar__indeterminate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 42%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--loading-accent-dim) 28%,
+    var(--loading-accent) 50%,
+    var(--loading-accent-dim) 72%,
+    transparent 100%
+  );
+  animation: loading-indeterminate 1.15s ease-in-out infinite;
+}
+
+@keyframes loading-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.loading-bar__label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loading-bar--global {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  padding: 0;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+}
+
+.loading-bar--global .loading-bar__track {
+  height: 4px;
+  border-radius: 0;
+}
+
+.loading-bar--global .loading-bar__label {
+  padding: 2px 10px 4px;
+}
+
+.loading-bar--tree {
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+.loading-bar--pane .loading-bar__track {
+  height: 4px;
+}
+
+#editorPane {
+  position: relative;
+}
+
+.pane-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.pane-loading[hidden] {
+  display: none !important;
+}
+
+.pane-loading .loading-bar--pane {
+  max-width: 420px;
+}
+
+body.is-loading-global .controls button,
+body.is-loading-global .controls select,
+body.is-loading-global #reportSelect {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+body.is-loading-tree #tree {
+  opacity: 0.55;
+}
+
+body.is-loading-editor #codePane {
+  opacity: 0.65;
+}

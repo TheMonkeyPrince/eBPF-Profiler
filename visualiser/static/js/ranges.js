@@ -1,18 +1,83 @@
-import { computeSampleStats, sampleInclusiveNs } from "./samples.js";
+import {
+  computeSampleStats,
+  computeSampleStatsFromBlock,
+  isAggregatedSampleBlock,
+  sampleBlockCount,
+  sampleBlockPreview,
+  sampleBlockTotalNs,
+  sampleInclusiveNs,
+} from "./samples.js";
 import { app } from "./state.js";
+
+function mergeAggregatedBlocks(blocks) {
+  let count = 0;
+  let total = 0;
+  let min = Infinity;
+  let max = -Infinity;
+  const preview = [];
+  const values = [];
+  for (const block of blocks) {
+    if (!block) {
+      continue;
+    }
+    if (isAggregatedSampleBlock(block)) {
+      count += Number(block.count) || 0;
+      total += Number(block.total_ns) || 0;
+      min = Math.min(min, Number(block.min_ns) || 0);
+      max = Math.max(max, Number(block.max_ns) || 0);
+      for (const v of block.preview || []) {
+        if (values.length < 10000) {
+          values.push(sampleInclusiveNs(v));
+        }
+        if (preview.length < 8) {
+          preview.push(v);
+        }
+      }
+    } else if (Array.isArray(block)) {
+      for (const v of block) {
+        const n = sampleInclusiveNs(v);
+        count += 1;
+        total += n;
+        min = Math.min(min, n);
+        max = Math.max(max, n);
+        if (values.length < 10000) {
+          values.push(n);
+        }
+        if (preview.length < 8) {
+          preview.push(v);
+        }
+      }
+    }
+  }
+  if (!count) {
+    return null;
+  }
+  if (!Number.isFinite(min)) {
+    min = 0;
+  }
+  if (!Number.isFinite(max)) {
+    max = 0;
+  }
+  values.sort((a, b) => a - b);
+  const mid = Math.floor(values.length / 2);
+  const med =
+    values.length % 2 ? values[mid] : values.length ? (values[mid - 1] + values[mid]) / 2 : 0;
+  return { count, total_ns: total, min_ns: min, max_ns: max, med_ns: med, preview };
+}
 
 export function rangeSamplesForCurrentArg(range) {
   if (app.selectedArg === "all") {
-    const combined = [...(range.no_arg || [])];
-    for (const argSamples of Object.values(range.by_arg || {})) {
-      combined.push(...argSamples);
+    const blocks = [range.no_arg, ...Object.values(range.by_arg || {})].filter(Boolean);
+    const merged = mergeAggregatedBlocks(blocks);
+    if (merged) {
+      return sampleBlockPreview(merged, 10000);
     }
-    return combined;
+    return [];
   }
   if (app.selectedArg === "__no_arg__") {
-    return [...(range.no_arg || [])];
+    return sampleBlockPreview(range.no_arg);
   }
-  return [...((range.by_arg && range.by_arg[app.selectedArg]) || [])];
+  return sampleBlockPreview((range.by_arg && range.by_arg[app.selectedArg]) || []);
 }
 
 export function rangeExclusiveSamplesForCurrentArg(range) {
@@ -20,24 +85,85 @@ export function rangeExclusiveSamplesForCurrentArg(range) {
     return [];
   }
   if (app.selectedArg === "all") {
-    const combined = [...(range.no_arg_exclusive || [])];
-    for (const xs of Object.values(range.by_arg_exclusive || {})) {
-      combined.push(...xs);
-    }
-    return combined;
+    const blocks = [range.no_arg_exclusive, ...Object.values(range.by_arg_exclusive || {})].filter(
+      Boolean,
+    );
+    const merged = mergeAggregatedBlocks(blocks);
+    return merged ? sampleBlockPreview(merged, 10000) : [];
   }
   if (app.selectedArg === "__no_arg__") {
-    return [...(range.no_arg_exclusive || [])];
+    return sampleBlockPreview(range.no_arg_exclusive);
   }
-  return [...((range.by_arg_exclusive && range.by_arg_exclusive[app.selectedArg]) || [])];
+  return sampleBlockPreview(
+    (range.by_arg_exclusive && range.by_arg_exclusive[app.selectedArg]) || [],
+  );
 }
 
 export function rangeTotalForCurrentArg(range) {
-  return rangeSamplesForCurrentArg(range).reduce((acc, value) => acc + sampleInclusiveNs(value), 0);
+  if (!range) {
+    return 0;
+  }
+  if (app.selectedArg === "all") {
+    return (
+      sampleBlockTotalNs(range.no_arg) +
+      Object.values(range.by_arg || {}).reduce((acc, block) => acc + sampleBlockTotalNs(block), 0)
+    );
+  }
+  if (app.selectedArg === "__no_arg__") {
+    return sampleBlockTotalNs(range.no_arg);
+  }
+  return sampleBlockTotalNs((range.by_arg && range.by_arg[app.selectedArg]) || []);
+}
+
+export function rangeStatsForCurrentArg(range) {
+  if (!range) {
+    return computeSampleStats([]);
+  }
+  if (app.selectedArg === "all") {
+    const blocks = [range.no_arg, ...Object.values(range.by_arg || {})].filter(Boolean);
+    const merged = mergeAggregatedBlocks(blocks);
+    return merged ? computeSampleStatsFromBlock(merged) : computeSampleStats([]);
+  }
+  if (app.selectedArg === "__no_arg__") {
+    return computeSampleStatsFromBlock(range.no_arg);
+  }
+  return computeSampleStatsFromBlock((range.by_arg && range.by_arg[app.selectedArg]) || []);
+}
+
+export function rangeExclusiveStatsForCurrentArg(range) {
+  if (!range) {
+    return computeSampleStats([]);
+  }
+  if (app.selectedArg === "all") {
+    const blocks = [
+      range.no_arg_exclusive,
+      ...Object.values(range.by_arg_exclusive || {}),
+    ].filter(Boolean);
+    const merged = mergeAggregatedBlocks(blocks);
+    return merged ? computeSampleStatsFromBlock(merged) : computeSampleStats([]);
+  }
+  if (app.selectedArg === "__no_arg__") {
+    return computeSampleStatsFromBlock(range.no_arg_exclusive);
+  }
+  return computeSampleStatsFromBlock(
+    (range.by_arg_exclusive && range.by_arg_exclusive[app.selectedArg]) || [],
+  );
 }
 
 export function rangeCallCountForCurrentArg(range) {
-  return rangeSamplesForCurrentArg(range).length;
+  if (!range) {
+    return 0;
+  }
+  if (app.selectedArg === "all") {
+    return (
+      sampleBlockCount(range.no_arg) +
+      Object.values(range.by_arg || {}).reduce((acc, block) => acc + sampleBlockCount(block), 0)
+    );
+  }
+  if (app.selectedArg === "__no_arg__") {
+    return sampleBlockCount(range.no_arg);
+  }
+  return sampleBlockCount((range.by_arg && range.by_arg[app.selectedArg]) || []);
 }
 
 /** `argKey === null` → `no_arg` samples only; else `by_arg` key (numeric string). */
@@ -46,28 +172,61 @@ export function rangeSamplesForArgKey(range, argKey) {
     return [];
   }
   if (argKey === null || argKey === undefined) {
-    return [...(range.no_arg || [])];
+    return sampleBlockPreview(range.no_arg);
   }
   const k =
     typeof argKey === "number" && Number.isFinite(argKey) ? String(argKey) : String(argKey);
-  return [...((range.by_arg && range.by_arg[k]) || [])];
+  return sampleBlockPreview((range.by_arg && range.by_arg[k]) || []);
 }
 
 export function rangeTotalForArgKey(range, argKey) {
-  return rangeSamplesForArgKey(range, argKey).reduce((acc, v) => acc + sampleInclusiveNs(v), 0);
+  if (!range) {
+    return 0;
+  }
+  if (argKey === null || argKey === undefined) {
+    return sampleBlockTotalNs(range.no_arg);
+  }
+  const k =
+    typeof argKey === "number" && Number.isFinite(argKey) ? String(argKey) : String(argKey);
+  return sampleBlockTotalNs((range.by_arg && range.by_arg[k]) || []);
 }
 
 export function rangeCallCountForArgKey(range, argKey) {
-  return rangeSamplesForArgKey(range, argKey).length;
+  if (!range) {
+    return 0;
+  }
+  if (argKey === null || argKey === undefined) {
+    return sampleBlockCount(range.no_arg);
+  }
+  const k =
+    typeof argKey === "number" && Number.isFinite(argKey) ? String(argKey) : String(argKey);
+  return sampleBlockCount((range.by_arg && range.by_arg[k]) || []);
 }
 
 export function lineSampleStats(lineNo) {
   const touching = app.lineRangesIndex[lineNo] || [];
-  const samples = [];
+  const blocks = [];
   for (const range of touching) {
-    samples.push(...rangeSamplesForCurrentArg(range));
+    if (app.selectedArg === "all") {
+      if (range.no_arg) {
+        blocks.push(range.no_arg);
+      }
+      for (const b of Object.values(range.by_arg || {})) {
+        blocks.push(b);
+      }
+    } else if (app.selectedArg === "__no_arg__") {
+      if (range.no_arg) {
+        blocks.push(range.no_arg);
+      }
+    } else if (range.by_arg?.[app.selectedArg]) {
+      blocks.push(range.by_arg[app.selectedArg]);
+    }
   }
-  return computeSampleStats(samples);
+  const merged = mergeAggregatedBlocks(blocks);
+  if (merged) {
+    return computeSampleStatsFromBlock(merged);
+  }
+  return computeSampleStats([]);
 }
 
 export function buildLineRangesIndex(data) {
@@ -110,31 +269,57 @@ function mergeOneProfileRangeGroup(list) {
   }
   const first = /** @type {Record<string, unknown>} */ (list[0]);
   const merged = { ...first };
-  const no_arg = [];
-  const no_arg_exclusive = [];
+  const noArgBlocks = [];
+  const noArgExcBlocks = [];
   /** @type {Record<string, unknown[]>} */
-  const byArg = {};
+  const byArgBlocks = {};
   /** @type {Record<string, unknown[]>} */
-  const byArgExc = {};
+  const byArgExcBlocks = {};
   for (const r of list) {
     const rec = /** @type {Record<string, unknown>} */ (r);
-    no_arg.push(...(rec.no_arg || []));
-    no_arg_exclusive.push(...(rec.no_arg_exclusive || []));
-    for (const [ak, samples] of Object.entries(/** @type {Record<string, unknown[]>} */ (rec.by_arg || {}))) {
-      if (!byArg[ak]) {
-        byArg[ak] = [];
-      }
-      byArg[ak].push(...(samples || []));
+    if (rec.no_arg) {
+      noArgBlocks.push(rec.no_arg);
     }
-    for (const [ak, samples] of Object.entries(/** @type {Record<string, unknown[]>} */ (rec.by_arg_exclusive || {}))) {
-      if (!byArgExc[ak]) {
-        byArgExc[ak] = [];
+    if (rec.no_arg_exclusive) {
+      noArgExcBlocks.push(rec.no_arg_exclusive);
+    }
+    for (const [ak, samples] of Object.entries(/** @type {Record<string, unknown>} */ (rec.by_arg || {}))) {
+      if (!byArgBlocks[ak]) {
+        byArgBlocks[ak] = [];
       }
-      byArgExc[ak].push(...(samples || []));
+      byArgBlocks[ak].push(samples);
+    }
+    for (const [ak, samples] of Object.entries(
+      /** @type {Record<string, unknown>} */ (rec.by_arg_exclusive || {}),
+    )) {
+      if (!byArgExcBlocks[ak]) {
+        byArgExcBlocks[ak] = [];
+      }
+      byArgExcBlocks[ak].push(samples);
     }
   }
-  merged.no_arg = no_arg;
-  if (no_arg_exclusive.length) {
+  const no_arg = mergeAggregatedBlocks(noArgBlocks);
+  const no_arg_exclusive = mergeAggregatedBlocks(noArgExcBlocks);
+  const byArg = {};
+  for (const [ak, blocks] of Object.entries(byArgBlocks)) {
+    const block = mergeAggregatedBlocks(blocks);
+    if (block) {
+      byArg[ak] = block;
+    }
+  }
+  const byArgExc = {};
+  for (const [ak, blocks] of Object.entries(byArgExcBlocks)) {
+    const block = mergeAggregatedBlocks(blocks);
+    if (block) {
+      byArgExc[ak] = block;
+    }
+  }
+  if (no_arg) {
+    merged.no_arg = no_arg;
+  } else {
+    delete merged.no_arg;
+  }
+  if (no_arg_exclusive) {
     merged.no_arg_exclusive = no_arg_exclusive;
   } else {
     delete merged.no_arg_exclusive;
@@ -149,13 +334,13 @@ function mergeOneProfileRangeGroup(list) {
   } else {
     delete merged.by_arg_exclusive;
   }
-  const allInc = [...no_arg];
-  for (const xs of Object.values(byArg)) {
-    allInc.push(...xs);
+  merged.total_ns = sampleBlockTotalNs(no_arg) + Object.values(byArg).reduce((a, b) => a + sampleBlockTotalNs(b), 0);
+  merged.count = sampleBlockCount(no_arg) + Object.values(byArg).reduce((a, b) => a + sampleBlockCount(b), 0);
+  const maxCandidates = [sampleBlockTotalNs(no_arg) > 0 ? no_arg?.max_ns : 0];
+  for (const b of Object.values(byArg)) {
+    maxCandidates.push(b?.max_ns || 0);
   }
-  merged.total_ns = allInc.reduce((acc, v) => acc + sampleInclusiveNs(v), 0);
-  merged.count = allInc.length;
-  merged.max_ns = merged.count ? Math.max(...allInc.map((v) => sampleInclusiveNs(v))) : 0;
+  merged.max_ns = Math.max(0, ...maxCandidates);
   return merged;
 }
 
@@ -562,7 +747,7 @@ export function buildProfiledRanges(data) {
   if (data && Array.isArray(data.ranges)) {
     data.ranges = mergeProfiledRangesForSameSite(data.ranges);
   }
-  const filtered = (data.ranges || []).filter((range) => rangeSamplesForCurrentArg(range).length > 0);
+  const filtered = (data.ranges || []).filter((range) => rangeCallCountForCurrentArg(range) > 0);
 
   const sortFn = (a, b) => {
     if (app.profiledSortMode === "time") {

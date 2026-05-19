@@ -3,7 +3,7 @@ import {
   callTreeNodeMergeKey,
   computeReferenceNs,
   profiledRangeMergeKey,
-  rangeSamplesForCurrentArg,
+  rangeCallCountForCurrentArg,
   rangeTotalForArgKey,
   rangeTotalForCurrentArg,
 } from "./ranges.js";
@@ -37,7 +37,7 @@ function fillProfiledLabelPrimary(labelEl, range, parentSharePct = null) {
   const total = rangeTotalForCurrentArg(range);
   const referenceNs = app.currentFileData ? computeReferenceNs(app.currentFileData) : 0;
   const ratio = referenceNs ? (total / referenceNs) * 100 : 0;
-  const count = rangeSamplesForCurrentArg(range).length;
+  const count = rangeCallCountForCurrentArg(range);
   const loc = formatProfiledLocation(range);
   if (loc.hasFn) {
     const spanLoc = document.createElement("span");

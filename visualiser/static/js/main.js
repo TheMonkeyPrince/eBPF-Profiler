@@ -1,5 +1,6 @@
 import { apiGet } from "./api.js";
 import { loadConfig, refreshBpfDisasmHeatmap } from "./config.js";
+import { initLoading, withLoading } from "./loading.js";
 import {
   applyTheme,
   ensureEditor,
@@ -44,26 +45,30 @@ if (!ui) {
   throw new Error("bindUi failed");
 }
 
+initLoading();
 initResizableLayout();
 
-async function refreshAfterReportChange() {
-  app.treeChildrenCache = {};
-  await loadConfig();
-  if (app.selectedPath) {
-    await ensureTreePathExpanded(app.selectedPath);
-    await renderTree();
-  } else {
-    await renderTree();
-  }
-  if (app.selectedPath) {
-    await loadFile();
-  }
-  updateUrlState();
+async function refreshAfterReportChange(reportLabel) {
+  const label = reportLabel || "Reloading report…";
+  await withLoading("global", label, async () => {
+    app.treeChildrenCache = {};
+    await loadConfig();
+    if (app.selectedPath) {
+      await ensureTreePathExpanded(app.selectedPath);
+      await renderTree();
+    } else {
+      await renderTree();
+    }
+    if (app.selectedPath) {
+      await loadFile();
+    }
+    updateUrlState();
+  });
 }
 
 ui.reloadButtonEl.addEventListener("click", async () => {
   await apiGet("/api/reload");
-  await refreshAfterReportChange();
+  await refreshAfterReportChange("Reloading report…");
 });
 
 if (ui.reportSelectEl) {
@@ -73,7 +78,7 @@ if (ui.reportSelectEl) {
       return;
     }
     await apiGet(`/api/reload?report=${encodeURIComponent(id)}`);
-    await refreshAfterReportChange();
+    await refreshAfterReportChange(`Loading report ${id}…`);
   });
 }
 
@@ -190,33 +195,36 @@ ui.copyDetailsBtnEl.addEventListener("click", async () => {
 
 async function boot() {
   readUrlState();
-  await ensureEditor();
+  await withLoading("global", "Loading editor…", () => ensureEditor());
   applyTheme();
-  await loadConfig();
 
-  const url = new URL(window.location.href);
-  const urlReport = url.searchParams.get("report");
-  if (urlReport && ui.reportSelectEl) {
-    const ids = new Set([...ui.reportSelectEl.options].map((o) => o.value));
-    if (ids.has(urlReport)) {
-      ui.reportSelectEl.value = urlReport;
-      await apiGet(`/api/reload?report=${encodeURIComponent(urlReport)}`);
-      await loadConfig();
+  await withLoading("global", "Loading report…", async () => {
+    await loadConfig();
+
+    const url = new URL(window.location.href);
+    const urlReport = url.searchParams.get("report");
+    if (urlReport && ui.reportSelectEl) {
+      const ids = new Set([...ui.reportSelectEl.options].map((o) => o.value));
+      if (ids.has(urlReport)) {
+        ui.reportSelectEl.value = urlReport;
+        await apiGet(`/api/reload?report=${encodeURIComponent(urlReport)}`);
+        await loadConfig();
+      }
     }
-  }
 
-  if (app.selectedPath) {
-    await ensureTreePathExpanded(app.selectedPath);
-  }
-  await renderTree();
-  updateUrlState(true);
-  updateProfileNavUI();
-  if (app.selectedPath) {
-    await loadFile();
-  }
-  if (ui.profiledDisplaySelectEl) {
-    ui.profiledDisplaySelectEl.value = app.profiledListDisplayMode;
-  }
+    if (app.selectedPath) {
+      await ensureTreePathExpanded(app.selectedPath);
+    }
+    await renderTree();
+    updateUrlState(true);
+    updateProfileNavUI();
+    if (app.selectedPath) {
+      await loadFile();
+    }
+    if (ui.profiledDisplaySelectEl) {
+      ui.profiledDisplaySelectEl.value = app.profiledListDisplayMode;
+    }
+  });
 }
 
 boot().catch((err) => {
