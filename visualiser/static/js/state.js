@@ -48,5 +48,7 @@ export const app = {
   bpfProfiledFiles: [],
   bpfInsnFileFilter: "all",
   bpfInsnScaleMode: "profiled",
+  /** All insn indices seen in the report (dropdown shows top 200 by time). */
+  globalArgs: /** @type {string[]} */ ([]),
   lastDetailsText: "Hover a line to see detailed profiling data.",
 };

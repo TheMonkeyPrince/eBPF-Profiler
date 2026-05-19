@@ -4,6 +4,38 @@ import { beginLoading, endLoading } from "./loading.js";
 import { sampleBlockTotalNs } from "./samples.js";
 import { app, ui } from "./state.js";
 
+const MAX_INSN_FILTER_OPTIONS = 200;
+
+/**
+ * @param {string[]} args
+ * @param {Map<string, number> | Record<string, number>} totals
+ * @param {{ pin?: string | null, limit?: number }} [opts]
+ */
+function selectTopInsnArgs(args, totals, opts = {}) {
+  const limit = opts.limit ?? MAX_INSN_FILTER_OPTIONS;
+  const pin = opts.pin;
+  const getTotal = (key) => {
+    if (totals instanceof Map) {
+      return totals.get(String(key)) || 0;
+    }
+    return Number(totals[String(key)] || 0);
+  };
+  const compare = (a, b) => {
+    const diff = getTotal(b) - getTotal(a);
+    if (diff !== 0) {
+      return diff;
+    }
+    return Number(a) - Number(b);
+  };
+  const sorted = [...args].sort(compare);
+  const top = sorted.slice(0, limit);
+  if (pin && pin !== "all" && pin !== "__no_arg__" && !top.includes(pin) && args.includes(pin)) {
+    top.push(pin);
+    top.sort(compare);
+  }
+  return top;
+}
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;")
@@ -179,11 +211,21 @@ function scrollSelectedInsnIntoView(preEl) {
   line?.scrollIntoView({ block: "nearest" });
 }
 
+function formatArgOptionLabel(baseLabel, total, grandTotal, rank) {
+  const pct = grandTotal > 0 ? (100 * total) / grandTotal : 0;
+  if (total <= 0) {
+    return `${baseLabel} (0%)`;
+  }
+  const rankTag = rank > 0 && rank <= 3 ? ` #${rank}` : "";
+  return `${baseLabel}${rankTag} (${pct.toFixed(1)}%, ${formatNs(total)})`;
+}
+
 export function buildArgOptions(globalArgs) {
   const argFilterEl = ui?.argFilterEl;
   if (!argFilterEl) {
     return;
   }
+  app.globalArgs = globalArgs.map(String);
   argFilterEl.innerHTML = "";
   const allOption = document.createElement("option");
   allOption.value = "all";
@@ -197,14 +239,17 @@ export function buildArgOptions(globalArgs) {
   noArgOption.dataset.baseLabel = "no arg";
   argFilterEl.appendChild(noArgOption);
 
-  for (const arg of globalArgs) {
+  const limitedArgs = selectTopInsnArgs(globalArgs.map(String), app.insnTiming || {}, {
+    pin: app.selectedArg,
+  });
+  for (const arg of limitedArgs) {
     const option = document.createElement("option");
     option.value = arg;
     option.textContent = `insn ${arg}`;
     option.dataset.baseLabel = `insn ${arg}`;
     argFilterEl.appendChild(option);
   }
-  const knownValues = new Set(["all", "__no_arg__", ...globalArgs.map(String)]);
+  const knownValues = new Set(["all", "__no_arg__", ...limitedArgs]);
   if (!knownValues.has(app.selectedArg)) {
     app.selectedArg = "all";
   }
@@ -239,69 +284,62 @@ export function applyArgTimingToOptions(data) {
     return;
   }
 
-  const options = [...argFilterEl.options];
-  if (!options.length) {
-    return;
-  }
-
   const selected = argFilterEl.value;
   const { totals, grandTotal } = computeArgTotalsByValue(data?.ranges || []);
-  const rankedValues = options
-    .map((opt) => opt.value)
-    .filter((value) => value !== "all")
-    .sort((a, b) => {
-      const diff = (totals.get(b) || 0) - (totals.get(a) || 0);
-      if (diff !== 0) {
-        return diff;
-      }
-      if (a === "__no_arg__") {
-        return -1;
-      }
-      if (b === "__no_arg__") {
-        return 1;
-      }
-      return Number(a) - Number(b);
-    });
+  const topArgValues = selectTopInsnArgs(app.globalArgs || [], totals, { pin: selected });
+  const rankedValues = ["__no_arg__", ...topArgValues].sort((a, b) => {
+    const diff = (totals.get(b) || 0) - (totals.get(a) || 0);
+    if (diff !== 0) {
+      return diff;
+    }
+    if (a === "__no_arg__") {
+      return -1;
+    }
+    if (b === "__no_arg__") {
+      return 1;
+    }
+    return Number(a) - Number(b);
+  });
   const rankByValue = new Map(rankedValues.map((value, idx) => [value, idx + 1]));
 
-  for (const option of options) {
-    const baseLabel = option.dataset.baseLabel || option.value;
-    if (option.value === "all") {
-      option.textContent = baseLabel;
-      continue;
-    }
-    const total = totals.get(option.value) || 0;
-    const pct = grandTotal > 0 ? (100 * total) / grandTotal : 0;
-    const rank = rankByValue.get(option.value) || 0;
-    if (total <= 0) {
-      option.textContent = `${baseLabel} (0%)`;
-      continue;
-    }
-    const rankTag = rank > 0 && rank <= 3 ? ` #${rank}` : "";
-    option.textContent = `${baseLabel}${rankTag} (${pct.toFixed(1)}%, ${formatNs(total)})`;
-  }
-
-  const allOption = options.find((option) => option.value === "all");
-  const noArgOption = options.find((option) => option.value === "__no_arg__");
-  const argOptions = options
-    .filter((option) => option.value !== "all" && option.value !== "__no_arg__")
-    .sort((a, b) => {
-      const diff = (totals.get(b.value) || 0) - (totals.get(a.value) || 0);
-      if (diff !== 0) {
-        return diff;
-      }
-      return Number(a.value) - Number(b.value);
-    });
-
   argFilterEl.innerHTML = "";
-  if (allOption) {
-    argFilterEl.appendChild(allOption);
-  }
-  if (noArgOption) {
-    argFilterEl.appendChild(noArgOption);
-  }
-  for (const option of argOptions) {
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "all";
+  allOption.dataset.baseLabel = "all";
+  argFilterEl.appendChild(allOption);
+
+  const noArgOption = document.createElement("option");
+  noArgOption.value = "__no_arg__";
+  noArgOption.dataset.baseLabel = "no arg";
+  noArgOption.textContent = formatArgOptionLabel(
+    "no arg",
+    totals.get("__no_arg__") || 0,
+    grandTotal,
+    rankByValue.get("__no_arg__") || 0,
+  );
+  argFilterEl.appendChild(noArgOption);
+
+  for (const arg of topArgValues) {
+    const option = document.createElement("option");
+    const baseLabel = `insn ${arg}`;
+    option.value = arg;
+    option.dataset.baseLabel = baseLabel;
+    option.textContent = formatArgOptionLabel(
+      baseLabel,
+      totals.get(arg) || 0,
+      grandTotal,
+      rankByValue.get(arg) || 0,
+    );
     argFilterEl.appendChild(option);
+  }
+
+  const knownValues = new Set(["all", "__no_arg__", ...topArgValues]);
+  if (!knownValues.has(selected)) {
+    app.selectedArg = "all";
+    argFilterEl.value = "all";
+    return;
   }
   argFilterEl.value = selected;
 }
