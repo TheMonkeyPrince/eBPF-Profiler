@@ -1,10 +1,7 @@
 import ctypes as ct
 from enum import Enum
 
-u64 = ct.c_uint64
-u32 = ct.c_uint32
-NO_ARG = u32(-1).value
-BPF_PROFILE_MAX_RECORDS = 819200
+BPF_PROFILE_MAX_RECORDS = 805306368 # 24GB at 32 bytes per record
 
 class RecordType(Enum):
 	START = 0
@@ -14,21 +11,23 @@ class RecordType(Enum):
 
 
 class Record(ct.Structure):
-	_pack_ = 1
+	NO_INSN_IDX = ct.c_uint32(-1).value
+
 	_fields_ = [
-		("type", ct.c_uint8),
-		("file_id", ct.c_uint8),
-		("line", ct.c_int),
-		("arg", u32),
-		("start_time", u64),
-		("end_time", u64),
+		("start_time", ct.c_uint64),
+        ("end_time", ct.c_uint64),
+        ("line", ct.c_uint32),
+        ("insn_idx", ct.c_uint32),
+        ("type", ct.c_int),
+        ("file_id", ct.c_uint8),
+        ("_pad", ct.c_uint8 * 3),
 	]
 
 	def get_record_type(self):
 		return RecordType(self.type)
 
-	def has_arg(self):
-		return self.get_record_type() in {RecordType.BLOCK, RecordType.CALL} and self.arg != NO_ARG
+	def has_insn_idx(self):
+		return self.get_record_type() in {RecordType.BLOCK, RecordType.CALL} and self.insn_idx != Record.NO_INSN_IDX
 
 	def duration(self):
 		if self.get_record_type() in {RecordType.BLOCK, RecordType.CALL}:
@@ -42,7 +41,7 @@ class Record(ct.Structure):
 		return (
 			f"[type={self.get_record_type().name}, file_id={self.file_id}, "
 			f"line={self.line}, "
-			f"arg={self.arg}, start_time={self.start_time}, end_time={self.end_time}]"
+			f"insn_idx={self.insn_idx}, start_time={self.start_time}, end_time={self.end_time}]"
 		)
 
 	@staticmethod
@@ -56,11 +55,13 @@ class Record(ct.Structure):
 	@staticmethod
 	def size():
 		return ct.sizeof(Record)
-	
+assert ct.sizeof(Record) == 32
+
+BPFInsnCode = ct.c_uint8
 class BPFInsn(ct.Structure):
 	_pack_ = 1
 	_fields_ = [
-		("code", ct.c_uint8),
+		("code", BPFInsnCode),
 		("_regs", ct.c_uint8),
 		("off", ct.c_int16),
 		("imm", ct.c_int32),
@@ -115,17 +116,26 @@ class BPFInsn(ct.Structure):
 		
 	def __hash__(self):
 		return hash(ct.string_at(ct.addressof(self), ct.sizeof(self)))
+	
+	def to_json_dict(self, compact: bool = False) -> dict:
+		return {
+			"code" if not compact else "c": self.code,
+			"dst_reg" if not compact else "d": self.dst_reg,
+			"src_reg" if not compact else "s": self.src_reg,
+			"off" if not compact else "o": self.off,
+			"imm" if not compact else "i": self.imm,
+		}
 
 class ProfileStats(ct.Structure):
 	_pack_ = 1
 	_fields_ = [
-		("subprog_cnt", u32),
-		("insn_processed", u32),
-		("complexity_limit_insns", u32),
-		("max_states_per_insn", u32),
-		("total_states", u32),
-		("peak_states", u32),
-		("longest_mark_read_walk", u32),
+		("subprog_cnt", ct.c_uint32),
+		("insn_processed", ct.c_uint32),
+		("complexity_limit_insns", ct.c_uint32),
+		("max_states_per_insn", ct.c_uint32),
+		("total_states", ct.c_uint32),
+		("peak_states", ct.c_uint32),
+		("longest_mark_read_walk", ct.c_uint32),
 	]
 
 	def __str__(self) -> str:
@@ -165,20 +175,20 @@ class ProfileStats(ct.Structure):
 		}
 
 class ProfilingResult:
-	def __init__(self, program_name: str, program: list[BPFInsn], stats: ProfileStats, trace: list[Record]):
+	def __init__(self, program_name: str, program: list[BPFInsn], stats: ProfileStats, records: list[Record]):
 		self.program_name = program_name
 		self.program = program
 		self.stats = stats
-		self.trace = trace
+		self.records = records
 
-		if len(self.trace) >= BPF_PROFILE_MAX_RECORDS:
-			print(f"Warning: trace for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
+		if len(self.records) >= BPF_PROFILE_MAX_RECORDS:
+			print(f"Warning: records for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
 
 	def __str__(self):
-		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, trace=[{len(self.trace)} records])"
-	
+		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, records=[{len(self.records)} records])"
+
 	def is_valid(self):
-		return len(self.trace) < BPF_PROFILE_MAX_RECORDS
+		return len(self.records) < BPF_PROFILE_MAX_RECORDS
 	
 if __name__ == "__main__":
 	print(Record.size())

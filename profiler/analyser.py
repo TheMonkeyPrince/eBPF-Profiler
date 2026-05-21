@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from time import time
 
-from profiler_types import BPFInsn, NO_ARG, ProfileStats, Record, RecordType
+from profiler_types import BPFInsn, ProfileStats, Record, RecordType
 from utils import find_block_end, find_block_start, find_call_name
 
 
@@ -243,7 +243,7 @@ class TraceAnalyser:
 					v1 = ev.end_time
 				elif t == block_t or t == call_t:
 					timed.append(ev)
-					args.append(ev.arg if ev.arg != NO_ARG else None)
+					args.append(ev.arg if ev.arg != Record.NO_ARG else None)
 
 		with _progress(len(timed), "Building call tree", self._show_progress) as tree_bar:
 			exc, ch, durations = _exclusive_and_children(

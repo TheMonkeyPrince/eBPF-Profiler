@@ -3,7 +3,7 @@ echo "Booting kernel with QEMU..."
 sudo qemu-system-x86_64 \
   -enable-kvm \
   -cpu host \
-  -m 8G \
+  -m 64G \
   -smp 4 \
   -kernel linux/arch/x86/boot/bzImage \
   -append "console=ttyS0 root=/dev/sda rw ip=dhcp" \

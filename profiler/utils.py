@@ -1,5 +1,3 @@
-saved_block_results: dict[tuple[str, int], int] = {}
-saved_call_results: dict[tuple[str, int], str] = {}
 cached_files: dict[str, list[str]] = {}
 
 def find_block_end(filename, start_line):
@@ -10,8 +8,6 @@ def find_block_end(filename, start_line):
     Nested braces, string literals, character literals, and comments are handled.
     """
 
-    if (filename, start_line) in saved_block_results:
-        return saved_block_results[(filename, start_line)]
     if filename not in cached_files:
         with open(filename, 'r') as f:
             cached_files[filename] = f.readlines()
@@ -77,7 +73,6 @@ def find_block_end(filename, start_line):
                     brace_count -= 1
                     if brace_count == 0:
                         # Return 1-based line number
-                        saved_block_results[(filename, start_line)] = i + 1
                         return i + 1
             j += 1
 
@@ -106,9 +101,8 @@ def find_block_start(filename, end_line):
 
     raise ValueError(f"No opening brace matches the given end line {filename}:{end_line}")
 
+# notes: only works with clang
 def find_call_name(filename, line):
-    if (filename, line) in saved_call_results:
-        return saved_call_results[(filename, line)]
     if filename not in cached_files:
         with open(filename, 'r') as f:
             cached_files[filename] = f.readlines()

@@ -64,18 +64,24 @@ def save_result(result: ProfilingResult):
 		for insn in result.program:
 			f.write(bytes(insn))
 		f.write(bytes(result.stats))
-		f.write(struct.pack("<I", len(result.trace)))
-		for rec in result.trace:
+		f.write(struct.pack("<I", len(result.records)))
+		for rec in result.records:
 			f.write(bytes(rec))
 
 
-def load_analysis(name: str) -> dict:
-	path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
-	with open(path, "r", encoding="utf-8") as f:
-		return json.load(f)
+# def load_analysis(name: str) -> dict:
+# 	path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
+# 	with open(path, "r", encoding="utf-8") as f:
+# 		return json.load(f)
 
 
 def save_analysis(name: str, analyser: TraceAnalyser):
 	path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
 	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(analyser.to_json(), encoding="utf-8")
+
+	data = analyser.to_json()
+	if len(data.encode("utf-8")) > 5 * 1024**3:  # 5 GiB
+		print(f"Warning: analysis for {name!r} is very large ({len(data.encode('utf-8')) / (1024**3):.2f} GiB): file discarded to avoid filling up the disk.")
+		return
+
+	path.write_text(data, encoding="utf-8")

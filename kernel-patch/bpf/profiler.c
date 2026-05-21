@@ -4,12 +4,12 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
-
+#include <linux/slab.h>
 
 
 static DEFINE_SPINLOCK(bpf_profiler_lock);
 
-static bpf_profile_record_list_t bpf_profile_records = {0};
+static bpf_profile_record_list_t *bpf_profile_records = NULL;
 
 void bpf_profiler_add_record(
     bpf_profile_record_type_t type, unsigned char file_id, int line, u32 arg, u64 start_time, u64 end_time)
@@ -18,16 +18,16 @@ void bpf_profiler_add_record(
     u32 idx;
 
     spin_lock_irqsave(&bpf_profiler_lock, flags);
-    idx = bpf_profile_records.count;
+    idx = bpf_profile_records->count;
     if (idx < BPF_PROFILE_MAX_RECORDS)
     {
-        bpf_profile_records.records[idx].type = type;
-        bpf_profile_records.records[idx].file_id = file_id;
-        bpf_profile_records.records[idx].line = line;
-        bpf_profile_records.records[idx].arg = arg;
-        bpf_profile_records.records[idx].start_time = start_time;
-        bpf_profile_records.records[idx].end_time = end_time;
-        bpf_profile_records.count = idx + 1;
+        bpf_profile_records->records[idx].type = type;
+        bpf_profile_records->records[idx].file_id = file_id;
+        bpf_profile_records->records[idx].line = line;
+        bpf_profile_records->records[idx].arg = arg;
+        bpf_profile_records->records[idx].start_time = start_time;
+        bpf_profile_records->records[idx].end_time = end_time;
+        bpf_profile_records->count = idx + 1;
     }
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
 }
@@ -39,6 +39,12 @@ int bpf_profiler_start(struct bpf_prog *prog)
     ssize_t ret;
 
     unsigned long flags;
+
+    if (bpf_profile_records == NULL) {
+        bpf_profile_records = vzalloc(sizeof(bpf_profile_record_list_t));
+        if (!bpf_profile_records)
+            return -ENOMEM;
+    }
 
     file = filp_open("/tmp/bpf_profile_records", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (IS_ERR(file))
@@ -58,7 +64,7 @@ out:
     filp_close(file, NULL);
 
     spin_lock_irqsave(&bpf_profiler_lock, flags);
-    bpf_profile_records.count = 0;
+    bpf_profile_records->count = 0;
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
     return ret;
 }
@@ -93,13 +99,13 @@ int bpf_profiler_end(struct bpf_verifier_env *env) {
     if (ret < 0)
         goto out;
 
-    ret = kernel_write(file, &bpf_profile_records.count,
-                       sizeof(bpf_profile_records.count), &pos);
+    ret = kernel_write(file, &bpf_profile_records->count,
+                       sizeof(bpf_profile_records->count), &pos);
     if (ret < 0)
         goto out;
 
-    ret = kernel_write(file, bpf_profile_records.records,
-                       sizeof(bpf_profile_record_t) * bpf_profile_records.count, &pos);
+    ret = kernel_write(file, bpf_profile_records->records,
+                       sizeof(bpf_profile_record_t) * bpf_profile_records->count, &pos);
     if (ret < 0)
         goto out;
 
@@ -107,110 +113,9 @@ int bpf_profiler_end(struct bpf_verifier_env *env) {
 
 out:    
     spin_lock_irqsave(&bpf_profiler_lock, flags);
-    bpf_profile_records.count = 0;
+    bpf_profile_records->count = 0;
     spin_unlock_irqrestore(&bpf_profiler_lock, flags);
     filp_close(file, NULL);
     
     return ret;
-}
-
-void bpf_profile_estimate_overhead(void) {
-    /* This function can be used to estimate the overhead of profiling by
-     * measuring the time taken to execute an empty profiling block.
-     */
-    
-    // BPF_PROFILE_BLOCK({
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    // });
-    // BPF_PROFILE_BLOCK({
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    // });
-    // BPF_PROFILE_BLOCK({
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    // });
-    // BPF_PROFILE_BLOCK({
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    // });
-    // BPF_PROFILE_BLOCK({
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    //     BPF_PROFILE_BLOCK({
-    //     });
-    // });
 }

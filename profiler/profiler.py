@@ -4,6 +4,7 @@ from programs.launcher import launch_bpf_program
 from recorder import BPFRecorder
 from storage import read_profile_file, result_bin_paths, save_analysis, save_result
 
+from new_analyser import NewTraceAnalyser
 
 class BPFProfiler:
     def __init__(self, verbose=False, show_progress=True):
@@ -14,7 +15,7 @@ class BPFProfiler:
     def profile_program(
         self,
         program_name: str,
-        save: bool = True,
+        save: bool = False,
         min_insns_to_save: int = 50,
     ) -> list[ProfilingResult]:
         if not self.recorder:
@@ -43,26 +44,28 @@ class BPFProfiler:
         if save:
             save_analysis(program_name, a)
         return a
-    
-    def analyse_traces(
-        self,
-        results: list[ProfilingResult],
-    ):
-        for result in results:
-            a = TraceAnalyser(f"{result.program_name}", result.trace, program=result.program, stats=result.stats)
-            a.analyse(verbose=self.verbose, show_progress=self.show_progress)
-            save_analysis(f"{result.program_name}", a)
 
-    def analyse_trace_from_file(self, program_name: str, save: bool = True) -> list[TraceAnalyser]:
-        paths = result_bin_paths(program_name)
-        if not paths:
-            raise FileNotFoundError(f"No saved profile for {program_name!r}")
-        out: list[TraceAnalyser] = []
-        for p in paths:
-            r = read_profile_file(p, p.stem)
-            out.append(
-                self.analyse_trace(
-                    r.program_name, r.trace, save, program=r.program, stats=r.stats
-                )
-            )
-        return out
+    def new_analyse_trace(
+        self,
+        profiling_result: ProfilingResult,
+        save: bool = True,
+    ) -> TraceAnalyser:
+        analyser = NewTraceAnalyser(profiling_result)
+        analyser.analyse(verbose=self.verbose, show_progress=self.show_progress)
+        if save:
+            save_analysis(profiling_result.program_name, analyser)
+        return analyser
+    
+    # def analyse_trace_from_file(self, program_name: str, save: bool = True) -> list[TraceAnalyser]:
+    #     paths = result_bin_paths(program_name)
+    #     if not paths:
+    #         raise FileNotFoundError(f"No saved profile for {program_name!r}")
+    #     out: list[TraceAnalyser] = []
+    #     for p in paths:
+    #         r = read_profile_file(p, p.stem)
+    #         out.append(
+    #             self.analyse_trace(
+    #                 r.program_name, r.trace, save, program=r.program, stats=r.stats
+    #             )
+    #         )
+    #     return out

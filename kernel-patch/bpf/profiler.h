@@ -5,28 +5,30 @@
 #include <linux/bpf_verifier.h>
 
 #define BPF_PROFILE_NO_ARG ((u32)-1)
-#define BPF_PROFILE_MAX_RECORDS 819200
+#define BPF_PROFILE_MAX_RECORDS 805306368 // 24GB of records, should be enough for profiling the verifier
 
 #define BPF_PROFILE_VERIFIER_FILE_ID 0
 #define BPF_PROFILE_LIVENESS_FILE_ID 1
 #define BPF_PROFILE_STATES_FILE_ID 2
 
-typedef unsigned char bpf_profile_record_type_t;
-enum {
+typedef enum {
     START,
     END,
     BLOCK,
     CALL,
-};
+} bpf_profile_record_type_t;
 
-typedef struct __attribute__((packed)) {
-    bpf_profile_record_type_t type;
-    unsigned char file_id;
-    int line;
-    u32 arg;
+// sizeof(bpf_profile_record_t) = 32
+typedef struct {
     u64 start_time;
     u64 end_time;
+    u32 line;
+    u32 arg;
+    bpf_profile_record_type_t type;
+    u8 file_id;
+    u8 _pad[3];
 } bpf_profile_record_t;
+_Static_assert(sizeof(bpf_profile_record_t) == 32, "bad size");
 
 typedef struct __attribute__((packed)) {
     u32 count;
@@ -103,7 +105,6 @@ void bpf_profiler_add_record(bpf_profile_record_type_t type, unsigned char file_
 
 int bpf_profiler_start(struct bpf_prog *prog);
 int bpf_profiler_end(struct bpf_verifier_env *env);
-void bpf_profile_estimate_overhead(void);
 
 
 #endif
