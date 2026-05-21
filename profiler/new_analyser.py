@@ -40,6 +40,8 @@ class SiteInfo:
 			return self._inclusive_duration
 		
 		self._inclusive_duration = sum(sum(durations) for durations in self.durations.values())
+		if self._inclusive_duration < 0:
+			raise ValueError(f"Site {self.file_id}:{self.line} has negative inclusive duration {self._inclusive_duration}. This should be impossible.")
 		return self._inclusive_duration
 
 	@property
@@ -48,6 +50,11 @@ class SiteInfo:
 			return self._exclusive_duration
 		
 		self._exclusive_duration = self.inclusive_duration - self.children_duration
+		if self._exclusive_duration < 0:
+			print(self.inclusive_duration, self.children_duration, self.durations, Record.NO_INSN_IDX)
+			raise ValueError(f"Site {self.file_id}:{self.line} has negative exclusive duration {self._exclusive_duration}. This should be impossible.")
+		if self._exclusive_duration > self.inclusive_duration:
+			raise ValueError(f"Site {self.file_id}:{self.line} has exclusive duration {self._exclusive_duration} greater than inclusive duration {self.inclusive_duration}. This should be impossible.")
 		return self._exclusive_duration
 	
 	@property
@@ -55,7 +62,9 @@ class SiteInfo:
 		if self._children_duration >= 0:
 			return self._children_duration
 		
-		self._children_duration = sum(child.exclusive_duration for child in self.children)
+		self._children_duration = sum(child.inclusive_duration for child in self.children)
+		if self._children_duration < 0:
+			raise ValueError(f"Site {self.file_id}:{self.line} has negative children duration {self._children_duration}. This should be impossible.")
 		return self._children_duration
 	
 	def to_json_dict(self, compact: bool = False) -> tuple[str, dict]:
@@ -133,8 +142,8 @@ class NewTraceAnalyser:
 
 		self.verification_time: int = verifier_end_time - verifier_start_time
 		self._build_call_tree()
-		self._compute_bpf_insn_stats()
-		self._compute_call_tree_stats()
+		# self._compute_call_tree_stats()
+		# self._compute_bpf_insn_stats()
 		# print("\n".join(disasm_program(self.profiling_result.program)))
 
 		analysis_end_time = time()
@@ -149,7 +158,8 @@ class NewTraceAnalyser:
 			"program_name": self.profiling_result.program_name,
 			"verification_time": self.verification_time,
 			"verification_stats": self.profiling_result.stats.to_json_dict(),
-			"program": [i.to_json_dict(compact=compact) for i in self.profiling_result.program],
+			"program_length": len(self.profiling_result.program),
+			# "program": [i.to_json_dict(compact=compact) for i in self.profiling_result.program],
 			"stats": self.stats,
 			"call_tree": dict([root.to_json_dict(compact=compact) for root in self.roots]),
 		}
@@ -164,9 +174,9 @@ class NewTraceAnalyser:
 
 		stack: list[Site] = []
 		time_boundaries: dict[Site, tuple[int, int]] = {}
-		for record in reversed(self.profiling_result.records):
+		for record in reversed(self.profiling_result.records[1:-1]):
 			if record.get_record_type() == RecordType.START or record.get_record_type() == RecordType.END:
-				continue
+				raise ValueError(f"Unexpected record type {record.get_record_type().name} in the middle of the trace. This should be impossible.")
 			
 			cur_site = (record.file_id, record.line)
 			time_boundaries[cur_site] = (record.start_time, record.end_time)
@@ -237,6 +247,12 @@ class NewTraceAnalyser:
 
 			percent_of_total = site_info.inclusive_duration / float(self.verification_time) * 100
 			percent_of_parent = site_info.inclusive_duration / float(parent_duration) * 100
+
+			if percent_of_total > 100.0:
+				raise ValueError(f"Site {key} has inclusive duration {site_info.inclusive_duration} which is greater than total verification time {self.verification_time}. This should be impossible.")
+			if percent_of_parent > 100.0:
+				print(site_info.inclusive_duration, site_info.exclusive_duration, site_info.children_duration, site_info.durations, Record.NO_INSN_IDX)
+				raise ValueError(f"Site {key} has inclusive duration {site_info.inclusive_duration} which is greater than parent duration {parent_duration}. This should be impossible.")
 
 			return [ key, [
 				percent_of_total,
