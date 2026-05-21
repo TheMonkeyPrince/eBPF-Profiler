@@ -5,7 +5,7 @@ from time import time
 from profiler_types import *
 from utils import find_block_start, find_call_name
 from disasm import disasm_program, disasm_insn_name
-from call_tree import SiteTree, CallSite, CallTree
+from call_tree import SiteTree, RecordSite, CallTree
 
 SUPPORTED_KERNEL_COMPILERS = ("clang")
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
@@ -55,19 +55,26 @@ class NewTraceAnalyser:
 		# self._compute_bpf_insn_stats()
 		# print("\n".join(disasm_program(self.profiling_result.program)))
 
+		self.stats = {
+			"verification_time": self.verification_time,
+			"program_length": len(self.profiling_result.program),
+			"num_records": len(self.profiling_result.records),
+			"num_record_sites": self.site_tree.number_of_sites(),
+		}
+
 		analysis_end_time = time()
+		analyis_time = analysis_end_time - analysis_start_time
+		self.stats["analysis_time"] = f"{analyis_time:.2f}s"
 
 		if verbose:
 			print(len(self.site_tree.roots), "root sites found in the call tree.")
 		print(f"Total verification time: {self.verification_time / 1e6:.2f} ms")
-		print(f"Analysis completed in {analysis_end_time - analysis_start_time:.2f} seconds.")
+		print(f"Analysis completed in {analyis_time:.2f} seconds.")
 	
 	def to_json(self, compact: bool = False) -> str:
 		out = {
 			"program_name": self.profiling_result.program_name,
-			"verification_time": self.verification_time,
 			"verification_stats": self.profiling_result.stats.to_json_dict(),
-			"program_length": len(self.profiling_result.program),
 			# "program": [i.to_json_dict(compact=compact) for i in self.profiling_result.program],
 			"stats": self.stats,
 			"site_tree": self.site_tree.serialize(resolve_site=resolve_site, compact=compact)
@@ -80,53 +87,53 @@ class NewTraceAnalyser:
 	def _compute_bpf_insn_stats(self):
 		durations_per_insn: dict[BPFInsnCode, list[float]] = {}
 		insn_counts: dict[str, int] = {}
-		for insn in self.profiling_result.program:
-			insn_name = disasm_insn_name(insn)
-			if insn_name not in durations_per_insn:
-				durations_per_insn[insn_name] = []
-				insn_counts[insn_name] = 0
-			insn_counts[insn_name] += 1
+		# for insn in self.profiling_result.program:
+		# 	insn_name = disasm_insn_name(insn)
+		# 	if insn_name not in durations_per_insn:
+		# 		durations_per_insn[insn_name] = []
+		# 		insn_counts[insn_name] = 0
+		# 	insn_counts[insn_name] += 1
 
-		def traverse_callsite(callsite: CallSite):
-			for insn_idx, durations in callsite.durations.items():
-				if insn_idx == Record.NO_INSN_IDX:
-					continue
-				insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
-				durations_per_insn[insn_name].extend(durations)
-			for child in callsite.children:
-				traverse_callsite(child)
+		# def traverse_callsite(site: RecordSite):
+		# 	for insn_idx, durations in site.durations.items():
+		# 		if insn_idx == Record.NO_INSN_IDX:
+		# 			continue
+		# 		insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
+		# 		durations_per_insn[insn_name].extend(durations)
+		# 	for child in site.children:
+		# 		traverse_callsite(child)
 
-		for callsite in self.roots:
-			traverse_callsite(callsite)
+		# for callsite in self.roots:
+		# 	traverse_callsite(callsite)
 
-		durations_per_insn_type: dict[str, tuple[int, int, float]] = {}
-		for insn_name, durations in durations_per_insn.items():
-			if insn_counts[insn_name] == 0:
-				if durations:
-					raise ValueError(f"Insn name {insn_name} has durations but no counts, which should be impossible.")
-				durations_per_insn_type[insn_name] = (0, 0, 0)
-			else:
-				durations_per_insn_type[insn_name] = (insn_counts[insn_name], sum(durations), sum(durations) / insn_counts[insn_name])
+		# durations_per_insn_type: dict[str, tuple[int, int, float]] = {}
+		# for insn_name, durations in durations_per_insn.items():
+		# 	if insn_counts[insn_name] == 0:
+		# 		if durations:
+		# 			raise ValueError(f"Insn name {insn_name} has durations but no counts, which should be impossible.")
+		# 		durations_per_insn_type[insn_name] = (0, 0, 0)
+		# 	else:
+		# 		durations_per_insn_type[insn_name] = (insn_counts[insn_name], sum(durations), sum(durations) / insn_counts[insn_name])
 
-		self.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
+		# self.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
 
 	def _compute_site_tree_stats(self):
-		def to_json_dict(callsite: CallSite, parent_duration: float) -> tuple[str, dict]:
-			filename, end_line_or_func_name = resolve_site(callsite.file_id, callsite.line, callsite.is_call)
-			key = f"{filename}:{callsite.line}:{end_line_or_func_name}"
+		def to_json_dict(site: RecordSite, parent_duration: float) -> tuple[str, dict]:
+			filename, end_line_or_func_name = resolve_site(site.file_id, site.line, site.is_call)
+			key = f"{filename}:{site.line}:{end_line_or_func_name}"
 
-			percent_of_total = callsite.inclusive_duration / float(self.verification_time) * 100
-			percent_of_parent = callsite.inclusive_duration / float(parent_duration) * 100
+			percent_of_total = site.inclusive_duration / float(self.verification_time) * 100
+			percent_of_parent = site.inclusive_duration / float(parent_duration) * 100
 
 			if percent_of_total > 100.0:
-				raise ValueError(f"Site {key} has inclusive duration {callsite.inclusive_duration} which is greater than total verification time {self.verification_time}. This should be impossible.")
+				raise ValueError(f"Site {key} has inclusive duration {site.inclusive_duration} which is greater than total verification time {self.verification_time}. This should be impossible.")
 			if percent_of_parent > 100.0:
-				raise ValueError(f"Site {key} has inclusive duration {callsite.inclusive_duration} which is greater than parent duration {parent_duration}. This should be impossible.")
+				raise ValueError(f"Site {key} has inclusive duration {site.inclusive_duration} which is greater than parent duration {parent_duration}. This should be impossible.")
 
 			return [ key, [
 				percent_of_total,
 				percent_of_parent,
-				dict(sorted([to_json_dict(child, callsite.inclusive_duration) for child in callsite.children], key=lambda item: item[1][1], reverse=True))
+				dict(sorted([to_json_dict(child, site.inclusive_duration) for child in site.children], key=lambda item: item[1][1], reverse=True))
 			]
 			]
 		

@@ -65,13 +65,13 @@ class CallTree:
 		for child in node.children:
 			self.print_node(child, indent + 2)
 
-class CallSite:
+class RecordSite:
 	def __init__(self, file_id: FileId, line: LineNumber, is_call: bool):
 		self.file_id = file_id
 		self.line = line
 		self.is_call = is_call
 		self.durations: dict[InsnIdx, list[int]] = {}
-		self.children: list[CallSite] = []
+		self.children: list[RecordSite] = []
 
 		self._inclusive_duration = -1
 		self._exclusive_duration = -1
@@ -84,7 +84,7 @@ class CallSite:
 		
 		self._inclusive_duration = sum(sum(durations) for durations in self.durations.values())
 		if self._inclusive_duration < 0:
-			raise ValueError(f"CallSite {self.file_id}:{self.line} has negative inclusive duration {self._inclusive_duration}. This should be impossible.")
+			raise ValueError(f"RecordSite {self.file_id}:{self.line} has negative inclusive duration {self._inclusive_duration}. This should be impossible.")
 		return self._inclusive_duration
 
 	@property
@@ -94,9 +94,9 @@ class CallSite:
 		
 		self._exclusive_duration = self.inclusive_duration - self.children_duration
 		if self._exclusive_duration < 0:
-			raise ValueError(f"CallSite {self.file_id}:{self.line} has negative exclusive duration {self._exclusive_duration}. This should be impossible.")
+			raise ValueError(f"RecordSite {self.file_id}:{self.line} has negative exclusive duration {self._exclusive_duration}. This should be impossible.")
 		if self._exclusive_duration > self.inclusive_duration:
-			raise ValueError(f"CallSite {self.file_id}:{self.line} has exclusive duration {self._exclusive_duration} greater than inclusive duration {self.inclusive_duration}. This should be impossible.")
+			raise ValueError(f"RecordSite {self.file_id}:{self.line} has exclusive duration {self._exclusive_duration} greater than inclusive duration {self.inclusive_duration}. This should be impossible.")
 		return self._exclusive_duration
 	
 	@property
@@ -106,11 +106,11 @@ class CallSite:
 		
 		self._children_duration = sum(child.inclusive_duration for child in self.children)
 		if self._children_duration < 0:
-			raise ValueError(f"CallSite {self.file_id}:{self.line} has negative children duration {self._children_duration}. This should be impossible.")
+			raise ValueError(f"RecordSite {self.file_id}:{self.line} has negative children duration {self._children_duration}. This should be impossible.")
 		return self._children_duration
 	
 	def __str__(self):
-		return f"CallSite(file_id={self.file_id}, line={self.line}, is_call={self.is_call}, inclusive_duration={self.inclusive_duration}, exclusive_duration={self.exclusive_duration}, children_duration={self.children_duration})"
+		return f"RecordSite(file_id={self.file_id}, line={self.line}, is_call={self.is_call}, inclusive_duration={self.inclusive_duration}, exclusive_duration={self.exclusive_duration}, children_duration={self.children_duration})"
 	
 	def serialize(self, resolve_site: callable, compact=False):
 		filename, end_line_or_func_name = resolve_site(self.file_id, self.line, self.is_call)
@@ -131,15 +131,15 @@ class CallSite:
 
 class SiteTree:
 	def __init__(self, call_tree: CallTree):
-		self.roots: list[CallSite] = []
+		self.roots: list[RecordSite] = []
 		
-		path_to_site: dict[list[str], CallSite] = {}
+		path_to_site: dict[list[str], RecordSite] = {}
 		def process_call_nodes(nodes: list[CallTreeNode]):
 			for node in nodes:
 				record = node.record
 				path_key = node.path()
 				if path_key not in path_to_site:
-					path_to_site[path_key] = CallSite(record.file_id, record.line, record.get_record_type() == RecordType.CALL)
+					path_to_site[path_key] = RecordSite(record.file_id, record.line, record.get_record_type() == RecordType.CALL)
 				site = path_to_site[path_key]
 
 				if record.insn_idx not in site.durations:
@@ -160,10 +160,22 @@ class SiteTree:
 				parent_site = path_to_site[parent_path_key]
 				parent_site.children.append(site)
 
+	def number_of_sites(self) -> int:
+		def count_sites(site: RecordSite) -> int:
+			count = 1
+			for child in site.children:
+				count += count_sites(child)
+			return count
+		
+		count = 0
+		for root in self.roots:
+			count += count_sites(root)
+		return count
+
 	def serialize(self, resolve_site: callable, compact=False):
 		return dict([site.serialize(resolve_site=resolve_site, compact=compact) for site in self.roots])
 
-	def print_node(self, node: CallSite, indent=0):
+	def print_node(self, node: RecordSite, indent=0):
 		print(" " * indent + str(node))
 		for child in node.children:
 			self.print_node(child, indent + 2)
