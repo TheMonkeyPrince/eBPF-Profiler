@@ -18,16 +18,6 @@ if __name__ == "__main__":
 		default=200,
 	)
 	parser.add_argument(
-		"--trace-only",
-		help="Only run the profiler and save the trace without analysing it",
-		action="store_true",
-	)
-	parser.add_argument(
-		"--analysis-only",
-		help="Only analyse the trace without running the profiler",
-		action="store_true",
-	)
-	parser.add_argument(
 		"--verbose",
 		help="Print extra analysis messages",
 		action="store_true",

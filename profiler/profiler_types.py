@@ -191,4 +191,6 @@ class ProfilingResult:
 		return len(self.records) < BPF_PROFILE_MAX_RECORDS
 	
 if __name__ == "__main__":
-	print(Record.size())
+	print(f"Record.size() = {Record.size()}")
+	print(f"BPFInsn.size() = {BPFInsn.size()}")
+	print(f"ProfileStats.size() = {ProfileStats.size()}")

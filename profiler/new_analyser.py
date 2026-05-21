@@ -4,6 +4,7 @@ from time import time
 
 from profiler_types import ProfilingResult, Record, RecordType, BPFInsnCode
 from utils import find_block_start, find_call_name
+from disasm import disasm_program, disasm_insn_name
 
 SUPPORTED_KERNEL_COMPILERS = ("clang")
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
@@ -108,7 +109,7 @@ class NewTraceAnalyser:
 		self.roots: list[Site] = []
 		self.site_info: dict[Site, SiteInfo] = {}
 
-		self.normalized_durations_per_insn_code: dict[BPFInsnCode, float] = {}
+		self.stats: dict[str, dict] = {}
 
 	def analyse(self, verbose = False, show_progress = False):
 		print(f"Analysing trace for {self.profiling_result.program_name!r} with {len(self.profiling_result.records)} records...")
@@ -130,9 +131,11 @@ class NewTraceAnalyser:
 			print(f"Warning: Last record is not an END record ({self.profiling_result.records[-1].get_record_type().name}). The trace is incomplete.")
 			return
 
-		self.verification_time = verifier_end_time - verifier_start_time
+		self.verification_time: int = verifier_end_time - verifier_start_time
 		self._build_call_tree()
 		self._compute_bpf_insn_stats()
+		self._compute_call_tree_stats()
+		# print("\n".join(disasm_program(self.profiling_result.program)))
 
 		analysis_end_time = time()
 
@@ -147,9 +150,7 @@ class NewTraceAnalyser:
 			"verification_time": self.verification_time,
 			"verification_stats": self.profiling_result.stats.to_json_dict(),
 			"program": [i.to_json_dict(compact=compact) for i in self.profiling_result.program],
-			"stats": {
-					"normalized_durations_per_insn_code": self.normalized_durations_per_insn_code,
-			},
+			"stats": self.stats,
 			"call_tree": dict([root.to_json_dict(compact=compact) for root in self.roots]),
 		}
 		if compact:
@@ -198,32 +199,53 @@ class NewTraceAnalyser:
 
 	def _compute_bpf_insn_stats(self):
 		durations_per_insn: dict[BPFInsnCode, list[float]] = {}
-		insn_counts: dict[BPFInsnCode, int] = {}
+		insn_counts: dict[str, int] = {}
 		for insn in self.profiling_result.program:
-			if insn.code not in durations_per_insn:
-				durations_per_insn[insn.code] = []
-				insn_counts[insn.code] = 0
-			insn_counts[insn.code] += 1
+			insn_name = disasm_insn_name(insn)
+			if insn_name not in durations_per_insn:
+				durations_per_insn[insn_name] = []
+				insn_counts[insn_name] = 0
+			insn_counts[insn_name] += 1
 
 		def traverse_site_info(site_info: SiteInfo):
 			for insn_idx, durations in site_info.durations.items():
 				if insn_idx == Record.NO_INSN_IDX:
 					continue
-				insn_code = self.profiling_result.program[insn_idx].code
-				durations_per_insn[insn_code].extend(durations)
+				insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
+				durations_per_insn[insn_name].extend(durations)
 			for child in site_info.children:
 				traverse_site_info(child)
 
 		for site_info in self.roots:
 			traverse_site_info(site_info)
 
-		self.normalized_durations_per_insn_code: dict[BPFInsnCode, float] = {}
-		for insn_code, durations in durations_per_insn.items():
-			if insn_counts[insn_code] == 0:
+		durations_per_insn_type: dict[str, tuple[int, int, float]] = {}
+		for insn_name, durations in durations_per_insn.items():
+			if insn_counts[insn_name] == 0:
 				if durations:
-					raise ValueError(f"Insn code {insn_code} has durations but no counts, which should be impossible.")
-				self.normalized_durations_per_insn_code[insn_code] = 0
+					raise ValueError(f"Insn name {insn_name} has durations but no counts, which should be impossible.")
+				durations_per_insn_type[insn_name] = (0, 0, 0)
 			else:
-				self.normalized_durations_per_insn_code[insn_code] = sum(durations) / insn_counts[insn_code]
+				durations_per_insn_type[insn_name] = (insn_counts[insn_name], sum(durations), sum(durations) / insn_counts[insn_name])
 
-		self.normalized_durations_per_insn_code = dict(sorted(self.normalized_durations_per_insn_code.items(), reverse=True))
+		self.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
+
+	def _compute_call_tree_stats(self):
+		def to_json_dict(site_info: SiteInfo, parent_duration: float) -> tuple[str, dict]:
+			filename, end_line_or_func_name = SiteInfo.resolve_site(site_info.file_id, site_info.line, site_info.is_call)
+			key = f"{filename}:{site_info.line}:{end_line_or_func_name}"
+
+			percent_of_total = site_info.inclusive_duration / float(self.verification_time) * 100
+			percent_of_parent = site_info.inclusive_duration / float(parent_duration) * 100
+
+			return [ key, [
+				percent_of_total,
+				percent_of_parent,
+				dict(sorted([to_json_dict(child, site_info.inclusive_duration) for child in site_info.children], key=lambda item: item[1][1], reverse=True))
+			]
+			]
+		
+		self.stats["call_tree"] = []
+		for root in self.roots:
+			self.stats["call_tree"].append(to_json_dict(root, self.verification_time))
+		self.stats["call_tree"] = dict(sorted(self.stats["call_tree"], key=lambda item: item[1][1], reverse=True))
