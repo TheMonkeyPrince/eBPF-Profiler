@@ -3,6 +3,12 @@ from enum import Enum
 
 BPF_PROFILE_MAX_RECORDS = 805306368 # 24GB at 32 bytes per record
 
+FileId = int
+LineNumber = int
+FunctionName = str
+InsnIdx = int
+Site = tuple[FileId, LineNumber]
+
 class RecordType(Enum):
 	START = 0
 	END = 1
@@ -31,6 +37,8 @@ class Record(ct.Structure):
 
 	def duration(self):
 		if self.get_record_type() in {RecordType.BLOCK, RecordType.CALL}:
+			if self.end_time < self.start_time:
+				raise ValueError(f"Record has end_time {self.end_time} less than start_time {self.start_time}, which should be impossible.")
 			return self.end_time - self.start_time
 		return None
 
