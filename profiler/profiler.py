@@ -4,7 +4,7 @@ from programs.launcher import launch_bpf_program
 from recorder import BPFRecorder
 from storage import read_profile_file, result_bin_paths, save_analysis, save_result
 
-from new_analyser import NewTraceAnalyser
+from trace_analyser import TraceAnalyser
 
 class BPFProfiler:
     def __init__(self, verbose=False, show_progress=True):
@@ -17,15 +17,19 @@ class BPFProfiler:
         program_name: str,
         save: bool = False,
         min_insns_to_save: int = 50,
+        min_duration_to_save: int = 0, # in milliseconds
+        record_duration: int = 1, # in seconds
     ) -> list[ProfilingResult]:
         if not self.recorder:
             self.recorder = BPFRecorder(verbose=self.verbose)
-        self.recorder.start_recording()
+        self.recorder.start_recording(record_duration=record_duration)
         proc = launch_bpf_program(program_name)
         results = self.recorder.wait_for_completion(program_name)
         proc.terminate()
         proc.wait()
-        filtered_results = [r for r in results if len(r.program) > min_insns_to_save and r.is_valid()]
+
+        min_duration_to_save_ns = min_duration_to_save * 1_000_000
+        filtered_results = [r for r in results if len(r.program) > min_insns_to_save and r.duration() > min_duration_to_save_ns]
         if save and filtered_results:
             for r in filtered_results:
                 save_result(r)
@@ -50,7 +54,7 @@ class BPFProfiler:
         profiling_result: ProfilingResult,
         save: bool = True,
     ) -> TraceAnalyser:
-        analyser = NewTraceAnalyser(profiling_result)
+        analyser = TraceAnalyser(profiling_result)
         analyser.analyse(verbose=self.verbose, show_progress=self.show_progress)
         if save:
             save_analysis(profiling_result.program_name, analyser)

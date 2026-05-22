@@ -5,9 +5,10 @@ from pathlib import Path
 from analyser import TraceAnalyser
 from profiler_types import BPFInsn, ProfilingResult, Record, ProfileStats
 
+OUT_DIR = Path("out")
 RESULTS_DIR = Path("out/results")
 ANALYSIS_DIR = Path("out/analysis")
-
+SAVED_PROGRAM_LIST_FILE = OUT_DIR / "program_list.txt"
 
 def fix_program_name(name: str) -> str:
 	return name.replace("/", ".")
@@ -85,3 +86,42 @@ def save_analysis(name: str, analyser: TraceAnalyser):
 		return
 
 	path.write_text(data, encoding="utf-8")
+
+def read_analysis(filename: str) -> dict:
+	path = ANALYSIS_DIR / filename
+	if not path.is_file():
+		raise FileNotFoundError(f"No analysis found for program {filename!r}")
+	with open(path, "r", encoding="utf-8") as f:
+		return json.load(f)
+
+def list_analysis_files():
+	if not ANALYSIS_DIR.is_dir():
+		return []
+	
+	return [path.name for path in ANALYSIS_DIR.glob("*.json")]
+
+def list_analysed_programs():
+	results = list_analysis_files()
+	programs = set()
+	for r in results:
+		program_name = r.rsplit(".", 1)[0].rsplit("_", 1)[0]
+		programs.add(program_name)
+
+	return list(programs)
+
+def list_analysis_for_program(program_name: str):
+	base = fix_program_name(program_name)
+	return [path.name for path in ANALYSIS_DIR.glob(f"{base}*.json")]
+
+def save_program_list(programs: list[str]):
+	SAVED_PROGRAM_LIST_FILE.parent.mkdir(parents=True, exist_ok=True)
+	with open(SAVED_PROGRAM_LIST_FILE, "w") as f:
+		for program in programs:
+			f.write(program + "\n")
+
+def read_saved_program_list() -> list[str]:
+	if not (SAVED_PROGRAM_LIST_FILE).is_file():
+		return []
+	with open(SAVED_PROGRAM_LIST_FILE, "r") as f:
+		return [line.strip() for line in f if line.strip()]
+	

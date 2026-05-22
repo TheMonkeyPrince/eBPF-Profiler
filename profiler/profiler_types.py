@@ -192,11 +192,20 @@ class ProfilingResult:
 		if len(self.records) >= BPF_PROFILE_MAX_RECORDS:
 			print(f"Warning: records for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
 
+	"""Returns the duration of the profiling in nanoseconds, or 0 if there are no records. This assumes that the first record is of type START and the last record is of type END"""
+	def duration(self):
+		if not self.records:
+			return 0
+		if self.records[0].get_record_type() != RecordType.START:
+			raise ValueError(f"First record for {self.program_name!r} should be of type START")
+		if self.records[-1].get_record_type() != RecordType.END:
+			raise ValueError(f"Last record for {self.program_name!r} should be of type END")
+		start_time = self.records[0].start_time
+		end_time = self.records[-1].end_time
+		return end_time - start_time
+
 	def __str__(self):
 		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, records=[{len(self.records)} records])"
-
-	def is_valid(self):
-		return len(self.records) < BPF_PROFILE_MAX_RECORDS
 	
 if __name__ == "__main__":
 	print(f"Record.size() = {Record.size()}")

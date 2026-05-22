@@ -13,12 +13,12 @@ class BPFRecorder:
 		self.verbose = verbose
 		self.record_thread = None
 
-	def start_recording(self):
+	def start_recording(self, record_duration=1):
 		
 		os.remove(RECORD_FILE_PATH) if os.path.exists(RECORD_FILE_PATH) else None
 
 		def recording_loop():
-			duration = 1  # seconds
+			duration = record_duration  # seconds
 			sleep(duration)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
