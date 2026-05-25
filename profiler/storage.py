@@ -94,11 +94,11 @@ def list_analysis_files():
 	
 	return [path.name for path in ANALYSIS_DIR.glob("*.json")]
 
-def list_analysed_programs():
+def list_analysed_programs() -> list[str]:
 	results = list_analysis_files()
 	programs = set()
 	for r in results:
-		program_name = r.rsplit(".", 1)[0].rsplit("_", 1)[0]
+		program_name = r.rsplit(".", 1)[0].rsplit("-", 1)[0]
 		programs.add(program_name)
 
 	return list(programs)

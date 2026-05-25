@@ -18,11 +18,11 @@ class BPFProfiler:
         save: bool = False,
         min_insns_to_save: int = 50,
         min_duration_to_save: int = 0, # in milliseconds
-        record_duration: int = 1, # in seconds
+        record_time: int = 1, # in seconds
     ) -> list[ProfilingResult]:
         if not self.recorder:
             self.recorder = BPFRecorder(verbose=self.verbose)
-        self.recorder.start_recording(record_duration=record_duration)
+        self.recorder.start_recording(record_time=record_time)
         proc = launch_bpf_program(program_name)
         results = self.recorder.wait_for_completion(program_name)
         proc.terminate()

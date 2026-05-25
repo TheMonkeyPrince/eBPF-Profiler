@@ -13,12 +13,12 @@ class BPFRecorder:
 		self.verbose = verbose
 		self.record_thread = None
 
-	def start_recording(self, record_duration=1):
+	def start_recording(self, record_time=1):
 		
 		os.remove(RECORD_FILE_PATH) if os.path.exists(RECORD_FILE_PATH) else None
 
 		def recording_loop():
-			duration = record_duration  # seconds
+			duration = record_time  # seconds
 			sleep(duration)
 
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
@@ -34,7 +34,7 @@ class BPFRecorder:
 			key = tuple(result.program)
 			if key not in seen:
 				seen.add(key)
-				result.program_name = program_name + "_" + str(len(seen))
+				result.program_name = f"{program_name}-{len(seen)}"
 				filtered_results.append(result)
 
 		for result in filtered_results:
@@ -53,7 +53,7 @@ class BPFRecorder:
 					if not f.read(1):
 						break
 					f.seek(pos)
-					results.append(read_profile(f, f"{program_name}_{i}"))
+					results.append(read_profile(f, f"{program_name}-{i}"))
 					i += 1
 		except FileNotFoundError:
 			print("No profiling data found.")

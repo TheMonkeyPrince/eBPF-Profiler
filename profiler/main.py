@@ -38,7 +38,7 @@ if __name__ == "__main__":
 		action="store_true",
 	)
 	parser.add_argument(
-		"--record-duration",
+		"--record-time",
 		help="Duration to record the BPF program execution in seconds (default: 1)",
 		type=int,
 		default=1,
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 			profiler = BPFProfiler(verbose=args.verbose, show_progress=args.progress)
 			for i, test in enumerate(tests):
 				print(f"Running and analysing test: {test} ({i+1}/{len(tests)})")
-				results = profiler.profile_program(test, min_insns_to_save=args.min_insns, min_duration_to_save=args.min_duration, save=False, record_duration=args.record_duration)
+				results = profiler.profile_program(test, min_insns_to_save=args.min_insns, min_duration_to_save=args.min_duration, save=False, record_time=args.record_time)
 				for r in results:
 					profiler.new_analyse_trace(r, save=True)
 		except KeyboardInterrupt:
