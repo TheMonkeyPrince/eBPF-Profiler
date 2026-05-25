@@ -10,21 +10,16 @@ RESULTS_DIR = Path("out/results")
 ANALYSIS_DIR = Path("out/analysis")
 SAVED_PROGRAM_LIST_FILE = OUT_DIR / "program_list.txt"
 
-def fix_program_name(name: str) -> str:
-	return name.replace("/", ".")
-
-
 def result_bin_paths(name: str) -> list[Path]:
-	base = fix_program_name(name)
 	if not RESULTS_DIR.is_dir():
 		return []
 	out: list[Path] = []
-	exact = RESULTS_DIR / f"{base}.bin"
+	exact = RESULTS_DIR / f"{name}.bin"
 	if exact.is_file():
 		out.append(exact)
-	prefix = f"{base}_"
+	prefix = f"{name}_"
 	numbered = sorted(
-		RESULTS_DIR.glob(f"{base}_*.bin"),
+		RESULTS_DIR.glob(f"{name}_*.bin"),
 		key=lambda p: (
 			int(p.stem[len(prefix) :])
 			if p.stem.startswith(prefix) and p.stem[len(prefix) :].isdigit()
@@ -58,9 +53,8 @@ def read_profile(file, program_name: str) -> ProfilingResult:
 	return ProfilingResult(program_name, program, stats, trace)
 
 def save_result(result: ProfilingResult):
-	name = fix_program_name(result.program_name)
 	RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-	with open(RESULTS_DIR / f"{name}.bin", "wb") as f:
+	with open(RESULTS_DIR / f"{result.program_name}.bin", "wb") as f:
 		f.write(struct.pack("<I", len(result.program)))
 		for insn in result.program:
 			f.write(bytes(insn))
@@ -71,13 +65,13 @@ def save_result(result: ProfilingResult):
 
 
 # def load_analysis(name: str) -> dict:
-# 	path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
+# 	path = ANALYSIS_DIR / f"{name}.json"
 # 	with open(path, "r", encoding="utf-8") as f:
 # 		return json.load(f)
 
 
 def save_analysis(name: str, analyser: TraceAnalyser):
-	path = ANALYSIS_DIR / f"{fix_program_name(name)}.json"
+	path = ANALYSIS_DIR / f"{name}.json"
 	path.parent.mkdir(parents=True, exist_ok=True)
 
 	data = analyser.to_json()
@@ -110,8 +104,7 @@ def list_analysed_programs():
 	return list(programs)
 
 def list_analysis_for_program(program_name: str):
-	base = fix_program_name(program_name)
-	return [path.name for path in ANALYSIS_DIR.glob(f"{base}*.json")]
+	return [path.name for path in ANALYSIS_DIR.glob(f"{program_name}*.json")]
 
 def save_program_list(programs: list[str]):
 	SAVED_PROGRAM_LIST_FILE.parent.mkdir(parents=True, exist_ok=True)
