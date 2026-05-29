@@ -1921,7 +1921,7 @@ int bpf_compute_subprog_arg_access(struct bpf_verifier_env *env)
 		err = PTR_ERR(instance);
 		goto out;
 	}
-	err = analyze_subprog(env, NULL, info, instance, callsites);
+	err = BPF_PROFILE_CALL(BPF_PROFILE_LIVENESS_FILE_ID, analyze_subprog, env, NULL, info, instance, callsites);
 	if (err)
 		goto out;
 
@@ -1947,7 +1947,7 @@ int bpf_compute_subprog_arg_access(struct bpf_verifier_env *env)
 			err = PTR_ERR(instance);
 			goto out;
 		}
-		err = analyze_subprog(env, NULL, info, instance, callsites);
+		err = BPF_PROFILE_CALL(BPF_PROFILE_LIVENESS_FILE_ID, analyze_subprog, env, NULL, info, instance, callsites);
 		if (err)
 			goto out;
 	}
@@ -2156,14 +2156,15 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 	}
 
 	for (i = 0; i < insn_cnt; ++i)
-		compute_insn_live_regs(env, &insns[i], &state[i]);
+		BPF_PROFILE_CALL_VOID_ARG(BPF_PROFILE_LIVENESS_FILE_ID, i, compute_insn_live_regs, env, &insns[i], &state[i]);
 
 	/* Forward pass: resolve stack access through FP-derived pointers */
-	err = bpf_compute_subprog_arg_access(env);
+	err = BPF_PROFILE_CALL(BPF_PROFILE_LIVENESS_FILE_ID, bpf_compute_subprog_arg_access, env);
 	if (err)
 		goto out;
 
 	changed = true;
+	BPF_PROFILE_BLOCK(BPF_PROFILE_LIVENESS_FILE_ID, {
 	while (changed) {
 		changed = false;
 		for (i = 0; i < env->cfg.cur_postorder; ++i) {
@@ -2184,6 +2185,7 @@ int bpf_compute_live_registers(struct bpf_verifier_env *env)
 			}
 		}
 	}
+	});
 
 	for (i = 0; i < insn_cnt; ++i)
 		insn_aux[i].live_regs_before = state[i].in;

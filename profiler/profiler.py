@@ -1,8 +1,7 @@
-from profiler_types import BPFInsn, ProfilingResult, ProfileStats, Record
-from analyser import TraceAnalyser
-from programs.launcher import launch_bpf_program
+from profiler_types import BPFProgramInfo, ProfilingResult, ProfileStats, Record
+from trace_analyser import TraceAnalyser
 from recorder import BPFRecorder
-from storage import read_profile_file, result_bin_paths, save_analysis, save_result
+from storage import save_analysis
 
 from trace_analyser import TraceAnalyser
 
@@ -14,8 +13,7 @@ class BPFProfiler:
 
     def profile_program(
         self,
-        program_name: str,
-        save: bool = False,
+        program: BPFProgramInfo,
         min_insns_to_save: int = 50,
         min_duration_to_save: int = 0, # in milliseconds
         record_time: int = 1, # in seconds
@@ -23,41 +21,24 @@ class BPFProfiler:
         if not self.recorder:
             self.recorder = BPFRecorder(verbose=self.verbose)
         self.recorder.start_recording(record_time=record_time)
-        proc = launch_bpf_program(program_name)
-        results = self.recorder.wait_for_completion(program_name)
+        proc = program.launch()
+        results = self.recorder.wait_for_completion(program)
         proc.terminate()
         proc.wait()
 
         min_duration_to_save_ns = min_duration_to_save * 1_000_000
         filtered_results = [r for r in results if len(r.program) > min_insns_to_save and r.duration() > min_duration_to_save_ns]
-        if save and filtered_results:
-            for r in filtered_results:
-                save_result(r)
         return filtered_results
 
     def analyse_trace(
-        self,
-        program_name: str,
-        trace: list[Record],
-        save: bool = True,
-        program: list[BPFInsn] | None = None,
-        stats: ProfileStats | None = None,
-    ) -> TraceAnalyser:
-        a = TraceAnalyser(program_name, trace, program=program, stats=stats)
-        a.analyse(verbose=self.verbose, show_progress=self.show_progress)
-        if save:
-            save_analysis(program_name, a)
-        return a
-
-    def new_analyse_trace(
         self,
         profiling_result: ProfilingResult,
         save: bool = True,
     ) -> TraceAnalyser:
         analyser = TraceAnalyser(profiling_result)
-        analyser.analyse(verbose=self.verbose, show_progress=self.show_progress)
-        if save:
-            save_analysis(profiling_result.program_name, analyser)
+        result = analyser.analyse(verbose=self.verbose)
+        if result and save:
+            save_analysis(profiling_result.program_info, result, profiling_result.trace_index)
         return analyser
     
     # def analyse_trace_from_file(self, program_name: str, save: bool = True) -> list[TraceAnalyser]:

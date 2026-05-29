@@ -2,8 +2,8 @@ import os
 import threading
 from time import sleep
 
-from profiler_types import ProfilingResult
-from storage import read_profile
+from profiler_types import ProfilingResult, BPFProgramInfo
+from storage import read_profiling_result
 
 RECORD_FILE_PATH = "/tmp/bpf_profile_records"
 
@@ -24,9 +24,9 @@ class BPFRecorder:
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
 		self.record_thread.start()
 
-	def wait_for_completion(self, program_name: str) -> list[ProfilingResult]:
+	def wait_for_completion(self, program_info: BPFProgramInfo) -> list[ProfilingResult]:
 		self.record_thread.join()
-		results = self.read_results(program_name)
+		results = self.read_results(program_info)
 		seen = set()
 		filtered_results = []
 		
@@ -34,7 +34,7 @@ class BPFRecorder:
 			key = tuple(result.program)
 			if key not in seen:
 				seen.add(key)
-				result.program_name = f"{program_name}-{len(seen)}"
+				# result.program_name = f"{program_name}-{len(seen)}"
 				filtered_results.append(result)
 
 		for result in filtered_results:
@@ -43,7 +43,7 @@ class BPFRecorder:
 
 		return filtered_results if results else []
 
-	def read_results(self, program_name: str) -> list[ProfilingResult]:
+	def read_results(self, program_info: BPFProgramInfo) -> list[ProfilingResult]:
 		results = []
 		try:
 			with open("/tmp/bpf_profile_records", "rb") as f:
@@ -53,7 +53,7 @@ class BPFRecorder:
 					if not f.read(1):
 						break
 					f.seek(pos)
-					results.append(read_profile(f, f"{program_name}-{i}"))
+					results.append(read_profiling_result(f, program_info, i))
 					i += 1
 		except FileNotFoundError:
 			print("No profiling data found.")

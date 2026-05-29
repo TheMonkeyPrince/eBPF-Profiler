@@ -9,23 +9,26 @@ class GlobalAnalyser:
 
 	def global_analysis(self, save_programs=False):
 		programs = list_analysed_programs()
-		print(f"Found {len(programs)} analysed programs with a total of {len(list_analysis_files())} analysis files.")
+		if not programs:
+			print("No analysed programs found.")
+			return
+		else:
+			print(f"Found {len(programs)} analysed programs with a total of {len(list_analysis_files())} analysis files.")
 
 		if save_programs:
-			save_program_list(programs)
+			save_program_list(list(programs.keys()))
 			print(f"Saved list of analysed programs")
 
-		self.programs = {}
-		analyis = []
-		for program in programs:
-			analysis_files = list_analysis_for_program(program)
-			self.programs[program] = [read_analysis(f) for f in analysis_files]
-			analyis.extend(self.programs[program])
+		analysis_list: list[TraceAnalyserResult] = [
+			r
+			for lists in programs.values()
+			for r in lists
+		]
 
 		# sort analysis by descending order of total time
-		analyis.sort(key=lambda a: a["stats"]["verification_time"], reverse=True)
+		analysis_list.sort(key=lambda a: a.stats["verification_time"], reverse=True)
 		with open("out/time_analysis.txt", "w") as f:
-			for a in analyis:
-				f.write(f"{a['program_name']} ({a['stats']['program_length']} insns): {a['stats']['verification_time']/1000000:.2f} ms\n")
+			for a in analysis_list:
+				f.write(f"{a.program_name} ({a.stats['program_length']} insns): {a.stats['verification_time']/1000000:.2f} ms\n")
 
 		

@@ -1,16 +1,3 @@
-# class Site:
-# 	def __init__(self, file_id: int, line: int, is_call: bool, parent=None):
-# 		self.file_id = file_id
-# 		self.line = line
-# 		self.is_call = is_call
-# 		self.parent = parent
-
-# 	def __eq__(self, other):
-# 		return self.file_id == other.file_id and self.line == other.line and self.is_call == other.is_call and self.parent == other.parent
-	
-# 	def __hash__(self):
-# 		return hash((self.file_id, self.line, self.is_call, self.parent))
-
 from profiler_types import *
 
 class CallTreeNode:

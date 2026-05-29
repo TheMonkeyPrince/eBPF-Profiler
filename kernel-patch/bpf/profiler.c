@@ -1,6 +1,5 @@
 #include "profiler.h"
 #include <linux/spinlock.h>
-#include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>

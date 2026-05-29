@@ -1,5 +1,8 @@
 import ctypes as ct
+from subprocess import Popen
 from enum import Enum
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
 BPF_PROFILE_MAX_RECORDS = 805306368 # 24GB at 32 bytes per record
 
@@ -31,19 +34,13 @@ class Record(ct.Structure):
 
 	def get_record_type(self):
 		return RecordType(self.type)
-
-	def has_insn_idx(self):
-		return self.get_record_type() in {RecordType.BLOCK, RecordType.CALL} and self.insn_idx != Record.NO_INSN_IDX
-
+	
 	def duration(self):
 		if self.get_record_type() in {RecordType.BLOCK, RecordType.CALL}:
 			if self.end_time < self.start_time:
 				raise ValueError(f"Record has end_time {self.end_time} less than start_time {self.start_time}, which should be impossible.")
 			return self.end_time - self.start_time
 		return None
-
-	def _decode_cstr(self, field: bytes):
-		return field.split(b"\x00", 1)[0].decode(errors="replace")
 
 	def __str__(self):
 		return (
@@ -182,31 +179,64 @@ class ProfileStats(ct.Structure):
 			"longest_mark_read_walk": int(self.longest_mark_read_walk),
 		}
 
-class ProfilingResult:
-	def __init__(self, program_name: str, program: list[BPFInsn], stats: ProfileStats, records: list[Record]):
-		self.program_name = program_name
-		self.program = program
-		self.stats = stats
-		self.records = records
+@dataclass
+class BPFProgramInfo(ABC):
+	@abstractmethod
+	def launch(self) -> Popen[str]:
+		pass
 
+	@abstractmethod
+	def to_analysis_file_name(self) -> str:
+		pass
+
+	@staticmethod
+	@abstractmethod
+	def from_analysis_file_name(file_name: str) -> 'BPFProgramInfo':
+		if file_name.startswith("selftest_"):
+			from selftest import SelftestInfo
+			return SelftestInfo.from_analysis_file_name(file_name)
+		else:
+			raise ValueError(f"Unknown program type for name: {file_name}")
+
+	@staticmethod
+	def from_string(full_name: str) -> 'BPFProgramInfo':
+		if full_name.startswith("selftest_"):
+			from selftest import SelftestInfo
+			return SelftestInfo.from_string(full_name)
+		else:
+			raise ValueError(f"Unknown program type for name: {full_name}")
+
+@dataclass(frozen=True)
+class ProfilingResult:
+	program_info: BPFProgramInfo
+	trace_index: int
+	program: list[BPFInsn]
+	stats: ProfileStats
+	records: list[Record]
+
+	def __post_init__(self):
 		if len(self.records) >= BPF_PROFILE_MAX_RECORDS:
-			print(f"Warning: records for {self.program_name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
+			print(f"Warning: records for {self.program_info.name!r} has reached the maximum record limit of {BPF_PROFILE_MAX_RECORDS}. Some records may have been truncated.")
 
 	"""Returns the duration of the profiling in nanoseconds, or 0 if there are no records. This assumes that the first record is of type START and the last record is of type END"""
 	def duration(self):
 		if not self.records:
 			return 0
 		if self.records[0].get_record_type() != RecordType.START:
-			raise ValueError(f"First record for {self.program_name!r} should be of type START")
+			raise ValueError(f"First record for {self.program_info.name!r} should be of type START")
 		if self.records[-1].get_record_type() != RecordType.END:
-			raise ValueError(f"Last record for {self.program_name!r} should be of type END")
+			raise ValueError(f"Last record for {self.program_info.name!r} should be of type END")
 		start_time = self.records[0].start_time
 		end_time = self.records[-1].end_time
 		return end_time - start_time
 
 	def __str__(self):
-		return f"ProfilingResult(program_name={self.program_name}, program=[{len(self.program)} insns], stats={self.stats}, records=[{len(self.records)} records])"
+		return f"ProfilingResult(program_info={self.program_info}, trace_index={self.trace_index}, program=[{len(self.program)} insns], stats={self.stats}, records=[{len(self.records)} records])"
 	
+	def to_analysis_file_name(self):
+		return f"{self.program_info.to_analysis_file_name()}-{self.trace_index}.json"
+	
+
 if __name__ == "__main__":
 	print(f"Record.size() = {Record.size()}")
 	print(f"BPFInsn.size() = {BPFInsn.size()}")

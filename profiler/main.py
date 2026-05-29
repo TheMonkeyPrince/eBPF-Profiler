@@ -1,10 +1,11 @@
 import argparse
 from time import time
-from profiler import BPFProfiler
-from programs.kernel_samples import list_kernel_samples
-from programs.kernel_selftests import list_kernel_selftests
 
-from storage import read_saved_program_list
+from profiler import BPFProfiler
+from profiler_types import BPFProgramInfo
+from selftest import SelftestInfo, list_selftests
+
+from storage import read_saved_program_list, delete_output_dir
 
 from global_analyser import GlobalAnalyser
 
@@ -44,8 +45,13 @@ if __name__ == "__main__":
 		default=1,
 	)
 	parser.add_argument(
-		"--global-analysis-only",
-		help="Only perform global analysis on existing analysis files, without running new profiles",
+		"--global-analysis",
+		help="Perform global analysis on existing analysis files",
+		action="store_true",
+	)
+	parser.add_argument(
+		"--recording",
+		help="Perform recording",
 		action="store_true",
 	)
 	parser.add_argument(
@@ -53,33 +59,51 @@ if __name__ == "__main__":
 		help="Save the list of analysed programs to a file",
 		action="store_true",
 	)
+	parser.add_argument(
+		"--resolve-subtests",
+		help="Resolve subtests for a given selftest",
+		action="store_true",
+	)
+
 	args = parser.parse_args()
 
 	if args.test:
-		if args.test == "samples":
-			tests = list_kernel_samples()
-		elif args.test == "selftests":
-			tests = list_kernel_selftests()
+		if args.test == "selftests":
+			tests = list_selftests()
 		else:
-			tests = [args.test]
+			tests = [BPFProgramInfo.from_string(args.test)]
 	else:
 		tests = read_saved_program_list()
 
-	if not args.global_analysis_only:
+	if args.recording:
+		
+		if args.resolve_subtests:
+			print("Resolving subtests...")
+			resolved_subtests = []
+			for test in tests:
+				if isinstance(test, SelftestInfo):
+					subtests = [str(subtest) for subtest in test.list_subtests()]
+					resolved_subtests.extend(subtests)
+				else:
+					resolved_subtests.append(test)
+			tests = resolved_subtests
+			print("Done resolving subtests")
+
 		start_time = time()
 		runned_tests = []
 		try:
 			profiler = BPFProfiler(verbose=args.verbose, show_progress=args.progress)
 			for i, test in enumerate(tests):
 				print(f"Running and analysing test: {test} ({i+1}/{len(tests)})")
-				results = profiler.profile_program(test, min_insns_to_save=args.min_insns, min_duration_to_save=args.min_duration, save=False, record_time=args.record_time)
+				results = profiler.profile_program(test, min_insns_to_save=args.min_insns, min_duration_to_save=args.min_duration, record_time=args.record_time)
 				for r in results:
-					profiler.new_analyse_trace(r, save=True)
+					profiler.analyse_trace(r, save=True)
 		except KeyboardInterrupt:
 			print("Stopped")
 		end_time = time()
 		total_time = end_time - start_time
 		print(f"Done in: {int(total_time/60)} minutes and {int(total_time%60)} seconds")
 
-	global_analyser = GlobalAnalyser(verbose=args.verbose, show_progress=args.progress)
-	global_analyser.global_analysis(save_programs=args.save_program_list)
+	if args.global_analysis:
+		global_analyser = GlobalAnalyser(verbose=args.verbose, show_progress=args.progress)
+		global_analyser.global_analysis(save_programs=args.save_program_list)

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from time import time
+from dataclasses import dataclass, asdict
 
 from profiler_types import *
 from utils import find_block_start, find_call_name
@@ -13,31 +14,39 @@ _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../l
 with open(_KERNEL_ROOT / "kernel/bpf/file_ids.json") as f:
 	file_ids = json.load(f)
 
+@dataclass
+class TraceAnalyserResult:
+	program_name: str
+	verification_stats: dict
+	stats: dict
+	site_tree: dict
+
+	def to_json(self) -> str:
+		return json.dumps(asdict(self), indent=2)
+	
+	@staticmethod
+	def from_json(json_str: str) -> 'TraceAnalyserResult':
+		data = json.loads(json_str)
+		return TraceAnalyserResult(**data)
 
 class TraceAnalyser:
 	def __init__(
 		self,
-		profiling_result: ProfilingResult,
-		kernel_compiler="clang",
+		profiling_result: ProfilingResult
 	):
-		if kernel_compiler not in SUPPORTED_KERNEL_COMPILERS:
-			raise ValueError(f"Invalid kernel compiler: {kernel_compiler!r}")
-
 		self.profiling_result = profiling_result
-		self.kernel_compiler = kernel_compiler
-
+		self.result: TraceAnalyserResult = None
 		self.site_tree: SiteTree = None
-		self.stats: dict[str, dict] = {}
 
-	def analyse(self, verbose=False, show_progress=False):
+	def analyse(self, verbose=False) -> TraceAnalyserResult | None:
 		print(
-			f"Analysing trace for {self.profiling_result.program_name!r} with {len(self.profiling_result.records)} records..."
+			f"Analysing trace for {str(self.profiling_result.program_info)!r} (program {self.profiling_result.trace_index}) with {len(self.profiling_result.records)} records..."
 		)
 		analysis_start_time = time()
 
 		if len(self.profiling_result.records) == 0:
 			print("No records to analyse.")
-			return
+			return None
 
 		if self.profiling_result.records[0].get_record_type() == RecordType.START:
 			verifier_start_time = self.profiling_result.records[0].start_time
@@ -53,43 +62,32 @@ class TraceAnalyser:
 				f"Last record is not an END record ({self.profiling_result.records[-1].get_record_type().name}). The trace is incomplete."
 			)
 
-		self.verification_time: int = verifier_end_time - verifier_start_time
 		self.site_tree = SiteTree(CallTree(self.profiling_result.records[1:-1]))
-		# print("\n".join(disasm_program(self.profiling_result.program)))
 
-		self.stats = {
-			"verification_time": self.verification_time,
-			"program_length": len(self.profiling_result.program),
-			"num_records": len(self.profiling_result.records),
-			"num_record_sites": self.site_tree.number_of_sites(),
-		}
+		self.result = TraceAnalyserResult(
+			program_name=str(self.profiling_result.program_info),
+			verification_stats=self.profiling_result.stats.to_json_dict(),
+			stats={
+				"verification_time": verifier_end_time - verifier_start_time,
+				"program_length": len(self.profiling_result.program),
+				"num_records": len(self.profiling_result.records),
+				"num_sites": self.site_tree.number_of_sites(),
+			},
+			site_tree=self.site_tree.serialize(resolve_site=resolve_site),
+		)
 
 		self._compute_site_tree_stats()
 		self._compute_bpf_insn_stats()
 
 		analysis_end_time = time()
-		analyis_time = analysis_end_time - analysis_start_time
-		self.stats["analysis_time"] = f"{analyis_time:.2f}s"
+		self.result.stats["analysis_time"] = f"{(analysis_end_time - analysis_start_time):.2f}s"
 
 		if verbose:
-			print(len(self.site_tree.roots), "root sites found in the call tree.")
-		print(f"Total verification time: {self.verification_time / 1e6:.2f} ms")
-		print(f"Analysis completed in {analyis_time:.2f} seconds.")
+			print(len(self.result.site_tree.roots), "root sites found in the call tree.")
+		print(f"Total verification time: {self.result.stats['verification_time'] / 1e6:.2f} ms")
+		print(f"Analysis completed in {self.result.stats['analysis_time']}.")
 
-	def to_json(self, compact: bool = False) -> str:
-		out = {
-			"program_name": self.profiling_result.program_name,
-			"verification_stats": self.profiling_result.stats.to_json_dict(),
-			"stats": self.stats,
-			"site_tree": self.site_tree.serialize(
-				resolve_site=resolve_site, compact=compact
-			),
-			# "program": [i.to_json_dict(compact=compact) for i in self.profiling_result.program],
-		}
-		if compact:
-			out["files"] = file_ids
-			return json.dumps(out, separators=(",", ":"))
-		return json.dumps(out, indent=2)
+		return self.result
 
 	def _compute_bpf_insn_stats(self):
 		durations_per_insn: dict[BPFInsnCode, list[float]] = {}
@@ -122,7 +120,7 @@ class TraceAnalyser:
 			else:
 				durations_per_insn_type[insn_name] = (insn_counts[insn_name], sum(durations), sum(durations) / insn_counts[insn_name])
 
-		self.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
+		self.result.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
 
 	def _compute_site_tree_stats(self):
 		def to_json_dict(site: RecordSite, parent_duration: float) -> tuple[str, dict]:
@@ -132,13 +130,13 @@ class TraceAnalyser:
 			key = f"{filename}:{site.line}:{end_line_or_func_name}"
 
 			percent_of_total = (
-				site.inclusive_duration / float(self.verification_time) * 100
+				site.inclusive_duration / float(self.result.stats['verification_time']) * 100
 			)
 			percent_of_parent = site.inclusive_duration / float(parent_duration) * 100
 
 			if percent_of_total > 100.0:
 				raise ValueError(
-					f"Site {key} has inclusive duration {site.inclusive_duration} which is greater than total verification time {self.verification_time}. This should be impossible."
+					f"Site {key} has inclusive duration {site.inclusive_duration} which is greater than total verification time {self.result.stats['verification_time']}. This should be impossible."
 				)
 			if percent_of_parent > 100.0:
 				raise ValueError(
@@ -163,18 +161,16 @@ class TraceAnalyser:
 				],
 			]
 
-		self.stats["site_tree"] = []
+		self.result.stats["site_tree"] = []
 		for root in self.site_tree.roots:
-			self.stats["site_tree"].append(to_json_dict(root, self.verification_time))
-		self.stats["site_tree"] = dict(
-			sorted(self.stats["site_tree"], key=lambda item: item[1][1], reverse=True)
+			self.result.stats["site_tree"].append(to_json_dict(root, self.result.stats['verification_time']))
+		self.result.stats["site_tree"] = dict(
+			sorted(self.result.stats["site_tree"], key=lambda item: item[1][1], reverse=True)
 		)
 
 
 # Cache for mapping (file_id, line) to (filename, line_number | function name)
 _site_cache: dict[Site, tuple[str, LineNumber | FunctionName]] = {}
-
-
 def resolve_site(
 	file_id: int, line: int, is_call: bool
 ) -> tuple[str, int | str] | None:
