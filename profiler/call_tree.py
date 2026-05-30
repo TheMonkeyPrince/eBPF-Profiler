@@ -99,19 +99,89 @@ class RecordSite:
 	def __str__(self):
 		return f"RecordSite(file_id={self.file_id}, line={self.line}, is_call={self.is_call}, inclusive_duration={self.inclusive_duration}, exclusive_duration={self.exclusive_duration}, children_duration={self.children_duration})"
 	
-	def serialize(self, resolve_site: callable, compact=False):
+	def serialize(self, resolve_site: callable, resolve_insn_name: callable, compact=False):
 		filename, end_line_or_func_name = resolve_site(self.file_id, self.line, self.is_call)
 		if compact:
 			key = f"{self.file_id}:{self.line}:{end_line_or_func_name}"
 		else:
 			key = f"{filename}:{self.line}:{end_line_or_func_name}"
 
-		serialized = {
-		 "inclusive_duration": self.inclusive_duration,
-		 "exclusive_duration": self.exclusive_duration,
-		 "children_duration": self.children_duration,
-		 "children": [child.serialize(resolve_site=resolve_site, compact=compact) for child in self.children],
-		}
+		if list(self.durations.keys())[0] == Record.NO_INSN_IDX:
+			serialized = {
+			"inclusive_duration": self.inclusive_duration,
+			"exclusive_duration": self.exclusive_duration,
+			"children_duration": self.children_duration,
+			"children": [child.serialize(resolve_site=resolve_site, resolve_insn_name=resolve_insn_name, compact=compact) for child in self.children],
+			"nb_visits": sum(len(durations) for durations in self.durations.values()),
+			}
+	
+		else:
+			nb_visits = sum(len(durations) for durations in self.durations.values())
+			avg_time_per_visit = self.inclusive_duration / float(nb_visits)
+
+			# save top 10 slowest instructions for this site
+			def compute_insn_score(durations: list[int]) -> float:
+				avg_duration = sum(durations) / float(len(durations))
+				return avg_duration / avg_time_per_visit # this score represents how much slower this instruction is compared to the average time per visit for this site, so a score of 2 means this instruction is on average twice as slow as the average time per visit for this site
+			
+			s = sorted(self.durations.items(), key=lambda item: compute_insn_score(item[1]), reverse=True)[:10]
+			slowest_insns: dict[InsnIdx, dict[str, int | float]] = {}
+			for insn_idx, durations in s:
+				slowest_insns[insn_idx] = {
+					"count": len(durations),
+					"score": compute_insn_score(durations),
+				}
+
+			s = sorted(self.durations.items(), key=lambda item: compute_insn_score(item[1]), reverse=True)[10:]
+			if len(s) > 0:
+				other_insns_count = sum(len(durations) for _, durations in s)
+				slowest_insns["other"] = {
+					"count": other_insns_count,
+					"score": compute_insn_score([duration for _, durations in s for duration in durations]),
+				}
+			
+			# save top 10 slowest instruction types for this site
+			durations_per_insn_type: dict[str, list[int]] = {}
+			for insn_idx, durations in self.durations.items():
+				insn_name = resolve_insn_name(insn_idx)
+				if insn_name not in durations_per_insn_type:
+					durations_per_insn_type[insn_name] = []
+				durations_per_insn_type[insn_name].extend(durations)
+
+			avg: dict[str, float] = {insn_name: sum(durations) / float(len(durations)) for insn_name, durations in durations_per_insn_type.items()}
+			nb_insn_types = len(durations_per_insn_type)
+			avg_time_per_insn_type = sum(avg.values()) / float(len(avg))
+			def compute_insn_type_score(durations: list[int]) -> float:
+				avg_duration = sum(durations) / float(len(durations))
+				return avg_duration / avg_time_per_insn_type # this score represents how much slower this instruction type is compared to the average time per instruction type for this site, so a score of 2 means this instruction type is on average twice as slow as the average time per instruction typefor this site
+
+			s = sorted(durations_per_insn_type.items(), key=lambda item: compute_insn_type_score(item[1]), reverse=True)[:10]
+			slowest_insn_types: dict[str, dict[str, int | float]] = {}
+			for insn_name, durations in s:
+				slowest_insn_types[insn_name] = {
+					"count": len(durations),
+					"score": compute_insn_type_score(durations),
+				}
+
+			s = sorted(durations_per_insn_type.items(), key=lambda item: compute_insn_type_score(item[1]), reverse=True)[10:]
+			if len(s) > 0:
+				other_insn_types_count = sum(len(durations) for _, durations in s)
+				slowest_insn_types["other"] = {
+					"count": other_insn_types_count,
+					"score": compute_insn_type_score([duration for _, durations in s for duration in durations]),
+				}
+
+			serialized = {
+				"inclusive_duration": self.inclusive_duration,
+				"exclusive_duration": self.exclusive_duration,
+				"children_duration": self.children_duration,
+				"children": [child.serialize(resolve_site=resolve_site, resolve_insn_name=resolve_insn_name, compact=compact) for child in self.children],
+				"nb_visits": nb_visits,
+				"nb_insn_types": nb_insn_types,
+				"slowest_insns": slowest_insns,
+				"slowest_insn_types": slowest_insn_types,
+			}
+			
 		if compact:
 			return (key, serialized.values())
 		return (key, serialized)
@@ -159,8 +229,8 @@ class SiteTree:
 			count += count_sites(root)
 		return count
 
-	def serialize(self, resolve_site: callable, compact=False):
-		return dict([site.serialize(resolve_site=resolve_site, compact=compact) for site in self.roots])
+	def serialize(self, resolve_site: callable, resolve_insn_name: callable, compact=False):
+		return dict([site.serialize(resolve_site=resolve_site, resolve_insn_name=resolve_insn_name, compact=compact) for site in self.roots])
 
 	def print_node(self, node: RecordSite, indent=0):
 		print(" " * indent + str(node))

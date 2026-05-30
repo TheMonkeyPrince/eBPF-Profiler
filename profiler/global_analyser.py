@@ -1,9 +1,8 @@
 from storage import *
 
 class GlobalAnalyser:
-	def __init__(self, verbose=False, show_progress=True):
+	def __init__(self, verbose=False):
 		self.verbose = verbose
-		self.show_progress = show_progress
 		self.programs: dict[str, list[dict]] = {}
 
 

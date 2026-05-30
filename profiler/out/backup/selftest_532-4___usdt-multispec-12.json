@@ -1,0 +1,952 @@
+{
+  "program_name": "selftest_#532/4   usdt/multispec",
+  "verification_stats": {
+    "subprog_cnt": 4,
+    "insn_processed": 2488,
+    "complexity_limit_insns": 1000000,
+    "max_states_per_insn": 4,
+    "total_states": 187,
+    "peak_states": 187,
+    "longest_mark_read_walk": 0
+  },
+  "stats": {
+    "verification_time": 14288462,
+    "program_length": 419,
+    "num_records": 6337,
+    "num_sites": 56,
+    "site_tree": {
+      "kernel/bpf/verifier.c:20063:do_check_main": [
+        49.657009970702234,
+        49.657009970702234,
+        {
+          "kernel/bpf/verifier.c:18807:do_check": [
+            46.143986665604736,
+            92.92542320375273,
+            {
+              "kernel/bpf/verifier.c:17790:do_check_insn": [
+                20.715518577156868,
+                44.89321377296169,
+                {
+                  "kernel/bpf/verifier.c:17642:check_cond_jmp_op": [
+                    8.07935801627915,
+                    39.00147604891874,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17578:check_alu_op": [
+                    2.6634987026595303,
+                    12.857504352300342,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17629:check_helper_call": [
+                    0.7228699631912798,
+                    3.4895093767451852,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17583:check_load_mem": [
+                    0.7202384693328086,
+                    3.476806369341967,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17640:process_bpf_exit_full": [
+                    0.7111542165979795,
+                    3.432953966125539,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17588:check_store_reg": [
+                    0.49070361806610113,
+                    2.368773034758604,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17628:check_kfunc_call": [
+                    0.17519730255082736,
+                    0.8457297455445721,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17626:check_func_call": [
+                    0.16018518998055914,
+                    0.7732617910767454,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17651:check_ld_imm": [
+                    0.06794993051036564,
+                    0.3280146246751189,
+                    {}
+                  ],
+                  "kernel/bpf/verifier.c:17587:check_atomic": [
+                    0.009182233889133765,
+                    0.044325387534633436,
+                    {}
+                  ]
+                }
+              ],
+              "kernel/bpf/verifier.c:17703:bpf_is_state_visited": [
+                12.610622472873567,
+                27.328853408917524,
+                {
+                  "kernel/bpf/states.c:1370:states_equal": [
+                    1.1036317274735377,
+                    8.751603894633558,
+                    {
+                      "kernel/bpf/states.c:967:refsafe": [
+                        0.19384871513813035,
+                        17.564619638282224,
+                        {}
+                      ]
+                    }
+                  ],
+                  "kernel/bpf/states.c:1382:propagate_precision": [
+                    0.2837324269050091,
+                    2.249947831800846,
+                    {}
+                  ],
+                  "kernel/bpf/states.c:1298:states_equal": [
+                    0.030969043414189712,
+                    0.24557902261213943,
+                    {
+                      "kernel/bpf/states.c:967:refsafe": [
+                        0.004318169443289278,
+                        13.943502824858758,
+                        {}
+                      ]
+                    }
+                  ],
+                  "kernel/bpf/states.c:1337:states_equal": [
+                    0.013633377756122386,
+                    0.10811026803354748,
+                    {
+                      "kernel/bpf/states.c:967:refsafe": [
+                        0.0015537011611186703,
+                        11.39630390143737,
+                        {}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "kernel/bpf/verifier.c:18798:18708": [
+            0.010875908127830692,
+            0.021902060019818967,
+            {}
+          ]
+        }
+      ],
+      "kernel/bpf/verifier.c:20055:bpf_compute_live_registers": [
+        46.37196081705645,
+        46.37196081705645,
+        {
+          "kernel/bpf/liveness.c:2162:bpf_compute_subprog_arg_access": [
+            44.956238117160545,
+            96.94702860316579,
+            {
+              "kernel/bpf/liveness.c:1950:analyze_subprog": [
+                23.047253091340412,
+                51.26597343682743,
+                {}
+              ],
+              "kernel/bpf/liveness.c:1924:analyze_subprog": [
+                21.762818139559037,
+                48.40889507445643,
+                {}
+              ]
+            }
+          ],
+          "kernel/bpf/liveness.c:2159:compute_insn_live_regs": [
+            0.5275795253540934,
+            1.1377123504340583,
+            {}
+          ],
+          "kernel/bpf/liveness.c:2188:2167": [
+            0.0678729453176976,
+            0.14636634751216449,
+            {}
+          ]
+        }
+      ],
+      "kernel/bpf/verifier.c:20114:bpf_fixup_call_args": [
+        1.0988376495664824,
+        1.0988376495664824,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20039:bpf_compute_const_regs": [
+        0.6000925781935103,
+        0.6000925781935103,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20001:add_subprog_and_kfunc": [
+        0.33645328657486023,
+        0.33645328657486023,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20009:bpf_check_btf_info": [
+        0.23113054435109948,
+        0.23113054435109948,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20023:bpf_check_cfg": [
+        0.16134696652445868,
+        0.16134696652445868,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20102:bpf_do_misc_fixups": [
+        0.16014319805728566,
+        0.16014319805728566,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20051:bpf_compute_scc": [
+        0.13785248545294798,
+        0.13785248545294798,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20013:check_and_resolve_insns": [
+        0.12757146290482488,
+        0.12757146290482488,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20089:bpf_opt_remove_dead_code": [
+        0.10031170604645902,
+        0.10031170604645902,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20043:bpf_prune_dead_branches": [
+        0.0856285302084997,
+        0.0856285302084997,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20091:bpf_opt_remove_nops": [
+        0.07903579825456372,
+        0.07903579825456372,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20027:bpf_compute_postorder": [
+        0.0711203207175132,
+        0.0711203207175132,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20079:check_max_stack_depth": [
+        0.04390955443629972,
+        0.04390955443629972,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20059:mark_fastcall_patterns": [
+        0.03698088709617592,
+        0.03698088709617592,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20047:sort_subprogs_topo": [
+        0.03079407706721689,
+        0.03079407706721689,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20099:bpf_convert_ctx_accesses": [
+        0.02976527494701669,
+        0.02976527494701669,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20108:bpf_opt_subreg_zext_lo32_rnd_hi32": [
+        0.026216957430407833,
+        0.026216957430407833,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20005:check_subprogs": [
+        0.02187779202548182,
+        0.02187779202548182,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20087:bpf_opt_hard_wire_dead_code_branches": [
+        0.01628586757623039,
+        0.01628586757623039,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20076:bpf_remove_fastcall_spills_fills": [
+        0.015732973919796264,
+        0.015732973919796264,
+        {}
+      ],
+      "kernel/bpf/verifier.c:19997:bpf_check_btf_info_early": [
+        0.014494212183228678,
+        0.014494212183228678,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20083:bpf_optimize_bpf_loop": [
+        0.011540780246327422,
+        0.011540780246327422,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20031:bpf_stack_liveness_init": [
+        0.010281022548123093,
+        0.010281022548123093,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20064:do_check_subprogs": [
+        0.0017706594313649713,
+        0.0017706594313649713,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20035:check_attach_btf_id": [
+        0.0011687751977784593,
+        0.0011687751977784593,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20066:bpf_prog_is_offloaded": [
+        0.0010637953895947653,
+        0.0010637953895947653,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20107:bpf_prog_is_offloaded": [
+        0.0010567967357158524,
+        0.0010567967357158524,
+        {}
+      ],
+      "kernel/bpf/verifier.c:20017:bpf_prog_is_offloaded": [
+        0.0010078061585634618,
+        0.0010078061585634618,
+        {}
+      ]
+    },
+    "durations_per_insn_type": {
+      "jsgt32": [
+        1,
+        165198,
+        165198.0
+      ],
+      "jeq32": [
+        6,
+        489968,
+        81661.33333333333
+      ],
+      "jge": [
+        2,
+        117220,
+        58610.0
+      ],
+      "jne32": [
+        9,
+        449695,
+        49966.11111111111
+      ],
+      "jslt32": [
+        4,
+        128410,
+        32102.5
+      ],
+      "call kernel-function": [
+        4,
+        92219,
+        23054.75
+      ],
+      "call bpf_probe_read_user": [
+        2,
+        45630,
+        22815.0
+      ],
+      "jgt": [
+        1,
+        22603,
+        22603.0
+      ],
+      "jeq": [
+        10,
+        223504,
+        22350.4
+      ],
+      "call bpf_probe_read_kernel": [
+        4,
+        82579,
+        20644.75
+      ],
+      "call pc+130": [
+        1,
+        19368,
+        19368.0
+      ],
+      "jlt32": [
+        1,
+        18245,
+        18245.0
+      ],
+      "ldx": [
+        56,
+        823203,
+        14700.05357142857
+      ],
+      "mov": [
+        115,
+        1385223,
+        12045.417391304349
+      ],
+      "call pc+136": [
+        1,
+        10994,
+        10994.0
+      ],
+      "call pc+157": [
+        1,
+        10728,
+        10728.0
+      ],
+      "and": [
+        2,
+        20023,
+        10011.5
+      ],
+      "rsh": [
+        7,
+        62618,
+        8945.42857142857
+      ],
+      "call pc+171": [
+        1,
+        8220,
+        8220.0
+      ],
+      "call pc+143": [
+        1,
+        8079,
+        8079.0
+      ],
+      "call pc+164": [
+        1,
+        7966,
+        7966.0
+      ],
+      "call pc+150": [
+        1,
+        7646,
+        7646.0
+      ],
+      "call pc+185": [
+        1,
+        7444,
+        7444.0
+      ],
+      "call pc+199": [
+        1,
+        7388,
+        7388.0
+      ],
+      "call pc+192": [
+        1,
+        7313,
+        7313.0
+      ],
+      "call pc+178": [
+        1,
+        7297,
+        7297.0
+      ],
+      "exit": [
+        4,
+        29133,
+        7283.25
+      ],
+      "lsh": [
+        20,
+        140416,
+        7020.8
+      ],
+      "jne": [
+        1,
+        6764,
+        6764.0
+      ],
+      "mul": [
+        2,
+        11887,
+        5943.5
+      ],
+      "stx": [
+        36,
+        196694,
+        5463.722222222223
+      ],
+      "add": [
+        39,
+        202736,
+        5198.358974358975
+      ],
+      "arsh": [
+        16,
+        82861,
+        5178.8125
+      ],
+      "call bpf_get_attach_cookie": [
+        4,
+        16214,
+        4053.5
+      ],
+      "call bpf_get_current_pid_tgid": [
+        1,
+        3801,
+        3801.0
+      ],
+      "goto": [
+        12,
+        30710,
+        2559.1666666666665
+      ],
+      "call bpf_map_lookup_elem": [
+        8,
+        17115,
+        2139.375
+      ],
+      "sub": [
+        1,
+        1965,
+        1965.0
+      ],
+      "atomic_fetch_add": [
+        1,
+        1950,
+        1950.0
+      ],
+      "ldimm64": [
+        36,
+        68053,
+        1890.361111111111
+      ],
+      "call pc+284": [
+        1,
+        1234,
+        1234.0
+      ],
+      "call pc+260": [
+        1,
+        842,
+        842.0
+      ],
+      "call pc+206": [
+        1,
+        626,
+        626.0
+      ]
+    },
+    "analysis_time": "0.03s"
+  },
+  "site_tree": {
+    "kernel/bpf/verifier.c:19997:bpf_check_btf_info_early": {
+      "inclusive_duration": 2071,
+      "exclusive_duration": 2071,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20001:add_subprog_and_kfunc": {
+      "inclusive_duration": 48074,
+      "exclusive_duration": 48074,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20005:check_subprogs": {
+      "inclusive_duration": 3126,
+      "exclusive_duration": 3126,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20009:bpf_check_btf_info": {
+      "inclusive_duration": 33025,
+      "exclusive_duration": 33025,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20013:check_and_resolve_insns": {
+      "inclusive_duration": 18228,
+      "exclusive_duration": 18228,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20017:bpf_prog_is_offloaded": {
+      "inclusive_duration": 144,
+      "exclusive_duration": 144,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20023:bpf_check_cfg": {
+      "inclusive_duration": 23054,
+      "exclusive_duration": 23054,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20027:bpf_compute_postorder": {
+      "inclusive_duration": 10162,
+      "exclusive_duration": 10162,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20031:bpf_stack_liveness_init": {
+      "inclusive_duration": 1469,
+      "exclusive_duration": 1469,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20035:check_attach_btf_id": {
+      "inclusive_duration": 167,
+      "exclusive_duration": 167,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20039:bpf_compute_const_regs": {
+      "inclusive_duration": 85744,
+      "exclusive_duration": 85744,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20043:bpf_prune_dead_branches": {
+      "inclusive_duration": 12235,
+      "exclusive_duration": 12235,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20047:sort_subprogs_topo": {
+      "inclusive_duration": 4400,
+      "exclusive_duration": 4400,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20051:bpf_compute_scc": {
+      "inclusive_duration": 19697,
+      "exclusive_duration": 19697,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20055:bpf_compute_live_registers": {
+      "inclusive_duration": 6625840,
+      "exclusive_duration": 117204,
+      "children_duration": 6508636,
+      "children": [
+        [
+          "kernel/bpf/liveness.c:2159:compute_insn_live_regs",
+          {
+            "inclusive_duration": 75383,
+            "exclusive_duration": 75383,
+            "children_duration": 0,
+            "children": []
+          }
+        ],
+        [
+          "kernel/bpf/liveness.c:2162:bpf_compute_subprog_arg_access",
+          {
+            "inclusive_duration": 6423555,
+            "exclusive_duration": 20885,
+            "children_duration": 6402670,
+            "children": [
+              [
+                "kernel/bpf/liveness.c:1924:analyze_subprog",
+                {
+                  "inclusive_duration": 3109572,
+                  "exclusive_duration": 3109572,
+                  "children_duration": 0,
+                  "children": []
+                }
+              ],
+              [
+                "kernel/bpf/liveness.c:1950:analyze_subprog",
+                {
+                  "inclusive_duration": 3293098,
+                  "exclusive_duration": 3293098,
+                  "children_duration": 0,
+                  "children": []
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "kernel/bpf/liveness.c:2188:2167",
+          {
+            "inclusive_duration": 9698,
+            "exclusive_duration": 9698,
+            "children_duration": 0,
+            "children": []
+          }
+        ]
+      ]
+    },
+    "kernel/bpf/verifier.c:20059:mark_fastcall_patterns": {
+      "inclusive_duration": 5284,
+      "exclusive_duration": 5284,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20063:do_check_main": {
+      "inclusive_duration": 7095223,
+      "exclusive_duration": 500403,
+      "children_duration": 6594820,
+      "children": [
+        [
+          "kernel/bpf/verifier.c:18798:18708",
+          {
+            "inclusive_duration": 1554,
+            "exclusive_duration": 1554,
+            "children_duration": 0,
+            "children": []
+          }
+        ],
+        [
+          "kernel/bpf/verifier.c:18807:do_check",
+          {
+            "inclusive_duration": 6593266,
+            "exclusive_duration": 1831473,
+            "children_duration": 4761793,
+            "children": [
+              [
+                "kernel/bpf/verifier.c:17790:do_check_insn",
+                {
+                  "inclusive_duration": 2959929,
+                  "exclusive_duration": 988073,
+                  "children_duration": 1971856,
+                  "children": [
+                    [
+                      "kernel/bpf/verifier.c:17578:check_alu_op",
+                      {
+                        "inclusive_duration": 380573,
+                        "exclusive_duration": 380573,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17626:check_func_call",
+                      {
+                        "inclusive_duration": 22888,
+                        "exclusive_duration": 22888,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17588:check_store_reg",
+                      {
+                        "inclusive_duration": 70114,
+                        "exclusive_duration": 70114,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17651:check_ld_imm",
+                      {
+                        "inclusive_duration": 9709,
+                        "exclusive_duration": 9709,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17583:check_load_mem",
+                      {
+                        "inclusive_duration": 102911,
+                        "exclusive_duration": 102911,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17629:check_helper_call",
+                      {
+                        "inclusive_duration": 103287,
+                        "exclusive_duration": 103287,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17642:check_cond_jmp_op",
+                      {
+                        "inclusive_duration": 1154416,
+                        "exclusive_duration": 1154416,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17640:process_bpf_exit_full",
+                      {
+                        "inclusive_duration": 101613,
+                        "exclusive_duration": 101613,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17587:check_atomic",
+                      {
+                        "inclusive_duration": 1312,
+                        "exclusive_duration": 1312,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/verifier.c:17628:check_kfunc_call",
+                      {
+                        "inclusive_duration": 25033,
+                        "exclusive_duration": 25033,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "kernel/bpf/verifier.c:17703:bpf_is_state_visited",
+                {
+                  "inclusive_duration": 1801864,
+                  "exclusive_duration": 1597258,
+                  "children_duration": 204606,
+                  "children": [
+                    [
+                      "kernel/bpf/states.c:1370:states_equal",
+                      {
+                        "inclusive_duration": 157692,
+                        "exclusive_duration": 129994,
+                        "children_duration": 27698,
+                        "children": [
+                          [
+                            "kernel/bpf/states.c:967:refsafe",
+                            {
+                              "inclusive_duration": 27698,
+                              "exclusive_duration": 27698,
+                              "children_duration": 0,
+                              "children": []
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "kernel/bpf/states.c:1382:propagate_precision",
+                      {
+                        "inclusive_duration": 40541,
+                        "exclusive_duration": 40541,
+                        "children_duration": 0,
+                        "children": []
+                      }
+                    ],
+                    [
+                      "kernel/bpf/states.c:1337:states_equal",
+                      {
+                        "inclusive_duration": 1948,
+                        "exclusive_duration": 1726,
+                        "children_duration": 222,
+                        "children": [
+                          [
+                            "kernel/bpf/states.c:967:refsafe",
+                            {
+                              "inclusive_duration": 222,
+                              "exclusive_duration": 222,
+                              "children_duration": 0,
+                              "children": []
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "kernel/bpf/states.c:1298:states_equal",
+                      {
+                        "inclusive_duration": 4425,
+                        "exclusive_duration": 3808,
+                        "children_duration": 617,
+                        "children": [
+                          [
+                            "kernel/bpf/states.c:967:refsafe",
+                            {
+                              "inclusive_duration": 617,
+                              "exclusive_duration": 617,
+                              "children_duration": 0,
+                              "children": []
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    },
+    "kernel/bpf/verifier.c:20064:do_check_subprogs": {
+      "inclusive_duration": 253,
+      "exclusive_duration": 253,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20066:bpf_prog_is_offloaded": {
+      "inclusive_duration": 152,
+      "exclusive_duration": 152,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20076:bpf_remove_fastcall_spills_fills": {
+      "inclusive_duration": 2248,
+      "exclusive_duration": 2248,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20079:check_max_stack_depth": {
+      "inclusive_duration": 6274,
+      "exclusive_duration": 6274,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20083:bpf_optimize_bpf_loop": {
+      "inclusive_duration": 1649,
+      "exclusive_duration": 1649,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20087:bpf_opt_hard_wire_dead_code_branches": {
+      "inclusive_duration": 2327,
+      "exclusive_duration": 2327,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20089:bpf_opt_remove_dead_code": {
+      "inclusive_duration": 14333,
+      "exclusive_duration": 14333,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20091:bpf_opt_remove_nops": {
+      "inclusive_duration": 11293,
+      "exclusive_duration": 11293,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20099:bpf_convert_ctx_accesses": {
+      "inclusive_duration": 4253,
+      "exclusive_duration": 4253,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20102:bpf_do_misc_fixups": {
+      "inclusive_duration": 22882,
+      "exclusive_duration": 22882,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20107:bpf_prog_is_offloaded": {
+      "inclusive_duration": 151,
+      "exclusive_duration": 151,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20108:bpf_opt_subreg_zext_lo32_rnd_hi32": {
+      "inclusive_duration": 3746,
+      "exclusive_duration": 3746,
+      "children_duration": 0,
+      "children": []
+    },
+    "kernel/bpf/verifier.c:20114:bpf_fixup_call_args": {
+      "inclusive_duration": 157007,
+      "exclusive_duration": 157007,
+      "children_duration": 0,
+      "children": []
+    }
+  }
+}

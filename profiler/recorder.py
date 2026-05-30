@@ -24,7 +24,7 @@ class BPFRecorder:
 		self.record_thread = threading.Thread(target=recording_loop, daemon=True)
 		self.record_thread.start()
 
-	def wait_for_completion(self, program_info: BPFProgramInfo) -> list[ProfilingResult]:
+	def get_results(self, program_info: BPFProgramInfo) -> list[ProfilingResult]:
 		self.record_thread.join()
 		results = self.read_results(program_info)
 		seen = set()

@@ -73,7 +73,7 @@ class TraceAnalyser:
 				"num_records": len(self.profiling_result.records),
 				"num_sites": self.site_tree.number_of_sites(),
 			},
-			site_tree=self.site_tree.serialize(resolve_site=resolve_site),
+			site_tree=self.site_tree.serialize(resolve_site=resolve_site, resolve_insn_name=lambda insn_idx: disasm_insn_name(self.profiling_result.program[insn_idx])),
 		)
 
 		self._compute_site_tree_stats()

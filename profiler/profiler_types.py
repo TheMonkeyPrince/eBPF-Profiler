@@ -205,6 +205,11 @@ class BPFProgramInfo(ABC):
 			return SelftestInfo.from_string(full_name)
 		else:
 			raise ValueError(f"Unknown program type for name: {full_name}")
+		
+	def __lt__(self, other):
+		if not isinstance(other, BPFProgramInfo):
+			return NotImplemented
+		return str(self) < str(other)
 
 @dataclass(frozen=True)
 class ProfilingResult:

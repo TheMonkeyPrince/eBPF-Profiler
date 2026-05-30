@@ -241,7 +241,8 @@ def _func_get_name(insn: BPFInsn) -> str:
         return BPF_FUNC_NAMES[insn.imm]
 
     if insn.src_reg == BPF_PSEUDO_CALL:
-        return f"{insn.imm:+d}"
+        # return f"{insn.imm:+d}"
+        return f"+offset"
     if insn.src_reg == BPF_PSEUDO_KFUNC_CALL:
         return "kernel-function"
     return "unknown"

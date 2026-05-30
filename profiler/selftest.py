@@ -70,7 +70,7 @@ class SelftestInfo(BPFProgramInfo):
 		example: #598/2   verifier_map_ptr/bpf_map_ptr: read with negative offset rejected @unpriv
 		"""
 
-		parsed = full_name.strip().removeprefix("selftest_").split("   ", 1)
+		parsed = full_name.strip().removeprefix("selftest_").split(" ", 1)
 
 		def parse_selftest_numeric_id(id_str):
 			"""Parse a numeric id from a selftest name."""
@@ -87,10 +87,10 @@ class SelftestInfo(BPFProgramInfo):
 		selftest = SelftestInfo(test_id=test_id, subtest_id=subtest_id)
 
 		if len(parsed) == 2:
-			parsed = parsed[1].split("/", 1)
+			parsed = parsed[1].strip().split("/", 1)
 			selftest.test_name = parsed[0]
 			if len(parsed) == 2:
-				parsed = parsed[1].split(":", 1)
+				parsed = parsed[1].rsplit(":", 1)
 				selftest.subtest_name = parsed[0]
 				if len(parsed) == 2:
 					selftest.description = parsed[1].strip()
@@ -99,8 +99,6 @@ class SelftestInfo(BPFProgramInfo):
 	
 	def __str__(self):
 		result = f"selftest_#{self.id()}"
-		if self.subtest_id is not None:
-			result += f"/{self.subtest_id}"
 		if self.test_name is not None:
 			result += f"   {self.test_name}"
 		if self.subtest_name is not None:
@@ -111,9 +109,7 @@ class SelftestInfo(BPFProgramInfo):
 	
 	def list_subtests(self) -> list['SelftestInfo']:
 		process = self.launch()
-		stdout, stderr = process.communicate()
-		if process.returncode != 0:
-			raise RuntimeError(f"Error running selftest {selftest}: {stderr}")
+		stdout, _ = process.communicate()
 		
 		subtests = []
 		for line in stdout.splitlines():
@@ -126,7 +122,7 @@ class SelftestInfo(BPFProgramInfo):
 
 		if subtests:
 			return subtests
-		return [selftest]
+		return [self]
 	
 	def __eq__(self, other):
 		if not isinstance(other, SelftestInfo):
@@ -135,6 +131,13 @@ class SelftestInfo(BPFProgramInfo):
 	
 	def __hash__(self):
 		return hash(str(self))
+	
+	def __lt__(self, other):
+		if not isinstance(other, BPFProgramInfo):
+			return NotImplemented
+		if isinstance(other, SelftestInfo):
+			return (self.test_id, self.subtest_id or 0) < (other.test_id, other.subtest_id or 0)
+		return super().__lt__(other)
 
 def list_selftests() -> list[SelftestInfo]:
 	result = subprocess.run(
@@ -171,8 +174,8 @@ if __name__ == "__main__":
 	else:
 		process = SelftestInfo.from_string(args[1]).launch()
 		stdout, stderr = process.communicate()
+		print(stdout)
 		if process.returncode != 0:
 			print("Error running selftest:", stderr)
-		else:
-			print(stdout)
+
 

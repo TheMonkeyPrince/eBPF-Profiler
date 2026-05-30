@@ -63,11 +63,11 @@ def list_analysed_programs() -> dict[BPFProgramInfo, list[TraceAnalyserResult]]:
 	for r in results:
 		program_name = r.rsplit(".", 1)[0].rsplit("-", 1)[0]
 		program_info = BPFProgramInfo.from_analysis_file_name(program_name)
-		print(program_info)
 		if program_info not in programs:
 			programs[program_info] = []
 		programs[program_info].append(read_analysis(r))
-	return programs
+	return dict(sorted(programs.items(), key=lambda item: item[0]))
+
 
 def save_program_list(programs: list[BPFProgramInfo]):
 	SAVED_PROGRAM_LIST_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -80,9 +80,3 @@ def read_saved_program_list() -> list[BPFProgramInfo]:
 		return []
 	with open(SAVED_PROGRAM_LIST_FILE, "r") as f:
 		return [BPFProgramInfo.from_string(line.strip()) for line in f if line.strip()]
-	
-def delete_output_dir():
-	if OUT_DIR.is_dir():
-		rm = input(f"Are you sure you want to delete the {OUT_DIR} directory and all its contents? [y/N] ")
-		if rm.lower() == "y":
-			rmtree(OUT_DIR)
