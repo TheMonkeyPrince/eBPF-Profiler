@@ -100,6 +100,8 @@ class RecordSite:
 		return f"RecordSite(file_id={self.file_id}, line={self.line}, is_call={self.is_call}, inclusive_duration={self.inclusive_duration}, exclusive_duration={self.exclusive_duration}, children_duration={self.children_duration})"
 	
 	def serialize(self, resolve_site: callable, resolve_insn_name: callable, compact=False):
+		raise NotImplementedError("Serialization of RecordSite is not implemented yet.")
+
 		filename, end_line_or_func_name = resolve_site(self.file_id, self.line, self.is_call)
 		if compact:
 			key = f"{self.file_id}:{self.line}:{end_line_or_func_name}"

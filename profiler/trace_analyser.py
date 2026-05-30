@@ -7,6 +7,7 @@ from profiler_types import *
 from utils import find_block_start, find_call_name
 from disasm import disasm_program, disasm_insn_name
 from call_tree import SiteTree, RecordSite, CallTree
+from utils import stddev
 
 SUPPORTED_KERNEL_COMPILERS = "clang"
 _KERNEL_ROOT = Path("/mnt/linux") if Path("/mnt/linux").is_dir() else Path("../linux")
@@ -19,7 +20,7 @@ class TraceAnalyserResult:
 	program_name: str
 	verification_stats: dict
 	stats: dict
-	site_tree: dict
+	# site_tree: dict
 
 	def to_json(self) -> str:
 		return json.dumps(asdict(self), indent=2)
@@ -73,7 +74,7 @@ class TraceAnalyser:
 				"num_records": len(self.profiling_result.records),
 				"num_sites": self.site_tree.number_of_sites(),
 			},
-			site_tree=self.site_tree.serialize(resolve_site=resolve_site, resolve_insn_name=lambda insn_idx: disasm_insn_name(self.profiling_result.program[insn_idx])),
+			# site_tree=self.site_tree.serialize(resolve_site=resolve_site, resolve_insn_name=lambda insn_idx: disasm_insn_name(self.profiling_result.program[insn_idx])),
 		)
 
 		self._compute_site_tree_stats()
@@ -143,29 +144,114 @@ class TraceAnalyser:
 					f"Site {key} has inclusive duration {site.inclusive_duration} which is greater than parent duration {parent_duration}. This should be impossible."
 				)
 
-			return [
-				key,
-				[
-					percent_of_total,
-					percent_of_parent,
-					dict(
-						sorted(
-							[
-								to_json_dict(child, site.inclusive_duration)
-								for child in site.children
-							],
-							key=lambda item: item[1][1],
-							reverse=True,
+			nb_visits = sum(len(durations) for durations in site.durations.values())
+			avg_duration_per_visit = site.inclusive_duration / float(nb_visits)
+
+			stats = {
+				"percent_of_total": percent_of_total,
+				"percent_of_parent": percent_of_parent,
+				"inclusive_duration": site.inclusive_duration,
+				"exclusive_duration": site.exclusive_duration,
+				"nb_visits": nb_visits,
+				"avg_duration_per_visit": avg_duration_per_visit,
+			}
+			
+			if list(site.durations.keys())[0] != Record.NO_INSN_IDX:
+				def compute_stats(durations: dict[type, list[int]], reference: float, normalize: bool) -> dict[type, dict[str, int | float]]:
+					def compute_score(durations: list[int], normalize: bool) -> float:
+						if normalize:
+							agg_duration = sum(durations) / float(len(durations))
+						else:
+							agg_duration = sum(durations)
+						return agg_duration / float(reference) * 100 # this score represents how much slower this item is compared to the average time per visit for this site, so a score of 2 means this item is on average twice as slow as the average time per visit for this site 
+
+					sorted_items = sorted(durations.items(), key=lambda item: compute_score(item[1], normalize), reverse=True)
+					top_10 = sorted_items[:10]
+					rest = sorted_items[10:]
+
+					type_avgs = [
+						sum(durations) / float(len(durations))
+						for durations in durations.values()
+					]
+
+					slowest_elts: dict[type, float | int | dict[str, type]] = {
+						"avg_duration": sum(type_avgs) / float(len(type_avgs)),
+						"stddev_duration": stddev(type_avgs),
+						"count": sum(len(durations) for durations in durations.values()),
+						"top10": {}
+					}
+
+					for insn_idx, isn_durations in top_10:
+						avg_duration = sum(isn_durations) / float(len(isn_durations))
+						slowest_elts["top10"][insn_idx] = {
+							"avg_duration": avg_duration,
+							"count": len(isn_durations),
+							"score": compute_score(isn_durations, normalize),
+						}
+					
+					if rest:
+						others_score = sum(
+							compute_score(durations, normalize)
+							for _, durations in rest
 						)
-					),
-				],
-			]
+						others_count = sum(len(durations) for _, durations in rest)
+						if others_count:
+							others_avg_duration = (
+								sum(duration
+									for _, durations in rest
+									for duration in durations)
+								/ float(others_count)
+							)
+						else:
+							others_avg_duration = 0.0
+
+						slowest_elts["top10"]["others"] = {
+							"avg_duration": others_avg_duration,
+							"count": others_count,
+							"score": others_score,
+						}
+
+					total_score = sum(item["score"] for item in slowest_elts["top10"].values())
+					if abs(total_score - 100.0) > 1e-2:
+						raise ValueError(
+							f"Total score for site {key} is {total_score:.2f} which is not close enough to 100. This should be impossible since the score of each item is computed as a percentage of the reference value."
+						)
+					return slowest_elts
+
+				# save top 10 slowest instructions for this site
+				stats["slowest_instructions"] = compute_stats(site.durations, site.inclusive_duration, False)
+
+				# save top 10 slowest instruction types for this site
+				durations_per_insn_type: dict[str, list[int]] = {}
+				for insn_idx, durations in site.durations.items():
+					insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
+					if insn_name not in durations_per_insn_type:
+						durations_per_insn_type[insn_name] = []
+					durations_per_insn_type[insn_name].extend(durations)
+
+				avg: dict[str, float] = {insn_name: sum(durations) / float(len(durations)) for insn_name, durations in durations_per_insn_type.items()}
+				stats["nb_insn_types"] = len(durations_per_insn_type)
+				stats["avg_duration_per_insn_type"] = sum(avg.values()) / float(stats["nb_insn_types"])
+				stats["slowest_instruction_types"] = compute_stats(durations_per_insn_type, sum(avg.values()), True)
+
+			stats["children"] = dict(
+				sorted(
+					[
+						to_json_dict(child, site.inclusive_duration)
+						for child in site.children
+					],
+					key=lambda item: item[1]["percent_of_total"],
+					reverse=True,
+				)
+			)
+
+			return [key, stats,]
 
 		self.result.stats["site_tree"] = []
 		for root in self.site_tree.roots:
 			self.result.stats["site_tree"].append(to_json_dict(root, self.result.stats['verification_time']))
 		self.result.stats["site_tree"] = dict(
-			sorted(self.result.stats["site_tree"], key=lambda item: item[1][1], reverse=True)
+			sorted(self.result.stats["site_tree"], key=lambda item: item[1]["percent_of_total"], reverse=True)
 		)
 
 

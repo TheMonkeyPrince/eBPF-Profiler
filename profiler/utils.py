@@ -1,5 +1,14 @@
-cached_files: dict[str, list[str]] = {}
+from math import sqrt
 
+def stddev(values: list[float]) -> float:
+    if len(values) <= 1:
+        return 0.0
+
+    mean = sum(values) / float(len(values))
+    variance = sum((x - mean) ** 2 for x in values) / float(len(values))
+    return sqrt(variance)
+
+cached_files: dict[str, list[str]] = {}
 def find_block_end(filename, start_line):
     """
     Given a C source file and a 1-based line number, find the matching closing '}' for the block

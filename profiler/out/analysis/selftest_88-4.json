@@ -10,1091 +10,1023 @@
     "longest_mark_read_walk": 0
   },
   "stats": {
-    "verification_time": 762692488,
+    "verification_time": 761812748,
     "program_length": 12409,
     "num_records": 1199779,
     "num_sites": 48,
     "site_tree": {
-      "kernel/bpf/verifier.c:20063:do_check_main": [
-        90.85555448659409,
-        90.85555448659409,
-        {
-          "kernel/bpf/verifier.c:18807:do_check": [
-            90.68968226156176,
-            99.8174330386627,
-            {
-              "kernel/bpf/verifier.c:17790:do_check_insn": [
-                58.40283325302661,
-                64.39854214571471,
-                {
-                  "kernel/bpf/verifier.c:17578:check_alu_op": [
-                    20.809176895944464,
-                    35.63042362309721,
-                    {}
-                  ],
-                  "kernel/bpf/verifier.c:17583:check_load_mem": [
-                    2.59386558950873,
-                    4.441335197337037,
-                    {}
-                  ],
-                  "kernel/bpf/verifier.c:17642:check_cond_jmp_op": [
-                    1.8759985479232881,
-                    3.212170443505099,
-                    {}
-                  ],
-                  "kernel/bpf/verifier.c:17588:check_store_reg": [
-                    0.12422844264332127,
-                    0.2127096165097151,
-                    {}
-                  ],
-                  "kernel/bpf/verifier.c:17651:check_ld_imm": [
-                    0.10407798850642411,
-                    0.17820708809710095,
-                    {}
-                  ],
-                  "kernel/bpf/verifier.c:17640:process_bpf_exit_full": [
-                    5.7952583374598544e-05,
-                    9.922906158254791e-05,
-                    {}
-                  ]
-                }
-              ],
-              "kernel/bpf/verifier.c:17703:bpf_is_state_visited": [
-                8.601872580656648,
-                9.484951723447042,
-                {
-                  "kernel/bpf/states.c:1370:states_equal": [
-                    3.1448817678665795,
-                    36.560431910356264,
-                    {
-                      "kernel/bpf/states.c:967:refsafe": [
-                        0.6804964099764412,
-                        21.638219182976645,
-                        {}
-                      ]
+      "kernel/bpf/verifier.c:20063:do_check_main": {
+        "percent_of_total": 91.63810527360721,
+        "percent_of_parent": 91.63810527360721,
+        "inclusive_duration": 698110768,
+        "exclusive_duration": 1231245,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 698110768.0,
+        "children": {
+          "kernel/bpf/verifier.c:18807:do_check": {
+            "percent_of_total": 91.47580069111682,
+            "percent_of_parent": 99.82288527026417,
+            "inclusive_duration": 696874311,
+            "exclusive_duration": 181868750,
+            "nb_visits": 1,
+            "avg_duration_per_visit": 696874311.0,
+            "children": {
+              "kernel/bpf/verifier.c:17790:do_check_insn": {
+                "percent_of_total": 58.85789692771064,
+                "percent_of_parent": 64.34258731055449,
+                "inclusive_duration": 448386962,
+                "exclusive_duration": 253042344,
+                "nb_visits": 551525,
+                "avg_duration_per_visit": 812.9948089388514,
+                "slowest_instructions": {
+                  "avg_duration": 821.1237847864364,
+                  "stddev_duration": 407.8738507070038,
+                  "count": 551525,
+                  "top10": {
+                    "12285": {
+                      "avg_duration": 3845.5604395604396,
+                      "count": 91,
+                      "score": 0.07804553424994548
+                    },
+                    "11320": {
+                      "avg_duration": 4114.892857142857,
+                      "count": 84,
+                      "score": 0.07708765626418905
+                    },
+                    "12148": {
+                      "avg_duration": 3829.0,
+                      "count": 90,
+                      "score": 0.07685549072677987
+                    },
+                    "11182": {
+                      "avg_duration": 4151.192771084337,
+                      "count": 83,
+                      "score": 0.07684188640614399
+                    },
+                    "12010": {
+                      "avg_duration": 3749.6516853932585,
+                      "count": 89,
+                      "score": 0.07442656193914934
+                    },
+                    "11458": {
+                      "avg_duration": 3874.3764705882354,
+                      "count": 85,
+                      "score": 0.07344593574511651
+                    },
+                    "11596": {
+                      "avg_duration": 3829.0116279069766,
+                      "count": 86,
+                      "score": 0.07343991416057276
+                    },
+                    "11872": {
+                      "avg_duration": 3725.3295454545455,
+                      "count": 88,
+                      "score": 0.0731129644220119
+                    },
+                    "11734": {
+                      "avg_duration": 3720.862068965517,
+                      "count": 87,
+                      "score": 0.0721954533548636
+                    },
+                    "11044": {
+                      "avg_duration": 3755.548780487805,
+                      "count": 82,
+                      "score": 0.06868063215450944
+                    },
+                    "others": {
+                      "avg_duration": 808.2126375621981,
+                      "count": 550660,
+                      "score": 99.25586797057672
                     }
-                  ],
-                  "kernel/bpf/states.c:1382:propagate_precision": [
-                    0.7668405146269122,
-                    8.914809042293127,
-                    {}
-                  ]
+                  }
+                },
+                "nb_insn_types": 13,
+                "avg_duration_per_insn_type": 1045.886853124748,
+                "slowest_instruction_types": {
+                  "avg_duration": 1045.886853124748,
+                  "stddev_duration": 815.1093126283838,
+                  "count": 551525,
+                  "top10": {
+                    "jgt": {
+                      "avg_duration": 3850.0148218981594,
+                      "count": 4183,
+                      "score": 28.3161591920818
+                    },
+                    "exit": {
+                      "avg_duration": 1014.0,
+                      "count": 1,
+                      "score": 7.457785683696376
+                    },
+                    "ldx": {
+                      "avg_duration": 1003.9893773187072,
+                      "count": 37467,
+                      "score": 7.384159373521393
+                    },
+                    "rsh": {
+                      "avg_duration": 844.8333547876938,
+                      "count": 54379,
+                      "score": 6.213595757835151
+                    },
+                    "arsh": {
+                      "avg_duration": 843.0038259206121,
+                      "count": 4182,
+                      "score": 6.200139905573978
+                    },
+                    "add": {
+                      "avg_duration": 808.7450160412443,
+                      "count": 62651,
+                      "score": 5.948172586186575
+                    },
+                    "lsh": {
+                      "avg_duration": 790.873374346551,
+                      "count": 62744,
+                      "score": 5.816729910077271
+                    },
+                    "xor": {
+                      "avg_duration": 783.4516580717872,
+                      "count": 58562,
+                      "score": 5.762144535932902
+                    },
+                    "or": {
+                      "avg_duration": 770.2161128376763,
+                      "count": 54379,
+                      "score": 5.664799506580961
+                    },
+                    "sub": {
+                      "avg_duration": 760.6439802129498,
+                      "count": 54379,
+                      "score": 5.594398211067028
+                    },
+                    "others": {
+                      "avg_duration": 730.0208766819254,
+                      "count": 158598,
+                      "score": 15.641915337446564
+                    }
+                  }
+                },
+                "children": {
+                  "kernel/bpf/verifier.c:17578:check_alu_op": {
+                    "percent_of_total": 20.94513270077229,
+                    "percent_of_parent": 35.585934588347826,
+                    "inclusive_duration": 159562691,
+                    "exclusive_duration": 159562691,
+                    "nb_visits": 497499,
+                    "avg_duration_per_visit": 320.7296718184358,
+                    "children": {}
+                  },
+                  "kernel/bpf/verifier.c:17583:check_load_mem": {
+                    "percent_of_total": 2.6050938438746103,
+                    "percent_of_parent": 4.426073610945004,
+                    "inclusive_duration": 19845937,
+                    "exclusive_duration": 19845937,
+                    "nb_visits": 37467,
+                    "avg_duration_per_visit": 529.6911148477327,
+                    "children": {}
+                  },
+                  "kernel/bpf/verifier.c:17642:check_cond_jmp_op": {
+                    "percent_of_total": 1.860844549689788,
+                    "percent_of_parent": 3.1615885833897197,
+                    "inclusive_duration": 14176151,
+                    "exclusive_duration": 14176151,
+                    "nb_visits": 4183,
+                    "avg_duration_per_visit": 3388.9913937365527,
+                    "children": {}
+                  },
+                  "kernel/bpf/verifier.c:17588:check_store_reg": {
+                    "percent_of_total": 0.12606273687612274,
+                    "percent_of_parent": 0.21418151761513532,
+                    "inclusive_duration": 960362,
+                    "exclusive_duration": 960362,
+                    "nb_visits": 4185,
+                    "avg_duration_per_visit": 229.47718040621265,
+                    "children": {}
+                  },
+                  "kernel/bpf/verifier.c:17651:check_ld_imm": {
+                    "percent_of_total": 0.10488036621828754,
+                    "percent_of_parent": 0.17819251399196573,
+                    "inclusive_duration": 798992,
+                    "exclusive_duration": 798992,
+                    "nb_visits": 4183,
+                    "avg_duration_per_visit": 191.0093234520679,
+                    "children": {}
+                  },
+                  "kernel/bpf/verifier.c:17640:process_bpf_exit_full": {
+                    "percent_of_total": 6.366393858245071e-05,
+                    "percent_of_parent": 0.00010816550013780285,
+                    "inclusive_duration": 485,
+                    "exclusive_duration": 485,
+                    "nb_visits": 1,
+                    "avg_duration_per_visit": 485.0,
+                    "children": {}
+                  }
                 }
-              ]
+              },
+              "kernel/bpf/verifier.c:17703:bpf_is_state_visited": {
+                "percent_of_total": 8.74474720656683,
+                "percent_of_parent": 9.55962903904489,
+                "inclusive_duration": 66618599,
+                "exclusive_duration": 36244070,
+                "nb_visits": 16556,
+                "avg_duration_per_visit": 4023.834199081904,
+                "slowest_instructions": {
+                  "avg_duration": 2873.7435227975357,
+                  "stddev_duration": 2919.1922229241513,
+                  "count": 16556,
+                  "top10": {
+                    "12003": {
+                      "avg_duration": 7660.342857142857,
+                      "count": 175,
+                      "score": 2.012290891917436
+                    },
+                    "12279": {
+                      "avg_duration": 7463.849162011174,
+                      "count": 179,
+                      "score": 2.0054894880031924
+                    },
+                    "12141": {
+                      "avg_duration": 7464.35593220339,
+                      "count": 177,
+                      "score": 1.9832164287934064
+                    },
+                    "11865": {
+                      "avg_duration": 7613.947976878612,
+                      "count": 173,
+                      "score": 1.9772451233926431
+                    },
+                    "11727": {
+                      "avg_duration": 7424.672514619883,
+                      "count": 171,
+                      "score": 1.9058026122704863
+                    },
+                    "11589": {
+                      "avg_duration": 7429.94674556213,
+                      "count": 169,
+                      "score": 1.884850505487214
+                    },
+                    "11451": {
+                      "avg_duration": 7426.2874251497005,
+                      "count": 167,
+                      "score": 1.8616272611797196
+                    },
+                    "11175": {
+                      "avg_duration": 7534.79754601227,
+                      "count": 163,
+                      "score": 1.843587254063989
+                    },
+                    "11313": {
+                      "avg_duration": 7440.866666666667,
+                      "count": 165,
+                      "score": 1.8429432897560636
+                    },
+                    "11037": {
+                      "avg_duration": 7566.298136645963,
+                      "count": 161,
+                      "score": 1.8285794332000287
+                    },
+                    "others": {
+                      "avg_duration": 3625.743605277329,
+                      "count": 14856,
+                      "score": 80.85436771193582
+                    }
+                  }
+                },
+                "nb_insn_types": 3,
+                "avg_duration_per_insn_type": 2992.7305482265315,
+                "slowest_instruction_types": {
+                  "avg_duration": 2992.7305482265315,
+                  "stddev_duration": 3049.4499035157023,
+                  "count": 16556,
+                  "top10": {
+                    "mov": {
+                      "avg_duration": 7253.0130647130645,
+                      "count": 8190,
+                      "score": 80.78478775858102
+                    },
+                    "jeq32": {
+                      "avg_duration": 1442.426966292135,
+                      "count": 4183,
+                      "score": 16.065896378441707
+                    },
+                    "jgt": {
+                      "avg_duration": 282.75161367439637,
+                      "count": 4183,
+                      "score": 3.149315862977293
+                    }
+                  }
+                },
+                "children": {
+                  "kernel/bpf/states.c:1370:states_equal": {
+                    "percent_of_total": 3.208062882140166,
+                    "percent_of_parent": 36.685598867067135,
+                    "inclusive_duration": 24439432,
+                    "exclusive_duration": 19176912,
+                    "nb_visits": 33775,
+                    "avg_duration_per_visit": 723.5953219837157,
+                    "slowest_instructions": {
+                      "avg_duration": 722.9037328447139,
+                      "stddev_duration": 53.890411696807824,
+                      "count": 33775,
+                      "top10": {
+                        "11865": {
+                          "avg_duration": 728.3661119515886,
+                          "count": 661,
+                          "score": 1.9699721335585867
+                        },
+                        "12279": {
+                          "avg_duration": 701.4467153284671,
+                          "count": 685,
+                          "score": 1.966048147109147
+                        },
+                        "12141": {
+                          "avg_duration": 703.7621861152141,
+                          "count": 677,
+                          "score": 1.949501117701917
+                        },
+                        "12003": {
+                          "avg_duration": 704.3408071748879,
+                          "count": 669,
+                          "score": 1.9280480822958568
+                        },
+                        "11727": {
+                          "avg_duration": 705.7595712098009,
+                          "count": 653,
+                          "score": 1.8857271314652484
+                        },
+                        "11589": {
+                          "avg_duration": 709.2449612403101,
+                          "count": 645,
+                          "score": 1.8718233713451278
+                        },
+                        "11313": {
+                          "avg_duration": 721.8251192368839,
+                          "count": 629,
+                          "score": 1.857768216544476
+                        },
+                        "11451": {
+                          "avg_duration": 710.1365777080063,
+                          "count": 637,
+                          "score": 1.8509309054318448
+                        },
+                        "11175": {
+                          "avg_duration": 725.8518518518518,
+                          "count": 621,
+                          "score": 1.8443718331915406
+                        },
+                        "11037": {
+                          "avg_duration": 719.862969004894,
+                          "count": 613,
+                          "score": 1.8055902444868603
+                        },
+                        "others": {
+                          "avg_duration": 726.1536008796041,
+                          "count": 27285,
+                          "score": 81.0702188168694
+                        }
+                      }
+                    },
+                    "nb_insn_types": 2,
+                    "avg_duration_per_insn_type": 712.5257777726623,
+                    "slowest_instruction_types": {
+                      "avg_duration": 712.5257777726623,
+                      "stddev_duration": 14.509793756678278,
+                      "count": 33775,
+                      "top10": {
+                        "mov": {
+                          "avg_duration": 727.0355715293406,
+                          "count": 29771,
+                          "score": 51.01819430323178
+                        },
+                        "jeq32": {
+                          "avg_duration": 698.015984015984,
+                          "count": 4004,
+                          "score": 48.98180569676823
+                        }
+                      }
+                    },
+                    "children": {
+                      "kernel/bpf/states.c:967:refsafe": {
+                        "percent_of_total": 0.690789175399832,
+                        "percent_of_parent": 21.5329063294106,
+                        "inclusive_duration": 5262520,
+                        "exclusive_duration": 5262520,
+                        "nb_visits": 33775,
+                        "avg_duration_per_visit": 155.81110288675055,
+                        "children": {}
+                      }
+                    }
+                  },
+                  "kernel/bpf/states.c:1382:propagate_precision": {
+                    "percent_of_total": 0.779075568843067,
+                    "percent_of_parent": 8.909069072437264,
+                    "inclusive_duration": 5935097,
+                    "exclusive_duration": 5935097,
+                    "nb_visits": 4183,
+                    "avg_duration_per_visit": 1418.8613435333493,
+                    "slowest_instructions": {
+                      "avg_duration": 1476.3581288188848,
+                      "stddev_duration": 166.35549570437072,
+                      "count": 4183,
+                      "top10": {
+                        "12279": {
+                          "avg_duration": 1488.2954545454545,
+                          "count": 88,
+                          "score": 2.206703614111109
+                        },
+                        "12141": {
+                          "avg_duration": 1460.712643678161,
+                          "count": 87,
+                          "score": 2.1411949964760475
+                        },
+                        "12003": {
+                          "avg_duration": 1454.5348837209303,
+                          "count": 86,
+                          "score": 2.1076319392926517
+                        },
+                        "11865": {
+                          "avg_duration": 1459.929411764706,
+                          "count": 85,
+                          "score": 2.0908504107009542
+                        },
+                        "11727": {
+                          "avg_duration": 1452.952380952381,
+                          "count": 84,
+                          "score": 2.05637751160596
+                        },
+                        "10485": {
+                          "avg_duration": 1613.68,
+                          "count": 75,
+                          "score": 2.0391579109827522
+                        },
+                        "11589": {
+                          "avg_duration": 1454.3493975903614,
+                          "count": 83,
+                          "score": 2.0338504998317632
+                        },
+                        "11451": {
+                          "avg_duration": 1455.439024390244,
+                          "count": 82,
+                          "score": 2.010851718177479
+                        },
+                        "11313": {
+                          "avg_duration": 1455.4074074074074,
+                          "count": 81,
+                          "score": 1.9862859865643308
+                        },
+                        "11175": {
+                          "avg_duration": 1454.725,
+                          "count": 80,
+                          "score": 1.9608441108881622
+                        },
+                        "others": {
+                          "avg_duration": 1405.2696897374701,
+                          "count": 3352,
+                          "score": 79.36625130136879
+                        }
+                      }
+                    },
+                    "nb_insn_types": 2,
+                    "avg_duration_per_insn_type": 1157.94580365043,
+                    "slowest_instruction_types": {
+                      "avg_duration": 1157.94580365043,
+                      "stddev_duration": 284.8889854686118,
+                      "count": 4183,
+                      "top10": {
+                        "mov": {
+                          "avg_duration": 1442.8347891190417,
+                          "count": 4007,
+                          "score": 62.30148183837697
+                        },
+                        "jeq32": {
+                          "avg_duration": 873.0568181818181,
+                          "count": 176,
+                          "score": 37.69851816162303
+                        }
+                      }
+                    },
+                    "children": {}
+                  }
+                }
+              }
             }
-          ],
-          "kernel/bpf/verifier.c:18798:18708": [
-            0.0005745434849490742,
-            0.0006323702366858036,
-            {}
-          ]
+          },
+          "kernel/bpf/verifier.c:18798:18708": {
+            "percent_of_total": 0.0006841576245190373,
+            "percent_of_parent": 0.0007465863927198441,
+            "inclusive_duration": 5212,
+            "exclusive_duration": 5212,
+            "nb_visits": 1,
+            "avg_duration_per_visit": 5212.0,
+            "children": {}
+          }
         }
-      ],
-      "kernel/bpf/verifier.c:20055:bpf_compute_live_registers": [
-        5.835841010669558,
-        5.835841010669558,
-        {
-          "kernel/bpf/liveness.c:2162:bpf_compute_subprog_arg_access": [
-            5.065824904256826,
-            86.80539608592956,
-            {
-              "kernel/bpf/liveness.c:1950:analyze_subprog": [
-                2.524805515063628,
-                49.839968075920424,
-                {}
-              ],
-              "kernel/bpf/liveness.c:1924:analyze_subprog": [
-                2.52173179919926,
-                49.77929255075995,
-                {}
-              ]
+      },
+      "kernel/bpf/verifier.c:20055:bpf_compute_live_registers": {
+        "percent_of_total": 5.59226517432864,
+        "percent_of_parent": 5.59226517432864,
+        "inclusive_duration": 42602589,
+        "exclusive_duration": 3785461,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 42602589.0,
+        "children": {
+          "kernel/bpf/liveness.c:2162:bpf_compute_subprog_arg_access": {
+            "percent_of_total": 4.816990539517724,
+            "percent_of_parent": 86.13666178832466,
+            "inclusive_duration": 36696448,
+            "exclusive_duration": 161363,
+            "nb_visits": 1,
+            "avg_duration_per_visit": 36696448.0,
+            "children": {
+              "kernel/bpf/liveness.c:1950:analyze_subprog": {
+                "percent_of_total": 2.404868788045012,
+                "percent_of_parent": 49.924714784384584,
+                "inclusive_duration": 18320597,
+                "exclusive_duration": 18320597,
+                "nb_visits": 1,
+                "avg_duration_per_visit": 18320597.0,
+                "children": {}
+              },
+              "kernel/bpf/liveness.c:1924:analyze_subprog": {
+                "percent_of_total": 2.3909402996758464,
+                "percent_of_parent": 49.635561458155294,
+                "inclusive_duration": 18214488,
+                "exclusive_duration": 18214488,
+                "nb_visits": 1,
+                "avg_duration_per_visit": 18214488.0,
+                "children": {}
+              }
             }
-          ],
-          "kernel/bpf/liveness.c:2159:compute_insn_live_regs": [
-            0.2556696218568236,
-            4.3810244554193245,
-            {}
-          ],
-          "kernel/bpf/liveness.c:2188:2167": [
-            0.018003061805428457,
-            0.3084913000973432,
-            {}
-          ]
+          },
+          "kernel/bpf/liveness.c:2159:compute_insn_live_regs": {
+            "percent_of_total": 0.2620066420836528,
+            "percent_of_parent": 4.685161270363169,
+            "inclusive_duration": 1996000,
+            "exclusive_duration": 1996000,
+            "nb_visits": 12409,
+            "avg_duration_per_visit": 160.8509952453864,
+            "slowest_instructions": {
+              "avg_duration": 160.8509952453864,
+              "stddev_duration": 149.7473283538584,
+              "count": 12409,
+              "top10": {
+                "289": {
+                  "avg_duration": 9154.0,
+                  "count": 1,
+                  "score": 0.4586172344689379
+                },
+                "3733": {
+                  "avg_duration": 9109.0,
+                  "count": 1,
+                  "score": 0.4563627254509018
+                },
+                "10241": {
+                  "avg_duration": 8656.0,
+                  "count": 1,
+                  "score": 0.43366733466933866
+                },
+                "2441": {
+                  "avg_duration": 6822.0,
+                  "count": 1,
+                  "score": 0.34178356713426855
+                },
+                "11600": {
+                  "avg_duration": 371.0,
+                  "count": 1,
+                  "score": 0.018587174348697395
+                },
+                "4944": {
+                  "avg_duration": 243.0,
+                  "count": 1,
+                  "score": 0.01217434869739479
+                },
+                "5968": {
+                  "avg_duration": 242.0,
+                  "count": 1,
+                  "score": 0.012124248496993987
+                },
+                "9840": {
+                  "avg_duration": 240.0,
+                  "count": 1,
+                  "score": 0.012024048096192385
+                },
+                "9384": {
+                  "avg_duration": 237.0,
+                  "count": 1,
+                  "score": 0.01187374749498998
+                },
+                "0": {
+                  "avg_duration": 231.0,
+                  "count": 1,
+                  "score": 0.011573146292585169
+                },
+                "others": {
+                  "avg_duration": 158.13331720300025,
+                  "count": 12399,
+                  "score": 98.2312124248497
+                }
+              }
+            },
+            "nb_insn_types": 14,
+            "avg_duration_per_insn_type": 165.16525005631019,
+            "slowest_instruction_types": {
+              "avg_duration": 165.16525005631019,
+              "stddev_duration": 11.244829447968705,
+              "count": 12409,
+              "top10": {
+                "jeq32": {
+                  "avg_duration": 190.06666666666666,
+                  "count": 90,
+                  "score": 8.21976200899518
+                },
+                "exit": {
+                  "avg_duration": 183.0,
+                  "count": 1,
+                  "score": 7.914151776461513
+                },
+                "jgt": {
+                  "avg_duration": 173.73333333333332,
+                  "count": 90,
+                  "score": 7.513398735686231
+                },
+                "stx": {
+                  "avg_duration": 172.09782608695653,
+                  "count": 92,
+                  "score": 7.442668393722686
+                },
+                "ldimm64": {
+                  "avg_duration": 168.90555555555557,
+                  "count": 180,
+                  "score": 7.304613128711577
+                },
+                "mov": {
+                  "avg_duration": 167.0098887515451,
+                  "count": 3236,
+                  "score": 7.222631736337052
+                },
+                "add": {
+                  "avg_duration": 165.38976377952756,
+                  "count": 1524,
+                  "score": 7.15256662745518
+                },
+                "ldx": {
+                  "avg_duration": 163.73076923076923,
+                  "count": 988,
+                  "score": 7.0808205364431815
+                },
+                "xor": {
+                  "avg_duration": 160.31746031746033,
+                  "count": 1260,
+                  "score": 6.933206083984846
+                },
+                "or": {
+                  "avg_duration": 153.8153846153846,
+                  "count": 1170,
+                  "score": 6.6520125650325514
+                },
+                "others": {
+                  "avg_duration": 153.68210693488618,
+                  "count": 3778,
+                  "score": 26.564168407170005
+                }
+              }
+            },
+            "children": {}
+          },
+          "kernel/bpf/liveness.c:2188:2167": {
+            "percent_of_total": 0.01636622652053599,
+            "percent_of_parent": 0.2926582701347094,
+            "inclusive_duration": 124680,
+            "exclusive_duration": 124680,
+            "nb_visits": 1,
+            "avg_duration_per_visit": 124680.0,
+            "children": {}
+          }
         }
-      ],
-      "kernel/bpf/verifier.c:20091:bpf_opt_remove_nops": [
-        1.100408766580116,
-        1.100408766580116,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20089:bpf_opt_remove_dead_code": [
-        0.8848231897099792,
-        0.8848231897099792,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20009:bpf_check_btf_info": [
-        0.7253131618624254,
-        0.7253131618624254,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20039:bpf_compute_const_regs": [
-        0.25832914719883804,
-        0.25832914719883804,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20051:bpf_compute_scc": [
-        0.03437912449978136,
-        0.03437912449978136,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20013:check_and_resolve_insns": [
-        0.032037551679675126,
-        0.032037551679675126,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20023:bpf_check_cfg": [
-        0.024846711221312042,
-        0.024846711221312042,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20043:bpf_prune_dead_branches": [
-        0.02397139120635996,
-        0.02397139120635996,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20102:bpf_do_misc_fixups": [
-        0.022245007348230234,
-        0.022245007348230234,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20027:bpf_compute_postorder": [
-        0.022047024540774028,
-        0.022047024540774028,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20099:bpf_convert_ctx_accesses": [
-        0.0072817027666856994,
-        0.0072817027666856994,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20076:bpf_remove_fastcall_spills_fills": [
-        0.006028642044262536,
-        0.006028642044262536,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20005:check_subprogs": [
-        0.005702560426948901,
-        0.005702560426948901,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20108:bpf_opt_subreg_zext_lo32_rnd_hi32": [
-        0.004267775087880504,
-        0.004267775087880504,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20059:mark_fastcall_patterns": [
-        0.0028399388142393766,
-        0.0028399388142393766,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20079:check_max_stack_depth": [
-        0.002739374037206985,
-        0.002739374037206985,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20083:bpf_optimize_bpf_loop": [
-        0.0025576494205617507,
-        0.0025576494205617507,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20001:add_subprog_and_kfunc": [
-        0.00193774033867238,
-        0.00193774033867238,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20087:bpf_opt_hard_wire_dead_code_branches": [
-        0.001735955212397477,
-        0.001735955212397477,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20047:sort_subprogs_topo": [
-        0.0016958341931381392,
-        0.0016958341931381392,
-        {}
-      ],
-      "kernel/bpf/verifier.c:19997:bpf_check_btf_info_early": [
-        0.00027809373153285863,
-        0.00027809373153285863,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20031:bpf_stack_liveness_init": [
-        0.00022918804465791462,
-        0.00022918804465791462,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20064:do_check_subprogs": [
-        3.2123038295874756e-05,
-        3.2123038295874756e-05,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20114:bpf_fixup_call_args": [
-        3.0680779433610994e-05,
-        3.0680779433610994e-05,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20035:check_attach_btf_id": [
-        2.9762978339443144e-05,
-        2.9762978339443144e-05,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20066:bpf_prog_is_offloaded": [
-        2.281391291217228e-05,
-        2.281391291217228e-05,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20107:bpf_prog_is_offloaded": [
-        2.255168402812432e-05,
-        2.255168402812432e-05,
-        {}
-      ],
-      "kernel/bpf/verifier.c:20017:bpf_prog_is_offloaded": [
-        2.1371654049908514e-05,
-        2.1371654049908514e-05,
-        {}
-      ]
+      },
+      "kernel/bpf/verifier.c:20091:bpf_opt_remove_nops": {
+        "percent_of_total": 1.1018707710047404,
+        "percent_of_parent": 1.1018707710047404,
+        "inclusive_duration": 8394192,
+        "exclusive_duration": 8394192,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 8394192.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20089:bpf_opt_remove_dead_code": {
+        "percent_of_total": 0.8790326779882134,
+        "percent_of_parent": 0.8790326779882134,
+        "inclusive_duration": 6696583,
+        "exclusive_duration": 6696583,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 6696583.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20009:bpf_check_btf_info": {
+        "percent_of_total": 0.2267281565626938,
+        "percent_of_parent": 0.2267281565626938,
+        "inclusive_duration": 1727244,
+        "exclusive_duration": 1727244,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 1727244.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20039:bpf_compute_const_regs": {
+        "percent_of_total": 0.20542699030812228,
+        "percent_of_parent": 0.20542699030812228,
+        "inclusive_duration": 1564969,
+        "exclusive_duration": 1564969,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 1564969.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20051:bpf_compute_scc": {
+        "percent_of_total": 0.03886611254239605,
+        "percent_of_parent": 0.03886611254239605,
+        "inclusive_duration": 296087,
+        "exclusive_duration": 296087,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 296087.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20013:check_and_resolve_insns": {
+        "percent_of_total": 0.030652414338437926,
+        "percent_of_parent": 0.030652414338437926,
+        "inclusive_duration": 233514,
+        "exclusive_duration": 233514,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 233514.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20027:bpf_compute_postorder": {
+        "percent_of_total": 0.026610607466495163,
+        "percent_of_parent": 0.026610607466495163,
+        "inclusive_duration": 202723,
+        "exclusive_duration": 202723,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 202723.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20043:bpf_prune_dead_branches": {
+        "percent_of_total": 0.024661440819050195,
+        "percent_of_parent": 0.024661440819050195,
+        "inclusive_duration": 187874,
+        "exclusive_duration": 187874,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 187874.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20023:bpf_check_cfg": {
+        "percent_of_total": 0.02299830246474164,
+        "percent_of_parent": 0.02299830246474164,
+        "inclusive_duration": 175204,
+        "exclusive_duration": 175204,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 175204.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20102:bpf_do_misc_fixups": {
+        "percent_of_total": 0.021627099366943122,
+        "percent_of_parent": 0.021627099366943122,
+        "inclusive_duration": 164758,
+        "exclusive_duration": 164758,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 164758.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20076:bpf_remove_fastcall_spills_fills": {
+        "percent_of_total": 0.006984918556390448,
+        "percent_of_parent": 0.006984918556390448,
+        "inclusive_duration": 53212,
+        "exclusive_duration": 53212,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 53212.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20099:bpf_convert_ctx_accesses": {
+        "percent_of_total": 0.006868748276709068,
+        "percent_of_parent": 0.006868748276709068,
+        "inclusive_duration": 52327,
+        "exclusive_duration": 52327,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 52327.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20005:check_subprogs": {
+        "percent_of_total": 0.005716102823734842,
+        "percent_of_parent": 0.005716102823734842,
+        "inclusive_duration": 43546,
+        "exclusive_duration": 43546,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 43546.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20108:bpf_opt_subreg_zext_lo32_rnd_hi32": {
+        "percent_of_total": 0.004666369799314516,
+        "percent_of_parent": 0.004666369799314516,
+        "inclusive_duration": 35549,
+        "exclusive_duration": 35549,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 35549.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20059:mark_fastcall_patterns": {
+        "percent_of_total": 0.002839149129071807,
+        "percent_of_parent": 0.002839149129071807,
+        "inclusive_duration": 21629,
+        "exclusive_duration": 21629,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 21629.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20079:check_max_stack_depth": {
+        "percent_of_total": 0.002729410876175047,
+        "percent_of_parent": 0.002729410876175047,
+        "inclusive_duration": 20793,
+        "exclusive_duration": 20793,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 20793.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20083:bpf_optimize_bpf_loop": {
+        "percent_of_total": 0.00254892032864748,
+        "percent_of_parent": 0.00254892032864748,
+        "inclusive_duration": 19418,
+        "exclusive_duration": 19418,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 19418.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20001:add_subprog_and_kfunc": {
+        "percent_of_total": 0.002305815969359442,
+        "percent_of_parent": 0.002305815969359442,
+        "inclusive_duration": 17566,
+        "exclusive_duration": 17566,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 17566.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20087:bpf_opt_hard_wire_dead_code_branches": {
+        "percent_of_total": 0.0017564683756119029,
+        "percent_of_parent": 0.0017564683756119029,
+        "inclusive_duration": 13381,
+        "exclusive_duration": 13381,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 13381.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20047:sort_subprogs_topo": {
+        "percent_of_total": 0.0016741646859393328,
+        "percent_of_parent": 0.0016741646859393328,
+        "inclusive_duration": 12754,
+        "exclusive_duration": 12754,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 12754.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:19997:bpf_check_btf_info_early": {
+        "percent_of_total": 0.00022118296187923598,
+        "percent_of_parent": 0.00022118296187923598,
+        "inclusive_duration": 1685,
+        "exclusive_duration": 1685,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 1685.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20031:bpf_stack_liveness_init": {
+        "percent_of_total": 0.00019808017179570746,
+        "percent_of_parent": 0.00019808017179570746,
+        "inclusive_duration": 1509,
+        "exclusive_duration": 1509,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 1509.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20035:check_attach_btf_id": {
+        "percent_of_total": 3.137253880660973e-05,
+        "percent_of_parent": 3.137253880660973e-05,
+        "inclusive_duration": 239,
+        "exclusive_duration": 239,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 239.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20114:bpf_fixup_call_args": {
+        "percent_of_total": 2.8484690046168667e-05,
+        "percent_of_parent": 2.8484690046168667e-05,
+        "inclusive_duration": 217,
+        "exclusive_duration": 217,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 217.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20064:do_check_subprogs": {
+        "percent_of_total": 2.7040765665948133e-05,
+        "percent_of_parent": 2.7040765665948133e-05,
+        "inclusive_duration": 206,
+        "exclusive_duration": 206,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 206.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20107:bpf_prog_is_offloaded": {
+        "percent_of_total": 2.3496587641770466e-05,
+        "percent_of_parent": 2.3496587641770466e-05,
+        "inclusive_duration": 179,
+        "exclusive_duration": 179,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 179.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20017:bpf_prog_is_offloaded": {
+        "percent_of_total": 2.1790131556055295e-05,
+        "percent_of_parent": 2.1790131556055295e-05,
+        "inclusive_duration": 166,
+        "exclusive_duration": 166,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 166.0,
+        "children": {}
+      },
+      "kernel/bpf/verifier.c:20066:bpf_prog_is_offloaded": {
+        "percent_of_total": 2.1527599850560654e-05,
+        "percent_of_parent": 2.1527599850560654e-05,
+        "inclusive_duration": 164,
+        "exclusive_duration": 164,
+        "nb_visits": 1,
+        "avg_duration_per_visit": 164.0,
+        "children": {}
+      }
     },
     "durations_per_insn_type": {
       "jgt": [
         90,
-        17375222,
-        193058.02222222224
+        17302998,
+        192255.53333333333
       ],
       "jeq32": [
         90,
-        8942309,
-        99358.98888888888
+        8999292,
+        99992.13333333333
       ],
       "mov": [
         3236,
-        194995827,
-        60258.29017305315
-      ],
-      "rsh": [
-        1170,
-        45946237,
-        39270.28803418804
+        197312087,
+        60974.06891223733
       ],
       "arsh": [
         89,
-        3487380,
-        39184.04494382023
+        3539073,
+        39764.86516853933
+      ],
+      "rsh": [
+        1170,
+        46120977,
+        39419.63846153846
       ],
       "ldx": [
         988,
-        37680592,
-        38138.25101214575
+        37778236,
+        38237.08097165992
       ],
       "lsh": [
         1349,
-        49205415,
-        36475.47442550037
+        49829847,
+        36938.3595255745
       ],
       "xor": [
         1260,
-        45628620,
-        36213.19047619047
+        46082496,
+        36573.409523809525
       ],
       "or": [
         1170,
-        41769818,
-        35700.69914529914
+        42063546,
+        35951.748717948714
       ],
       "sub": [
         1170,
-        41157707,
-        35177.52735042735
+        41542967,
+        35506.809401709404
       ],
       "add": [
         1524,
-        50779166,
-        33319.66272965879
+        50920738,
+        33412.557742782155
       ],
       "stx": [
         92,
-        3013702,
-        32757.630434782608
+        3019664,
+        32822.434782608696
       ],
       "ldimm64": [
         180,
-        2841124,
-        15784.022222222222
+        2862972,
+        15905.4
       ],
       "exit": [
         1,
-        1124,
-        1124.0
+        1197,
+        1197.0
       ]
     },
-    "analysis_time": "7.92s"
-  },
-  "site_tree": {
-    "kernel/bpf/verifier.c:19997:bpf_check_btf_info_early": {
-      "inclusive_duration": 2121,
-      "exclusive_duration": 2121,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20001:add_subprog_and_kfunc": {
-      "inclusive_duration": 14779,
-      "exclusive_duration": 14779,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20005:check_subprogs": {
-      "inclusive_duration": 43493,
-      "exclusive_duration": 43493,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20009:bpf_check_btf_info": {
-      "inclusive_duration": 5531909,
-      "exclusive_duration": 5531909,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20013:check_and_resolve_insns": {
-      "inclusive_duration": 244348,
-      "exclusive_duration": 244348,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20017:bpf_prog_is_offloaded": {
-      "inclusive_duration": 163,
-      "exclusive_duration": 163,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20023:bpf_check_cfg": {
-      "inclusive_duration": 189504,
-      "exclusive_duration": 189504,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20027:bpf_compute_postorder": {
-      "inclusive_duration": 168151,
-      "exclusive_duration": 168151,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20031:bpf_stack_liveness_init": {
-      "inclusive_duration": 1748,
-      "exclusive_duration": 1748,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20035:check_attach_btf_id": {
-      "inclusive_duration": 227,
-      "exclusive_duration": 227,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20039:bpf_compute_const_regs": {
-      "inclusive_duration": 1970257,
-      "exclusive_duration": 1970257,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20043:bpf_prune_dead_branches": {
-      "inclusive_duration": 182828,
-      "exclusive_duration": 182828,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20047:sort_subprogs_topo": {
-      "inclusive_duration": 12934,
-      "exclusive_duration": 12934,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20051:bpf_compute_scc": {
-      "inclusive_duration": 262207,
-      "exclusive_duration": 262207,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20055:bpf_compute_live_registers": {
-      "inclusive_duration": 44509521,
-      "exclusive_duration": 3785574,
-      "children_duration": 40723947,
-      "children": [
-        [
-          "kernel/bpf/liveness.c:2159:compute_insn_live_regs",
-          {
-            "inclusive_duration": 1949973,
-            "exclusive_duration": 1949973,
-            "children_duration": 0,
-            "children": [],
-            "nb_visits": 12409,
-            "nb_insn_types": 14,
-            "slowest_insns": {
-              "81": {
-                "count": 1,
-                "score": 80.89507290613768
-              },
-              "9491": {
-                "count": 1,
-                "score": 42.903916105505054
-              },
-              "7304": {
-                "count": 1,
-                "score": 28.872006432909586
-              },
-              "2930": {
-                "count": 1,
-                "score": 27.255632257472286
-              },
-              "756": {
-                "count": 1,
-                "score": 1.7627387661265055
-              },
-              "0": {
-                "count": 1,
-                "score": 1.6418288868615105
-              },
-              "8795": {
-                "count": 1,
-                "score": 1.5527373968767775
-              },
-              "11687": {
-                "count": 1,
-                "score": 1.5209190075965155
-              },
-              "11003": {
-                "count": 1,
-                "score": 1.4827369404602013
-              },
-              "5111": {
-                "count": 1,
-                "score": 1.42546383975573
-              },
-              "other": {
-                "count": 12399,
-                "score": 0.985538103674514
-              }
-            },
-            "slowest_insn_types": {
-              "exit": {
-                "count": 1,
-                "score": 1.213164536259979
-              },
-              "jeq32": {
-                "count": 90,
-                "score": 1.0443943677802743
-              },
-              "jgt": {
-                "count": 90,
-                "score": 1.038686167297872
-              },
-              "stx": {
-                "count": 92,
-                "score": 1.0347421565926396
-              },
-              "ldx": {
-                "count": 988,
-                "score": 1.0259600070496557
-              },
-              "ldimm64": {
-                "count": 180,
-                "score": 1.020770670603103
-              },
-              "mov": {
-                "count": 3236,
-                "score": 1.0086585861580573
-              },
-              "lsh": {
-                "count": 1349,
-                "score": 0.9890307318101079
-              },
-              "xor": {
-                "count": 1260,
-                "score": 0.964450086669589
-              },
-              "or": {
-                "count": 1170,
-                "score": 0.9322406604337212
-              },
-              "other": {
-                "count": 3953,
-                "score": 0.9319903542833906
-              }
-            }
-          }
-        ],
-        [
-          "kernel/bpf/liveness.c:2162:bpf_compute_subprog_arg_access",
-          {
-            "inclusive_duration": 38636666,
-            "exclusive_duration": 147105,
-            "children_duration": 38489561,
-            "children": [
-              [
-                "kernel/bpf/liveness.c:1924:analyze_subprog",
-                {
-                  "inclusive_duration": 19233059,
-                  "exclusive_duration": 19233059,
-                  "children_duration": 0,
-                  "children": [],
-                  "nb_visits": 1
-                }
-              ],
-              [
-                "kernel/bpf/liveness.c:1950:analyze_subprog",
-                {
-                  "inclusive_duration": 19256502,
-                  "exclusive_duration": 19256502,
-                  "children_duration": 0,
-                  "children": [],
-                  "nb_visits": 1
-                }
-              ]
-            ],
-            "nb_visits": 1
-          }
-        ],
-        [
-          "kernel/bpf/liveness.c:2188:2167",
-          {
-            "inclusive_duration": 137308,
-            "exclusive_duration": 137308,
-            "children_duration": 0,
-            "children": [],
-            "nb_visits": 1
-          }
-        ]
-      ],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20059:mark_fastcall_patterns": {
-      "inclusive_duration": 21660,
-      "exclusive_duration": 21660,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20063:do_check_main": {
-      "inclusive_duration": 692948489,
-      "exclusive_duration": 1260713,
-      "children_duration": 691687776,
-      "children": [
-        [
-          "kernel/bpf/verifier.c:18798:18708",
-          {
-            "inclusive_duration": 4382,
-            "exclusive_duration": 4382,
-            "children_duration": 0,
-            "children": [],
-            "nb_visits": 1
-          }
-        ],
-        [
-          "kernel/bpf/verifier.c:18807:do_check",
-          {
-            "inclusive_duration": 691683394,
-            "exclusive_duration": 180643536,
-            "children_duration": 511039858,
-            "children": [
-              [
-                "kernel/bpf/verifier.c:17790:do_check_insn",
-                {
-                  "inclusive_duration": 445434022,
-                  "exclusive_duration": 250890957,
-                  "children_duration": 194543065,
-                  "children": [
-                    [
-                      "kernel/bpf/verifier.c:17578:check_alu_op",
-                      {
-                        "inclusive_duration": 158710029,
-                        "exclusive_duration": 158710029,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 497499
-                      }
-                    ],
-                    [
-                      "kernel/bpf/verifier.c:17583:check_load_mem",
-                      {
-                        "inclusive_duration": 19783218,
-                        "exclusive_duration": 19783218,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 37467
-                      }
-                    ],
-                    [
-                      "kernel/bpf/verifier.c:17588:check_store_reg",
-                      {
-                        "inclusive_duration": 947481,
-                        "exclusive_duration": 947481,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 4185
-                      }
-                    ],
-                    [
-                      "kernel/bpf/verifier.c:17642:check_cond_jmp_op",
-                      {
-                        "inclusive_duration": 14308100,
-                        "exclusive_duration": 14308100,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 4183
-                      }
-                    ],
-                    [
-                      "kernel/bpf/verifier.c:17651:check_ld_imm",
-                      {
-                        "inclusive_duration": 793795,
-                        "exclusive_duration": 793795,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 4183
-                      }
-                    ],
-                    [
-                      "kernel/bpf/verifier.c:17640:process_bpf_exit_full",
-                      {
-                        "inclusive_duration": 442,
-                        "exclusive_duration": 442,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 1
-                      }
-                    ]
-                  ],
-                  "nb_visits": 551525,
-                  "nb_insn_types": 13,
-                  "slowest_insns": {
-                    "5": {
-                      "count": 1,
-                      "score": 32.97382227125884
-                    },
-                    "979": {
-                      "count": 9,
-                      "score": 15.692347112383096
-                    },
-                    "418": {
-                      "count": 5,
-                      "score": 9.216970184643866
-                    },
-                    "7": {
-                      "count": 1,
-                      "score": 7.634583309848748
-                    },
-                    "10078": {
-                      "count": 75,
-                      "score": 7.12993644507319
-                    },
-                    "10354": {
-                      "count": 77,
-                      "score": 6.585142070394306
-                    },
-                    "802": {
-                      "count": 7,
-                      "score": 6.32990126329288
-                    },
-                    "1384": {
-                      "count": 12,
-                      "score": 5.693744948157552
-                    },
-                    "2764": {
-                      "count": 22,
-                      "score": 5.5981803972469635
-                    },
-                    "1108": {
-                      "count": 10,
-                      "score": 5.595186266441048
-                    },
-                    "other": {
-                      "count": 551306,
-                      "score": 0.9975649246825875
-                    }
-                  },
-                  "slowest_insn_types": {
-                    "jgt": {
-                      "count": 4183,
-                      "score": 3.7401140013816554
-                    },
-                    "ldx": {
-                      "count": 37467,
-                      "score": 0.9660126449089937
-                    },
-                    "exit": {
-                      "count": 1,
-                      "score": 0.8952691486106871
-                    },
-                    "rsh": {
-                      "count": 54379,
-                      "score": 0.8119993818952279
-                    },
-                    "arsh": {
-                      "count": 4182,
-                      "score": 0.8013990123985303
-                    },
-                    "add": {
-                      "count": 62651,
-                      "score": 0.7783873066416791
-                    },
-                    "lsh": {
-                      "count": 62744,
-                      "score": 0.7532508647062001
-                    },
-                    "xor": {
-                      "count": 58562,
-                      "score": 0.7484354848893906
-                    },
-                    "or": {
-                      "count": 54379,
-                      "score": 0.7379058215070163
-                    },
-                    "sub": {
-                      "count": 54379,
-                      "score": 0.7270486341538553
-                    },
-                    "other": {
-                      "count": 158598,
-                      "score": 0.6989717310646641
-                    }
-                  }
-                }
-              ],
-              [
-                "kernel/bpf/verifier.c:17703:bpf_is_state_visited",
-                {
-                  "inclusive_duration": 65605836,
-                  "exclusive_duration": 35771424,
-                  "children_duration": 29834412,
-                  "children": [
-                    [
-                      "kernel/bpf/states.c:1370:states_equal",
-                      {
-                        "inclusive_duration": 23985777,
-                        "exclusive_duration": 18795682,
-                        "children_duration": 5190095,
-                        "children": [
-                          [
-                            "kernel/bpf/states.c:967:refsafe",
-                            {
-                              "inclusive_duration": 5190095,
-                              "exclusive_duration": 5190095,
-                              "children_duration": 0,
-                              "children": [],
-                              "nb_visits": 33775
-                            }
-                          ]
-                        ],
-                        "nb_visits": 33775,
-                        "nb_insn_types": 2,
-                        "slowest_insns": {
-                          "3855": {
-                            "count": 27,
-                            "score": 1.3895597532808868
-                          },
-                          "9375": {
-                            "count": 67,
-                            "score": 1.2866279885335952
-                          },
-                          "10065": {
-                            "count": 72,
-                            "score": 1.2420063854693741
-                          },
-                          "6753": {
-                            "count": 48,
-                            "score": 1.1791003051169309
-                          },
-                          "405": {
-                            "count": 2,
-                            "score": 1.1490309444634628
-                          },
-                          "2619": {
-                            "count": 125,
-                            "score": 1.1064717394812766
-                          },
-                          "2061": {
-                            "count": 14,
-                            "score": 1.0975337592774252
-                          },
-                          "825": {
-                            "count": 21,
-                            "score": 1.084525355727827
-                          },
-                          "543": {
-                            "count": 3,
-                            "score": 1.0842571412216497
-                          },
-                          "411": {
-                            "count": 7,
-                            "score": 1.0772165104344962
-                          },
-                          "other": {
-                            "count": 33389,
-                            "score": 0.9978051368896731
-                          }
-                        },
-                        "slowest_insn_types": {
-                          "mov": {
-                            "count": 29771,
-                            "score": 1.0107680362963476
-                          },
-                          "jeq32": {
-                            "count": 4004,
-                            "score": 0.9892319637036523
-                          }
-                        }
-                      }
-                    ],
-                    [
-                      "kernel/bpf/states.c:1382:propagate_precision",
-                      {
-                        "inclusive_duration": 5848635,
-                        "exclusive_duration": 5848635,
-                        "children_duration": 0,
-                        "children": [],
-                        "nb_visits": 4183,
-                        "nb_insn_types": 2,
-                        "slowest_insns": {
-                          "12273": {
-                            "count": 1,
-                            "score": 1.3052575515483527
-                          },
-                          "7029": {
-                            "count": 1,
-                            "score": 1.1707981434984402
-                          },
-                          "6621": {
-                            "count": 47,
-                            "score": 1.1592634862664537
-                          },
-                          "1371": {
-                            "count": 1,
-                            "score": 1.1564939511527048
-                          },
-                          "7443": {
-                            "count": 1,
-                            "score": 1.149341854979837
-                          },
-                          "12135": {
-                            "count": 1,
-                            "score": 1.1450505972761165
-                          },
-                          "11721": {
-                            "count": 1,
-                            "score": 1.143620178041543
-                          },
-                          "6063": {
-                            "count": 1,
-                            "score": 1.1429049684242563
-                          },
-                          "3717": {
-                            "count": 1,
-                            "score": 1.1321768241649546
-                          },
-                          "4275": {
-                            "count": 30,
-                            "score": 1.1316761774328539
-                          },
-                          "other": {
-                            "count": 4098,
-                            "score": 0.9968810851033199
-                          }
-                        },
-                        "slowest_insn_types": {
-                          "mov": {
-                            "count": 4007,
-                            "score": 1.2409362082022437
-                          },
-                          "jeq32": {
-                            "count": 176,
-                            "score": 0.7590637917977562
-                          }
-                        }
-                      }
-                    ]
-                  ],
-                  "nb_visits": 16556,
-                  "nb_insn_types": 3,
-                  "slowest_insns": {
-                    "8829": {
-                      "count": 129,
-                      "score": 2.0415450533011783
-                    },
-                    "10761": {
-                      "count": 157,
-                      "score": 1.9725303014958633
-                    },
-                    "9795": {
-                      "count": 143,
-                      "score": 1.8879075258560158
-                    },
-                    "12279": {
-                      "count": 179,
-                      "score": 1.8843364333740031
-                    },
-                    "10209": {
-                      "count": 149,
-                      "score": 1.877976165855021
-                    },
-                    "12141": {
-                      "count": 177,
-                      "score": 1.8738529511479733
-                    },
-                    "9105": {
-                      "count": 133,
-                      "score": 1.8734651933337747
-                    },
-                    "8415": {
-                      "count": 123,
-                      "score": 1.8730406978660932
-                    },
-                    "9381": {
-                      "count": 137,
-                      "score": 1.8648986618572065
-                    },
-                    "11727": {
-                      "count": 171,
-                      "score": 1.864068162351392
-                    },
-                    "other": {
-                      "count": 15058,
-                      "score": 0.9105056689444085
-                    }
-                  },
-                  "slowest_insn_types": {
-                    "mov": {
-                      "count": 8190,
-                      "score": 2.422024745424351
-                    },
-                    "jeq32": {
-                      "count": 4183,
-                      "score": 0.48526682322117964
-                    },
-                    "jgt": {
-                      "count": 4183,
-                      "score": 0.09270843135446961
-                    }
-                  }
-                }
-              ]
-            ],
-            "nb_visits": 1
-          }
-        ]
-      ],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20064:do_check_subprogs": {
-      "inclusive_duration": 245,
-      "exclusive_duration": 245,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20066:bpf_prog_is_offloaded": {
-      "inclusive_duration": 174,
-      "exclusive_duration": 174,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20076:bpf_remove_fastcall_spills_fills": {
-      "inclusive_duration": 45980,
-      "exclusive_duration": 45980,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20079:check_max_stack_depth": {
-      "inclusive_duration": 20893,
-      "exclusive_duration": 20893,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20083:bpf_optimize_bpf_loop": {
-      "inclusive_duration": 19507,
-      "exclusive_duration": 19507,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20087:bpf_opt_hard_wire_dead_code_branches": {
-      "inclusive_duration": 13240,
-      "exclusive_duration": 13240,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20089:bpf_opt_remove_dead_code": {
-      "inclusive_duration": 6748480,
-      "exclusive_duration": 6748480,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20091:bpf_opt_remove_nops": {
-      "inclusive_duration": 8392735,
-      "exclusive_duration": 8392735,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20099:bpf_convert_ctx_accesses": {
-      "inclusive_duration": 55537,
-      "exclusive_duration": 55537,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20102:bpf_do_misc_fixups": {
-      "inclusive_duration": 169661,
-      "exclusive_duration": 169661,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20107:bpf_prog_is_offloaded": {
-      "inclusive_duration": 172,
-      "exclusive_duration": 172,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20108:bpf_opt_subreg_zext_lo32_rnd_hi32": {
-      "inclusive_duration": 32550,
-      "exclusive_duration": 32550,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    },
-    "kernel/bpf/verifier.c:20114:bpf_fixup_call_args": {
-      "inclusive_duration": 234,
-      "exclusive_duration": 234,
-      "children_duration": 0,
-      "children": [],
-      "nb_visits": 1
-    }
+    "analysis_time": "7.84s"
   }
 }
