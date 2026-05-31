@@ -3,7 +3,6 @@ import {
   formatPercent,
   formatCount,
   parseSiteKey,
-  normalizeLineRange,
   buildSiteParentMap,
 } from "./format.js";
 import { renderInstructionChart, destroyInstructionChart } from "./insn-chart.js";
@@ -116,11 +115,7 @@ export function renderSiteTree(container, siteTree, onSelect, options = {}) {
 
       const { file, line, endLine, symbol } = parseSiteKey(key);
       const indent = depth * 16;
-      let lineLabel = line;
-      if (endLine) {
-        const { start, end } = normalizeLineRange(line, endLine);
-        lineLabel = `${start}:${end}`;
-      }
+      const lineLabel = endLine ? `${line}:${endLine}` : line;
       const titleLabel = symbol || (endLine ? `lines ${lineLabel}` : file);
 
       tr.innerHTML = `
@@ -234,11 +229,7 @@ export function renderSiteDetail(container, siteKey, node, activeScale) {
   }
 
   const { file, line, endLine, symbol } = parseSiteKey(siteKey);
-  let lineLabel = line;
-  if (endLine) {
-    const { start, end } = normalizeLineRange(line, endLine);
-    lineLabel = `${start}:${end}`;
-  }
+  const lineLabel = endLine ? `${line}:${endLine}` : line;
   const titleLabel = symbol || (endLine ? `lines ${lineLabel}` : siteKey);
   const header = document.createElement("div");
   header.className = "mb-4";

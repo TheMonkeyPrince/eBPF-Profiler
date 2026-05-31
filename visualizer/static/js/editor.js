@@ -1,5 +1,4 @@
 import { fetchSource } from "./api.js";
-import { normalizeLineRange } from "./format.js";
 
 /** @returns {Promise<typeof monaco>} */
 function loadMonaco() {
@@ -135,18 +134,20 @@ export async function createSourceEditor(container, options = {}) {
    * @param {string} [symbol]
    */
   function highlightSelection(file, lineNumber, symbol = "", endLineNumber = lineNumber) {
-    const { start, end } = normalizeLineRange(lineNumber, endLineNumber);
-    const lineLabel = end !== start ? `${start}:${end}` : String(start);
+    const lineLabel =
+      endLineNumber !== lineNumber
+        ? `${Math.min(lineNumber, endLineNumber)}:${Math.max(lineNumber, endLineNumber)}`
+        : String(lineNumber);
     const symbolSuffix = symbol ? ` — ${symbol}` : "";
     setPathLabel(`${file}:${lineLabel}${symbolSuffix}`);
-    refreshLineHighlights(file, start, end);
+    refreshLineHighlights(file, lineNumber, endLineNumber);
     const siteCount = siteIndex.get(file)?.size ?? 0;
     const status =
-      end !== start
+      endLineNumber !== lineNumber
         ? `Lines ${lineLabel} · ${siteCount.toLocaleString()} profiled line(s) in file`
         : siteCount > 1
-          ? `Line ${start.toLocaleString()} · ${siteCount} profiled sites in file`
-          : `Line ${start.toLocaleString()}`;
+          ? `Line ${lineNumber.toLocaleString()} · ${siteCount} profiled sites in file`
+          : `Line ${lineNumber.toLocaleString()}`;
     setStatus(status);
   }
 
@@ -165,7 +166,8 @@ export async function createSourceEditor(container, options = {}) {
    * @param {string|number} [endLine]
    */
   async function openAt(file, line, symbol = "", endLine = line) {
-    const { start: startLine, end: endLineNum } = normalizeLineRange(line, endLine);
+    const lineNumber = Math.max(1, parseInt(String(line), 10) || 1);
+    const endLineNumber = Math.max(1, parseInt(String(endLine), 10) || lineNumber);
     setStatus("Loading source…");
 
     try {
@@ -200,15 +202,15 @@ export async function createSourceEditor(container, options = {}) {
       }
 
       suppressCursorSelect = true;
-      editor.revealLineInCenter(startLine);
-      editor.setPosition({ lineNumber: startLine, column: 1 });
+      editor.revealLineInCenter(lineNumber);
+      editor.setPosition({ lineNumber, column: 1 });
       editor.focus();
-      highlightSelection(file, startLine, symbol, endLineNum);
+      highlightSelection(file, lineNumber, symbol, endLineNumber);
       setTimeout(() => {
         suppressCursorSelect = false;
       }, 0);
     } catch (err) {
-      setPathLabel(file ? `${file}:${startLine}` : "Source");
+      setPathLabel(file ? `${file}:${lineNumber}` : "Source");
       setStatus(err.message || "Failed to load source", true);
     }
   }
