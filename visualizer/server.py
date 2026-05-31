@@ -7,15 +7,19 @@ import re
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 HOST = "127.0.0.1"
 PORT = 8000
 _SERVER_ROOT = Path(__file__).resolve().parent
 _REPO_ROOT = _SERVER_ROOT.parent
 _DEFAULT_ANALYSIS_DIR = (_REPO_ROOT / "profiler" / "out" / "analysis").resolve()
+_DEFAULT_AGGREGATED_DIR = (_REPO_ROOT / "profiler" / "out" / "aggregated").resolve()
 ANALYSIS_DIR = Path(
     os.environ.get("ANALYSIS_DIR", str(_DEFAULT_ANALYSIS_DIR))
+).resolve()
+AGGREGATED_DIR = Path(
+    os.environ.get("AGGREGATED_DIR", str(_DEFAULT_AGGREGATED_DIR))
 ).resolve()
 _DEFAULT_KERNEL_PATCH_PATH = (_REPO_ROOT / "kernel-patch").resolve()
 KERNEL_PATCH_PATH = Path(
@@ -24,22 +28,47 @@ KERNEL_PATCH_PATH = Path(
 _CATALOG_PEEK_BYTES = 64 * 1024
 _PROGRAM_NAME_RE = re.compile(r'"program_name"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"')
 _VERIFICATION_TIME_RE = re.compile(r'"verification_time"\s*:\s*(\d+)')
+_AGGREGATED_RE = re.compile(r'"aggregated"\s*:\s*true')
+
+REPORT_SOURCES = {
+    "analysis": ANALYSIS_DIR,
+    "aggregated": AGGREGATED_DIR,
+}
 
 
-def list_analysis_report_stems(analysis_dir: Path) -> list[str]:
-    if not analysis_dir.is_dir():
+def list_report_stems(report_dir: Path) -> list[str]:
+    if not report_dir.is_dir():
         return []
-    return sorted(p.stem for p in analysis_dir.glob("*.json") if p.is_file())
+    return sorted(p.stem for p in report_dir.glob("*.json") if p.is_file())
 
 
-def resolve_analysis_report_path(analysis_dir: Path, stem: str) -> Path | None:
+def resolve_report_path(report_dir: Path, stem: str) -> Path | None:
     if not stem or "/" in stem or "\\" in stem or stem.startswith("."):
         return None
-    root = analysis_dir.resolve()
+    root = report_dir.resolve()
     candidate = (root / f"{stem}.json").resolve()
     if candidate.parent != root:
         return None
     return candidate if candidate.is_file() else None
+
+
+def parse_report_id(report_id: str) -> tuple[str, str] | None:
+    if not report_id or report_id.startswith(".") or ".." in report_id:
+        return None
+    if "/" in report_id:
+        source, stem = report_id.split("/", 1)
+        if source not in REPORT_SOURCES or not stem or "/" in stem or stem.startswith("."):
+            return None
+        return source, stem
+    return "analysis", report_id
+
+
+def resolve_report_by_id(report_id: str) -> Path | None:
+    parsed = parse_report_id(report_id)
+    if parsed is None:
+        return None
+    source, stem = parsed
+    return resolve_report_path(REPORT_SOURCES[source], stem)
 
 
 def _peek_report_meta(report_path: Path) -> dict:
@@ -59,6 +88,8 @@ def _peek_report_meta(report_path: Path) -> dict:
             meta["verification_time"] = int(time_match.group(1))
         except ValueError:
             pass
+    if _AGGREGATED_RE.search(text):
+        meta["aggregated"] = True
     return meta
 
 
@@ -111,16 +142,28 @@ def serve_source_file(rel_path: str) -> dict:
     }
 
 
-def reports_catalog(analysis_dir: Path) -> list[dict]:
+def _catalog_for_source(source: str, report_dir: Path) -> list[dict]:
     catalog = []
-    for stem in list_analysis_report_stems(analysis_dir):
-        entry: dict = {"id": stem, "label": stem}
-        path = resolve_analysis_report_path(analysis_dir, stem)
+    for stem in list_report_stems(report_dir):
+        entry: dict = {
+            "id": f"{source}/{stem}",
+            "label": stem,
+            "source": source,
+        }
+        path = resolve_report_path(report_dir, stem)
         if path is None:
             catalog.append(entry)
             continue
         entry.update(_peek_report_meta(path))
+        if source == "aggregated":
+            entry["aggregated"] = True
         catalog.append(entry)
+    return catalog
+
+
+def reports_catalog() -> list[dict]:
+    catalog = _catalog_for_source("analysis", ANALYSIS_DIR)
+    catalog.extend(_catalog_for_source("aggregated", AGGREGATED_DIR))
     return catalog
 
 
@@ -136,11 +179,13 @@ class TraceReportHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/api/reports":
-            self._send_json(reports_catalog(ANALYSIS_DIR))
+            self._send_json(reports_catalog())
             return
         if parsed.path.startswith("/api/report/"):
-            stem = parsed.path.removeprefix("/api/report/").strip("/")
-            self._serve_report(stem)
+            report_id = unquote(
+                parsed.path.removeprefix("/api/report/").strip("/")
+            )
+            self._serve_report(report_id)
             return
         if parsed.path == "/api/source":
             query = parse_qs(parsed.query)
@@ -161,8 +206,8 @@ class TraceReportHandler(SimpleHTTPRequestHandler):
             return
         return super().do_GET()
 
-    def _serve_report(self, stem: str):
-        path = resolve_analysis_report_path(ANALYSIS_DIR, stem)
+    def _serve_report(self, report_id: str):
+        path = resolve_report_by_id(report_id)
         if path is None:
             self._send_error(HTTPStatus.NOT_FOUND, "Report not found")
             return
@@ -195,6 +240,7 @@ def main():
     server = ThreadingHTTPServer((HOST, PORT), TraceReportHandler)
     print(f"Trace report visualizer at http://{HOST}:{PORT}/")
     print(f"Analysis directory: {ANALYSIS_DIR}")
+    print(f"Aggregated directory: {AGGREGATED_DIR}")
     print(f"Kernel patch sources: {KERNEL_PATCH_PATH}")
     try:
         server.serve_forever()

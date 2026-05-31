@@ -6,7 +6,8 @@ export async function fetchReportCatalog() {
 
 /** @param {string} id */
 export async function fetchReport(id) {
-  const res = await fetch(`/api/report/${encodeURIComponent(id)}`);
+  const path = id.split("/").map(encodeURIComponent).join("/");
+  const res = await fetch(`/api/report/${path}`);
   if (!res.ok) throw new Error(`Failed to load report (${res.status})`);
   return res.json();
 }

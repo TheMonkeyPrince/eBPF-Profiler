@@ -12,7 +12,10 @@ python3 visualizer/server.py
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-Reports are loaded from `profiler/out/analysis/*.json` by default.
+Reports are loaded from two directories by default:
+
+- `profiler/out/analysis/*.json` — per-program TraceAnalyser output
+- `profiler/out/aggregated/*.json` — merged reports from `report_aggregator.py`
 
 ## Configuration
 
@@ -20,7 +23,8 @@ Environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ANALYSIS_DIR` | `profiler/out/analysis` | Directory of analysis JSON files |
+| `ANALYSIS_DIR` | `profiler/out/analysis` | Per-program analysis JSON files |
+| `AGGREGATED_DIR` | `profiler/out/aggregated` | Aggregated report JSON files |
 | `KERNEL_PATCH_PATH` | `kernel-patch` | Patched kernel sources (`kernel/bpf/…` → `bpf/…`) |
 | `VISUALIZER_QUIET` | unset | Set to any value to suppress request logs |
 
@@ -45,3 +49,11 @@ Open `visualizer/static/index.html` directly in a browser and use **Open JSON…
 ## Generating reports
 
 Run the trace analyser and write JSON under the analysis directory (see `profiler/` tooling). Each report matches `TraceAnalyserResult` in `trace_analyser.py`.
+
+Merge multiple analysis reports with:
+
+```bash
+cd profiler
+python report_aggregator.py my_corpus out/analysis/a.json out/analysis/b.json
+# → out/aggregated/my_corpus.json
+```

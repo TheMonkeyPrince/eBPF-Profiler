@@ -23,12 +23,19 @@ const els = {
   percentScale: document.getElementById("percent-scale"),
   status: document.getElementById("status"),
   programName: document.getElementById("program-name"),
+  aggregatedBadge: document.getElementById("aggregated-badge"),
+  programMeta: document.getElementById("program-meta"),
+  sourceProgramsCount: document.getElementById("source-programs-count"),
+  sourcePrograms: document.getElementById("source-programs"),
   overviewStats: document.getElementById("overview-stats"),
   siteTree: document.getElementById("site-tree"),
   childrenChart: document.getElementById("children-chart"),
   childrenChartTitle: document.getElementById("children-chart-title"),
   siteDetail: document.getElementById("site-detail"),
   insnGroup: document.getElementById("insn-group"),
+  insnViewLabel: document.getElementById("insn-view-label"),
+  insnView: document.getElementById("insn-view"),
+  insnSectionDesc: document.getElementById("insn-section-desc"),
   insnChart: document.getElementById("insn-chart"),
   insnTable: document.getElementById("insn-table"),
   monacoContainer: document.getElementById("monaco-container"),
@@ -190,7 +197,7 @@ async function loadCatalog() {
     placeholder.value = "";
     placeholder.textContent =
       catalog.length === 0
-        ? "(no reports in analysis dir)"
+        ? "(no reports in analysis or aggregated dirs)"
         : "Select a report…";
     els.reportSelect.appendChild(placeholder);
 
@@ -198,6 +205,8 @@ async function loadCatalog() {
       const opt = document.createElement("option");
       opt.value = entry.id;
       let label = entry.label;
+      if (entry.source === "aggregated") label = `[aggregated] ${label}`;
+      else if (entry.aggregated) label = `[aggregated] ${label}`;
       if (entry.program_name) label += ` — ${entry.program_name}`;
       if (entry.verification_time) {
         label += ` (${formatDurationNs(entry.verification_time)})`;
@@ -207,7 +216,7 @@ async function loadCatalog() {
     }
     setStatus(
       catalog.length
-        ? `${catalog.length} report(s) in analysis directory`
+        ? `${catalog.length} report(s) available`
         : "No server reports — load a JSON file locally"
     );
   } catch (err) {
@@ -240,11 +249,37 @@ function appendStat(container, label, value, { muted = false } = {}) {
   container.appendChild(item);
 }
 
+function isAggregatedReport(report) {
+  return report?.aggregated === true;
+}
+
+function renderProgramMeta(report) {
+  const aggregated = isAggregatedReport(report);
+  els.aggregatedBadge.classList.toggle("hidden", !aggregated);
+  els.programMeta.classList.toggle("hidden", !aggregated);
+
+  if (!aggregated) {
+    els.sourcePrograms.replaceChildren();
+    return;
+  }
+
+  const sources = report.source_programs ?? [];
+  els.sourceProgramsCount.textContent = String(sources.length);
+  els.sourcePrograms.replaceChildren();
+  for (const name of sources) {
+    const li = document.createElement("li");
+    li.textContent = name;
+    els.sourcePrograms.appendChild(li);
+  }
+}
+
 function renderOverview(report) {
   const stats = report.stats || {};
   const verStats = report.verification_stats || {};
+  const aggregated = isAggregatedReport(report);
 
   els.programName.textContent = report.program_name || "—";
+  renderProgramMeta(report);
 
   els.overviewStats.replaceChildren();
 
@@ -260,6 +295,13 @@ function renderOverview(report) {
   );
   appendStat(els.overviewStats, "Trace", formatCount(stats.num_records));
   appendStat(els.overviewStats, "Sites", formatCount(stats.num_sites));
+  if (aggregated) {
+    appendStat(
+      els.overviewStats,
+      "Sources",
+      formatCount(report.source_programs?.length ?? 0)
+    );
+  }
   appendStat(els.overviewStats, "Analysis", stats.analysis_time || "—");
 
   const verEntries = Object.entries(verStats);
@@ -282,18 +324,80 @@ function getInsnGroup() {
   return /** @type {'types' | 'class'} */ (els.insnGroup?.value ?? "types");
 }
 
+function getInsnView() {
+  return els.insnView?.value ?? "combined";
+}
+
+function syncInsnViewOptions(report) {
+  const aggregated = isAggregatedReport(report);
+  els.insnViewLabel?.classList.toggle("hidden", !aggregated);
+  els.insnViewLabel?.classList.toggle("flex", aggregated);
+
+  if (!aggregated || !els.insnView) return;
+
+  const previous = els.insnView.value;
+  els.insnView.replaceChildren();
+  const combinedOpt = document.createElement("option");
+  combinedOpt.value = "combined";
+  combinedOpt.textContent = "Combined";
+  els.insnView.appendChild(combinedOpt);
+
+  for (const name of report.source_programs ?? []) {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    els.insnView.appendChild(opt);
+  }
+
+  const values = ["combined", ...(report.source_programs ?? [])];
+  els.insnView.value = values.includes(previous) ? previous : "combined";
+}
+
+function getInsnStatsForView() {
+  const group = getInsnGroup();
+  const statsKey = group === "class" ? "insn_classes" : "insn_types";
+  const unaggregatedKey =
+    group === "class" ? "unaggregated_insn_classes" : "unaggregated_insn_types";
+  const statsField = group === "class" ? "insn_classes" : "insn_types";
+
+  if (!isAggregatedReport(currentReport) || getInsnView() === "combined") {
+    return currentReport?.stats?.[statsKey] ?? {};
+  }
+
+  const view = getInsnView();
+  const entry = (currentReport?.[unaggregatedKey] ?? []).find(
+    (item) => item.program_name === view
+  );
+  return entry?.[statsField] ?? {};
+}
+
 function renderInsnSection() {
   const group = getInsnGroup();
-  const stats =
-    group === "class"
-      ? currentReport?.stats?.insn_classes
-      : currentReport?.stats?.insn_types;
+  const stats = getInsnStatsForView();
+  const aggregated = isAggregatedReport(currentReport);
+  const view = getInsnView();
   const groupLabel =
     group === "class" ? "instruction class" : "instruction type";
-  renderProgramInsnChart(els.insnChart, stats ?? {}, {
-    ariaLabel: `Program ${groupLabel} mix by share of program length`,
+
+  if (aggregated) {
+    if (view === "combined") {
+      els.insnSectionDesc.textContent =
+        "Combined static instruction mix across all source programs.";
+    } else {
+      els.insnSectionDesc.textContent = `${view} — per-program ${groupLabel} mix.`;
+    }
+  } else {
+    els.insnSectionDesc.textContent =
+      "Program-wide static instruction mix by count and share of program length.";
+  }
+
+  renderProgramInsnChart(els.insnChart, stats, {
+    ariaLabel:
+      view === "combined" && aggregated
+        ? `Combined program ${groupLabel} mix`
+        : `Program ${groupLabel} mix by share of program length`,
   });
-  renderInsnTable(els.insnTable, stats ?? {}, {
+  renderInsnTable(els.insnTable, stats, {
     emptyMessage:
       group === "class"
         ? "No instruction class data."
@@ -307,6 +411,7 @@ function renderReport(report) {
   pendingSiteIndex = collectSiteLocations(siteTree);
   siteLineIndex = collectSiteLineIndex(siteTree);
   applySiteIndexToEditor();
+  syncInsnViewOptions(report);
   renderOverview(report);
   siteTreeController = renderSiteTree(
     els.siteTree,
@@ -319,10 +424,18 @@ function renderReport(report) {
   renderSiteDetail(els.siteDetail, "", null);
   updateChildrenChart();
   syncClearSelectionButton();
-  setStatus("Report loaded");
+  setStatus(
+    isAggregatedReport(report)
+      ? `Aggregated report loaded (${report.source_programs?.length ?? 0} sources)`
+      : "Report loaded"
+  );
 }
 
 els.insnGroup?.addEventListener("change", () => {
+  renderInsnSection();
+});
+
+els.insnView?.addEventListener("change", () => {
   renderInsnSection();
 });
 
