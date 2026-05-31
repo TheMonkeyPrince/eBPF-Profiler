@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trace Analyser Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
+              mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .profiled-site-line {
+        background: rgba(167, 139, 250, 0.1);
+      }
+      .profiled-site-gutter {
+        background: rgba(167, 139, 250, 0.35);
+        width: 3px !important;
+        margin-left: 3px;
+      }
+      .profiled-line-highlight {
+        background: rgba(34, 211, 238, 0.18);
+      }
+      .profiled-line-gutter {
+        background: rgba(34, 211, 238, 0.55);
+        width: 4px !important;
+        margin-left: 3px;
+      }
+      #monaco-container .monaco-editor {
+        border-radius: 0 0 0.5rem 0.5rem;
+      }
+    </style>
+  </head>
+  <body
+    class="h-full bg-slate-950 text-slate-200 font-sans antialiased overflow-hidden flex flex-col"
+  >
+    <header
+      class="shrink-0 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-4 py-3"
+    >
+      <div class="max-w-[1600px] mx-auto flex flex-wrap items-center gap-3">
+        <h1 class="text-lg font-semibold text-slate-100 mr-2">
+          Trace Analyser
+        </h1>
+        <select
+          id="report-select"
+          class="min-w-[220px] max-w-md flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+        ></select>
+        <label
+          class="cursor-pointer rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+        >
+          Open JSON…
+          <input id="file-input" type="file" accept=".json,application/json" class="hidden" />
+        </label>
+        <button
+          id="reload-btn"
+          type="button"
+          class="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+        >
+          Reload
+        </button>
+        <span id="status" class="text-sm text-slate-500 w-full sm:w-auto sm:ml-auto"></span>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-hidden flex flex-col min-h-0">
+      <div class="max-w-[1800px] mx-auto w-full p-4 space-y-6 flex-1 overflow-auto min-h-0">
+        <section>
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Program</p>
+          <h2 id="program-name" class="text-2xl font-semibold text-cyan-100">—</h2>
+        </section>
+
+        <section
+          id="overview-stats"
+          class="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm"
+        ></section>
+
+        <section
+          class="rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col min-h-[min(42vh,480px)]"
+        >
+          <div class="px-4 py-3 border-b border-slate-800 shrink-0 min-w-0">
+            <h3 class="text-sm font-medium text-slate-300">Source</h3>
+            <p
+              id="source-path"
+              class="text-xs font-mono text-cyan-300/80 truncate mt-0.5"
+              title=""
+            >
+              —
+            </p>
+            <p id="source-status" class="text-xs text-slate-500 truncate"></p>
+          </div>
+          <div
+            id="monaco-container"
+            class="flex-1 min-h-[320px] overflow-hidden"
+          ></div>
+        </section>
+
+        <section class="grid lg:grid-cols-12 gap-4 min-h-[min(48vh,560px)]">
+          <div
+            class="lg:col-span-7 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col min-h-[320px] lg:min-h-0"
+          >
+            <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-start justify-between gap-2 shrink-0">
+              <div>
+                <h3 class="text-sm font-medium text-slate-300">Call tree</h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Click a site to view stats and jump to source.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <label class="flex items-center gap-2 text-xs text-slate-400">
+                  Bar scale
+                  <select
+                    id="percent-scale"
+                    class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+                  >
+                    <option value="total">% of total</option>
+                    <option value="parent">% of parent</option>
+                  </select>
+                </label>
+                <button
+                  id="clear-selection-btn"
+                  type="button"
+                  class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  Clear selection
+                </button>
+              </div>
+            </div>
+            <div
+              id="children-chart-panel"
+              class="shrink-0 px-4 py-3 border-b border-slate-800"
+            >
+              <p
+                id="children-chart-title"
+                class="text-xs font-medium text-slate-400 mb-2"
+              >
+                Child sites
+              </p>
+              <div id="children-chart"></div>
+            </div>
+            <div id="site-tree" class="flex-1 overflow-auto p-2 min-h-0"></div>
+          </div>
+          <div
+            class="lg:col-span-5 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col min-h-[240px] lg:min-h-0"
+          >
+            <div class="px-4 py-3 border-b border-slate-800 shrink-0">
+              <h3 class="text-sm font-medium text-slate-300">Site detail</h3>
+            </div>
+            <div id="site-detail" class="flex-1 overflow-auto p-4 min-h-0"></div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+          <h3 class="text-sm font-medium text-slate-300 mb-1">
+            BPF instruction timings
+          </h3>
+          <p class="text-xs text-slate-500 mb-4">
+            Program-wide aggregate: count, total time, average per static instruction occurrence.
+          </p>
+          <div id="insn-table" class="overflow-x-auto"></div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>

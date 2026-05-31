@@ -1,0 +1,416 @@
+{
+    "topics": [
+        {
+            "topic": "Verifier scale",
+            "description": "Large BPF workloads used to measure verifier time and complexity; includes TC jhash, pyperf, and strobemeta families.",
+            "tests": [
+                {
+                    "name": "selftest_verif_scale1",
+                    "description": "Verifier scale test: smaller TC ingress jhash loop (baseline scale relative to verif_scale2/3).",
+                    "sources": [
+                        "selftests/progs/test_jhash.h",
+                        "selftests/progs/test_verif_scale1.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale2",
+                    "description": "Verifier scale test: TC ingress program with a large jhash loop over packet headers (moderate instruction count).",
+                    "sources": [
+                        "selftests/progs/test_jhash.h",
+                        "selftests/progs/test_verif_scale2.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale3",
+                    "description": "Verifier scale test: another TC jhash loop variant sized between verif_scale1 and verif_scale2.",
+                    "sources": [
+                        "selftests/progs/test_jhash.h",
+                        "selftests/progs/test_verif_scale3.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf50",
+                    "description": "Verifier scale test: pyperf-style program with LLVM fully unrolling ~50 loop iterations.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf50.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf100",
+                    "description": "Verifier scale test: simulates Python stack-walking perf profiling with LLVM fully unrolling ~100 loop iterations.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf100.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf180",
+                    "description": "Verifier scale test: pyperf-style Python stack walker with LLVM fully unrolling ~180 loop iterations.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf180.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf600_bpf_loop",
+                    "description": "Verifier scale test: pyperf workload sized for ~600 logical loops, implemented with bpf_loop instead of full unroll.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf600_bpf_loop.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf_subprogs",
+                    "description": "Verifier scale test: pyperf stack walker split into multiple BPF subprograms.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf_subprogs.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_pyperf_global",
+                    "description": "Verifier scale test: pyperf stack walker using global (non-inlined) subprogram functions.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/pyperf.h",
+                        "selftests/progs/pyperf_global.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_strobemeta",
+                    "description": "Verifier scale test: large strobemeta workload with partial LLVM unroll (~20k insns, high state count).",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/strobemeta.c",
+                        "selftests/progs/strobemeta.h"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_strobemeta_bpf_loop",
+                    "description": "Verifier scale test: large strobemeta workload implemented with the bpf_loop helper instead of fully unrolled loops.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/strobemeta.h",
+                        "selftests/progs/strobemeta_bpf_loop.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_strobemeta_subprogs",
+                    "description": "Verifier scale test: large strobemeta program using non-inlined subprograms (not fully inlined).",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/strobemeta.h",
+                        "selftests/progs/strobemeta_subprogs.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_strobemeta_nounroll1",
+                    "description": "Verifier scale test: strobemeta with tiny loops and no LLVM unrolling (variant 1).",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/strobemeta.h",
+                        "selftests/progs/strobemeta_nounroll1.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verif_scale_strobemeta_nounroll2",
+                    "description": "Verifier scale test: strobemeta with tiny loops and no LLVM unrolling (variant 2).",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/strobemeta.h",
+                        "selftests/progs/strobemeta_nounroll2.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Verifier features",
+            "description": "Targeted verifier behavior tests (control flow, register liveness) rather than large-scale benchmarks.",
+            "tests": [
+                {
+                    "name": "selftest_verifier_gotol",
+                    "description": "Verifier stress test for the BPF gotol (goto label) instruction with small immediates and control-flow jumps.",
+                    "sources": [
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/verifier_gotol.c"
+                    ]
+                },
+                {
+                    "name": "selftest_verifier_liveness_exp",
+                    "description": "Stress-tests verifier register liveness analysis (compute_live_registers) with arena maps and expected log output.",
+                    "sources": [
+                        "selftests/bpf_arena_common.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/compute_live_registers.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Networking — socket options",
+            "description": "Cgroup BPF hooks on getsockopt/setsockopt: loaded programs and inline-bytecode validation.",
+            "tests": [
+                {
+                    "name": "selftest_setget_sockopt",
+                    "description": "Exercises cgroup BPF getsockopt/setsockopt hooks on TCP/UDP sockets (IPv4/IPv6), including TLS and related socket options.",
+                    "sources": [
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/bpf_tracing_net.h",
+                        "selftests/progs/setget_sockopt.c"
+                    ]
+                },
+                {
+                    "name": "selftest_sockopt",
+                    "description": "Validates cgroup BPF getsockopt/setsockopt programs built from inline bytecode (attach types, errors, optval bounds).",
+                    "sources": [
+                        "selftests/prog_tests/sockopt.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Networking — datapath",
+            "description": "Packet-path BPF: TC redirect, XDP, and TCP SYN-cookie handling.",
+            "tests": [
+                {
+                    "name": "selftest_cls_redirect",
+                    "description": "TC clsact tests for redirecting packets between interfaces, including dynptr and subprogram variants.",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/test_cls_redirect.c",
+                        "selftests/progs/test_cls_redirect.h",
+                        "selftests/bpf_kfuncs.h",
+                        "selftests/progs/test_cls_redirect_dynptr.c",
+                        "selftests/progs/test_cls_redirect_subprogs.c"
+                    ]
+                },
+                {
+                    "name": "selftest_xdp_noinline",
+                    "description": "XDP load-balancing program using non-inlined functions and per-CPU stats maps (verifier/jit path for noinline).",
+                    "sources": [
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/test_xdp_noinline.c"
+                    ]
+                },
+                {
+                    "name": "selftest_tcp_custom_syncookie",
+                    "description": "BPF program that implements custom TCP SYN-cookie generation/validation on incoming connections.",
+                    "sources": [
+                        "selftests/bpf_kfuncs.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/bpf_tracing_net.h",
+                        "selftests/progs/test_siphash.h",
+                        "selftests/progs/test_tcp_custom_syncookie.c",
+                        "selftests/progs/test_tcp_custom_syncookie.h"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Program extension & attachment",
+            "description": "BPF-to-BPF linking: fexit, freplace, and multi-program attachment patterns.",
+            "tests": [
+                {
+                    "name": "selftest_fexit_bpf2bpf",
+                    "description": "Tests fexit/freplace BPF-to-BPF attachment: chaining programs, replacing functions, mod-ret, and multi-program interactions.",
+                    "sources": [
+                        "selftests/progs/bind4_prog.c",
+                        "selftests/progs/bind_prog.h",
+                        "selftests/progs/freplace_progmap.c",
+                        "selftests/progs/xdp_dummy.c",
+                        "selftests/progs/fexit_bpf2bpf_simple.c",
+                        "selftests/progs/test_pkt_md_access.c",
+                        "selftests/progs/fexit_bpf2bpf.c",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/test_pkt_access.c",
+                        "selftests/progs/freplace_connect4.c",
+                        "selftests/progs/connect4_prog.c",
+                        "selftests/progs/freplace_get_constant.c",
+                        "selftests/progs/fmod_ret_freplace.c",
+                        "selftests/progs/freplace_cls_redirect.c",
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/test_cls_redirect.c",
+                        "selftests/progs/test_cls_redirect.h",
+                        "selftests/progs/freplace_connect_v4_prog.c",
+                        "selftests/progs/freplace_attach_probe.c",
+                        "selftests/progs/test_attach_probe.c",
+                        "selftests/progs/freplace_unreliable_prog.c",
+                        "selftests/progs/verifier_btf_unreliable_prog.c",
+                        "selftests/progs/freplace_global_func.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "BPF helpers & formatting",
+            "description": "Kernel BPF helper APIs: loops, snprintf, and BTF-aware printing.",
+            "tests": [
+                {
+                    "name": "selftest_bpf_loop",
+                    "description": "Tests the bpf_loop helper for iterating with callbacks, nested loops, and map updates.",
+                    "sources": [
+                        "selftests/progs/bpf_loop.c",
+                        "selftests/progs/bpf_misc.h"
+                    ]
+                },
+                {
+                    "name": "selftest_snprintf",
+                    "description": "Validates the bpf_snprintf helper: integer, IP, symbol, pointer, string, padding, and edge-case formatting.",
+                    "sources": [
+                        "selftests/progs/test_snprintf.c",
+                        "selftests/progs/test_snprintf_single.c"
+                    ]
+                },
+                {
+                    "name": "selftest_snprintf_btf",
+                    "description": "Exercises bpf_snprintf_btf on live kernel objects (triggered via a netif_receive_skb trace program).",
+                    "sources": [
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/btf_ptr.h",
+                        "selftests/progs/netif_receive_skb.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "BPF iterator",
+            "description": "bpf_iter programs that walk kernel objects (tasks, sockets, maps, links, routes, etc.).",
+            "tests": [
+                {
+                    "name": "selftest_bpf_iter",
+                    "description": "Comprehensive BPF iterator tests over tasks, sockets, maps, links, ksyms, netlink, routes, and related kernel objects.",
+                    "sources": [
+                        "selftests/progs/bpf_iter_ipv6_route.c",
+                        "selftests/progs/bpf_tracing_net.h",
+                        "selftests/progs/bpf_iter_netlink.c",
+                        "selftests/progs/bpf_iter_bpf_map.c",
+                        "selftests/progs/bpf_iter_tasks.c",
+                        "selftests/progs/bpf_iter_task_stack.c",
+                        "selftests/progs/bpf_iter_task_file.c",
+                        "selftests/progs/bpf_iter_task_vmas.c",
+                        "selftests/progs/bpf_iter_task_btf.c",
+                        "selftests/progs/bpf_iter_tcp4.c",
+                        "selftests/progs/bpf_iter_tcp6.c",
+                        "selftests/progs/bpf_iter_udp4.c",
+                        "selftests/progs/bpf_iter_udp6.c",
+                        "selftests/progs/bpf_iter_unix.c",
+                        "selftests/progs/bpf_iter_vma_offset.c",
+                        "selftests/progs/bpf_iter_test_kern1.c",
+                        "selftests/progs/bpf_iter_test_kern_common.h",
+                        "selftests/progs/bpf_iter_test_kern2.c",
+                        "selftests/progs/bpf_iter_test_kern3.c",
+                        "selftests/progs/bpf_iter_test_kern4.c",
+                        "selftests/progs/bpf_iter_bpf_hash_map.c",
+                        "selftests/progs/bpf_iter_bpf_percpu_hash_map.c",
+                        "selftests/progs/bpf_iter_bpf_array_map.c",
+                        "selftests/progs/bpf_iter_bpf_percpu_array_map.c",
+                        "selftests/progs/bpf_iter_bpf_sk_storage_helpers.c",
+                        "selftests/progs/bpf_iter_bpf_sk_storage_map.c",
+                        "selftests/progs/bpf_iter_test_kern5.c",
+                        "selftests/progs/bpf_iter_test_kern6.c",
+                        "selftests/progs/bpf_iter_bpf_link.c",
+                        "selftests/progs/bpf_iter_ksym.c",
+                        "selftests/progs/bpf_iter_sockmap.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Tracing",
+            "description": "Userspace probe attachment and reading (USDT).",
+            "tests": [
+                {
+                    "name": "selftest_usdt",
+                    "description": "Attaches to and reads User Statically Defined Tracing (USDT) probes, including multi-spec and urandom auto-attach cases.",
+                    "sources": [
+                        "selftests/progs/test_usdt.c",
+                        "selftests/progs/test_urandom_usdt.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Maps & memory",
+            "description": "Map access patterns and experimental BPF arena / memory allocator APIs.",
+            "tests": [
+                {
+                    "name": "selftest_map_ptr",
+                    "description": "Tests BPF map pointer helpers and ringbuf access from a cgroup-SKB program via a lightweight skeleton.",
+                    "sources": [
+                        "selftests/progs/map_ptr_kern.c"
+                    ]
+                },
+                {
+                    "name": "selftest_test_bpf_ma",
+                    "description": "Tests experimental BPF memory allocator (arena) APIs and related map/program behavior.",
+                    "sources": [
+                        "selftests/bpf_experimental.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/test_bpf_ma.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "CO-RE & BTF",
+            "description": "Compile-once run-everywhere relocations against kernel BTF via lightweight skeletons.",
+            "tests": [
+                {
+                    "name": "selftest_core_kern_lskel",
+                    "description": "Loads a lightweight-skeleton BPF program that checks BPF CO-RE (compile-once, run-everywhere) type relocation against kernel BTF.",
+                    "sources": [
+                        "selftests/progs/core_kern.c",
+                        "selftests/progs/test_jhash.h"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Timers",
+            "description": "BPF timer callbacks under concurrent perf/NMI load.",
+            "tests": [
+                {
+                    "name": "selftest_timer_stress_nmi_update",
+                    "description": "Stress-tests BPF timers under perf/NMI pressure, focusing on timer update while callbacks run.",
+                    "sources": [
+                        "selftests/progs/timer.c"
+                    ]
+                }
+            ]
+        },
+        {
+            "topic": "Project — verifier profiler",
+            "description": "Semester-project harness programs used to exercise the patched verifier profiler.",
+            "tests": [
+                {
+                    "name": "selftest_test_profiler",
+                    "description": "Project profiler harness: loads profiler1/2/3 BPF programs and sanity-runs sched_process_exec tracepoints.",
+                    "sources": [
+                        "selftests/bpf_experimental.h",
+                        "selftests/progs/bpf_compiler.h",
+                        "selftests/progs/bpf_misc.h",
+                        "selftests/progs/err.h",
+                        "selftests/progs/profiler.h",
+                        "selftests/progs/profiler.inc.h",
+                        "selftests/progs/profiler1.c",
+                        "selftests/progs/profiler2.c",
+                        "selftests/progs/profiler3.c"
+                    ]
+                }
+            ]
+        }
+    ]
+}
