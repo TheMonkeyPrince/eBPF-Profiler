@@ -166,8 +166,6 @@ class TraceAnalyser:
 						return agg_duration / float(reference) * 100 # this score represents how much slower this item is compared to the average time per visit for this site, so a score of 2 means this item is on average twice as slow as the average time per visit for this site 
 
 					sorted_items = sorted(durations.items(), key=lambda item: compute_score(item[1], normalize), reverse=True)
-					top_10 = sorted_items[:10]
-					rest = sorted_items[10:]
 
 					type_avgs = [
 						sum(durations) / float(len(durations))
@@ -178,40 +176,18 @@ class TraceAnalyser:
 						"avg_duration": sum(type_avgs) / float(len(type_avgs)),
 						"stddev_duration": stddev(type_avgs),
 						"count": sum(len(durations) for durations in durations.values()),
-						"top10": {}
+						"stats": {}
 					}
 
-					for insn_idx, isn_durations in top_10:
+					for insn_idx, isn_durations in sorted_items:
 						avg_duration = sum(isn_durations) / float(len(isn_durations))
-						slowest_elts["top10"][insn_idx] = {
+						slowest_elts["stats"][insn_idx] = {
 							"avg_duration": avg_duration,
 							"count": len(isn_durations),
 							"score": compute_score(isn_durations, normalize),
 						}
-					
-					if rest:
-						others_score = sum(
-							compute_score(durations, normalize)
-							for _, durations in rest
-						)
-						others_count = sum(len(durations) for _, durations in rest)
-						if others_count:
-							others_avg_duration = (
-								sum(duration
-									for _, durations in rest
-									for duration in durations)
-								/ float(others_count)
-							)
-						else:
-							others_avg_duration = 0.0
 
-						slowest_elts["top10"]["others"] = {
-							"avg_duration": others_avg_duration,
-							"count": others_count,
-							"score": others_score,
-						}
-
-					total_score = sum(item["score"] for item in slowest_elts["top10"].values())
+					total_score = sum(item["score"] for item in slowest_elts["stats"].values())
 					if abs(total_score - 100.0) > 1e-2:
 						raise ValueError(
 							f"Total score for site {key} is {total_score:.2f} which is not close enough to 100. This should be impossible since the score of each item is computed as a percentage of the reference value."
@@ -219,9 +195,9 @@ class TraceAnalyser:
 					return slowest_elts
 
 				# save top 10 slowest instructions for this site
-				stats["slowest_instructions"] = compute_stats(site.durations, site.inclusive_duration, False)
+				# stats["slowest_instructions"] = compute_stats(site.durations, site.inclusive_duration, False)
 
-				# save top 10 slowest instruction types for this site
+				# compute average duration per instruction type for this site
 				durations_per_insn_type: dict[str, list[int]] = {}
 				for insn_idx, durations in site.durations.items():
 					insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
@@ -232,7 +208,7 @@ class TraceAnalyser:
 				avg: dict[str, float] = {insn_name: sum(durations) / float(len(durations)) for insn_name, durations in durations_per_insn_type.items()}
 				stats["nb_insn_types"] = len(durations_per_insn_type)
 				stats["avg_duration_per_insn_type"] = sum(avg.values()) / float(stats["nb_insn_types"])
-				stats["slowest_instruction_types"] = compute_stats(durations_per_insn_type, sum(avg.values()), True)
+				stats["instruction_types"] = compute_stats(durations_per_insn_type, sum(avg.values()), True)
 
 			stats["children"] = dict(
 				sorted(
