@@ -73,8 +73,7 @@ class TraceAnalyser:
 				"program_length": len(self.profiling_result.program),
 				"num_records": len(self.profiling_result.records),
 				"num_sites": self.site_tree.number_of_sites(),
-			},
-			# site_tree=self.site_tree.serialize(resolve_site=resolve_site, resolve_insn_name=lambda insn_idx: disasm_insn_name(self.profiling_result.program[insn_idx])),
+			}
 		)
 
 		self._compute_site_tree_stats()
@@ -125,10 +124,13 @@ class TraceAnalyser:
 
 	def _compute_site_tree_stats(self):
 		def to_json_dict(site: RecordSite, parent_duration: float) -> tuple[str, dict]:
-			filename, end_line_or_func_name = resolve_site(
+			filename, start_line_or_func_name = resolve_site(
 				site.file_id, site.line, site.is_call
 			)
-			key = f"{filename}:{site.line}:{end_line_or_func_name}"
+			if site.is_call:
+				key = f"{filename}:{site.line}:{start_line_or_func_name}"
+			else:
+				key = f"{filename}:{start_line_or_func_name}:{site.line}"
 
 			percent_of_total = (
 				site.inclusive_duration / float(self.result.stats['verification_time']) * 100
