@@ -109,8 +109,7 @@ class TraceAnalyser:
 				raise ValueError(
 					f"Total percent is {total_percent:.2f} which is not close enough to 100. This should be impossible since the percent of each item is computed as a percentage of the total count."
 				)
-			print(f"Total count for {resolve.__name__}: {total_count}, total percent: {total_percent:.2f}%")
-			return sorted(items.items(), key=lambda item: item[1]["percent"], reverse=True)
+			return dict(sorted(items.items(), key=lambda item: item[1]["percent"], reverse=True))
 
 		self.result.stats["insn_types"] = compute_stats(resolve_insn_name)
 		self.result.stats["insn_class"] = compute_stats(resolve_insn_class_name)
