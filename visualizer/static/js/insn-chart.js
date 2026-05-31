@@ -1,7 +1,7 @@
 import { formatDurationNs, formatCount, formatPercent } from "./format.js";
 
-/** @type {import('chart.js').Chart | null} */
-let activeChart = null;
+/** @type {import('chart.js').Chart[]} */
+const activeCharts = [];
 
 const SLICE_COLORS = [
   "rgba(167, 139, 250, 0.9)",
@@ -22,13 +22,9 @@ const SLICE_COLORS = [
 /**
  * @param {HTMLElement} container
  * @param {{ stats?: Record<string, { score?: number, avg_duration?: number, count?: number }> }} instructionTypes
+ * @param {{ ariaLabel?: string }} [options]
  */
-export function renderInstructionChart(container, instructionTypes) {
-  if (activeChart) {
-    activeChart.destroy();
-    activeChart = null;
-  }
-
+export function renderInstructionChart(container, instructionTypes, options = {}) {
   container.replaceChildren();
 
   const stats = instructionTypes?.stats;
@@ -59,12 +55,12 @@ export function renderInstructionChart(container, instructionTypes) {
   canvas.setAttribute("role", "img");
   canvas.setAttribute(
     "aria-label",
-    "Instruction type breakdown by relative score"
+    options.ariaLabel ?? "Instruction type breakdown by relative score"
   );
   wrap.appendChild(canvas);
   container.appendChild(wrap);
 
-  activeChart = new Chart(canvas, {
+  const chart = new Chart(canvas, {
     type: "doughnut",
     data: {
       labels,
@@ -101,7 +97,7 @@ export function renderInstructionChart(container, instructionTypes) {
               if (!stat) return insn;
               return [
                 `${insn}: ${formatPercent(stat.score ?? 0)}`,
-                `avg ${formatDurationNs(stat.avg_duration)}`,
+                `avg / sample ${formatDurationNs(stat.avg_duration)}`,
                 `${formatCount(stat.count)} samples`,
               ];
             },
@@ -110,11 +106,11 @@ export function renderInstructionChart(container, instructionTypes) {
       },
     },
   });
+  activeCharts.push(chart);
 }
 
 export function destroyInstructionChart() {
-  if (activeChart) {
-    activeChart.destroy();
-    activeChart = null;
+  while (activeCharts.length) {
+    activeCharts.pop()?.destroy();
   }
 }
