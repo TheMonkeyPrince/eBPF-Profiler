@@ -90,37 +90,27 @@ class TraceAnalyser:
 		return self.result
 
 	def _compute_bpf_insn_stats(self):
-		durations_per_insn: dict[BPFInsnCode, list[float]] = {}
-		insn_counts: dict[str, int] = {}
+		self.result.stats["insn_types"] = {}
+		self.result.stats["insn_class"] = {}
 		for insn in self.profiling_result.program:
 			insn_name = resolve_insn_name(insn)
-			if insn_name not in durations_per_insn:
-				durations_per_insn[insn_name] = []
-				insn_counts[insn_name] = 0
-			insn_counts[insn_name] += 1
+			insn_class_name = resolve_insn_class_name(insn)
+			if insn_name not in self.result.stats["insn_types"]:
+				self.result.stats["insn_types"][insn_name] = {
+					"count": 0,
+				}
+			self.result.stats["insn_types"][insn_name]["count"] += 1
 			
-		def traverse_recordsite(site: RecordSite):
-			for insn_idx, durations in site.durations.items():
-				if insn_idx == Record.NO_INSN_IDX:
-					continue
-				insn_name = resolve_insn_name(self.profiling_result.program[insn_idx])
-				durations_per_insn[insn_name].extend(durations)
-			for child in site.children:
-				traverse_recordsite(child)
+			if insn_class_name not in self.result.stats["insn_class"]:
+				self.result.stats["insn_class"][insn_class_name] = {
+					"count": 0,
+				}
+			self.result.stats["insn_class"][insn_class_name]["count"] += 1
 
-		for recordsite in self.site_tree.roots:
-			traverse_recordsite(recordsite)
-
-		durations_per_insn_type: dict[str, tuple[int, int, float]] = {}
-		for insn_name, durations in durations_per_insn.items():
-			if insn_counts[insn_name] == 0:
-				if durations:
-					raise ValueError(f"Insn name {insn_name} has durations but no counts, which should be impossible.")
-				durations_per_insn_type[insn_name] = (0, 0, 0)
-			else:
-				durations_per_insn_type[insn_name] = (insn_counts[insn_name], sum(durations), sum(durations) / insn_counts[insn_name])
-
-		self.result.stats["durations_per_insn_type"] = dict(sorted(durations_per_insn_type.items(), key=lambda item: item[1][2], reverse=True))
+		for insn_name, stats in self.result.stats["insn_types"].items():
+			stats["percent"] = stats["count"] / float(self.result.stats["program_length"]) * 100
+		for insn_class_name, stats in self.result.stats["insn_class"].items():
+			stats["percent"] = stats["count"] / float(self.result.stats["program_length"]) * 100
 
 	def _compute_site_tree_stats(self):
 		def to_json_dict(site: RecordSite, parent_duration: float) -> tuple[str, dict]:
