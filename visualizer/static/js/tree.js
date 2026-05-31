@@ -256,12 +256,23 @@ export function renderSiteDetail(container, siteKey, node, activeScale) {
   if (node.nb_insn_types != null) {
     entries.push(["BPF insn types", formatCount(node.nb_insn_types)]);
     entries.push([
-      "Avg / insn type",
+      "Avg of insn avgs",
       formatDurationNs(node.avg_duration_per_insn_type),
     ]);
-    const insnStddev = node.instruction_types?.stddev_duration;
+    const insnStddev = node.instruction_types?.stddev_avg_duration;
     if (Number.isFinite(insnStddev)) {
-      entries.push(["Stddev / insn type", formatDurationNs(insnStddev)]);
+      entries.push(["σ of insn avgs", formatDurationNs(insnStddev)]);
+    }
+  }
+  if (node.nb_insn_classes != null) {
+    entries.push(["BPF insn classes", formatCount(node.nb_insn_classes)]);
+    entries.push([
+      "Avg of class avgs",
+      formatDurationNs(node.avg_duration_per_insn_class),
+    ]);
+    const classStddev = node.instruction_classes?.stddev_avg_duration;
+    if (Number.isFinite(classStddev)) {
+      entries.push(["σ of class avgs", formatDurationNs(classStddev)]);
     }
   }
   for (const [label, value] of entries) {
@@ -270,44 +281,71 @@ export function renderSiteDetail(container, siteKey, node, activeScale) {
   container.appendChild(statsGrid);
 
   if (node.instruction_types?.stats) {
-    const title = document.createElement("h4");
-    title.className = "text-sm font-medium text-slate-300 mb-1";
-    title.textContent = "Instruction types (relative score)";
-    container.appendChild(title);
-    const insnTypes = node.instruction_types;
-    if (Number.isFinite(insnTypes.stddev_duration)) {
-      const summary = document.createElement("p");
-      summary.className = "text-xs text-slate-500 mb-3 tabular-nums";
-      summary.textContent = `Across ${formatCount(node.nb_insn_types ?? Object.keys(insnTypes.stats).length)} types: avg ${formatDurationNs(insnTypes.avg_duration)} · σ ${formatDurationNs(insnTypes.stddev_duration)}`;
-      container.appendChild(summary);
-    }
+    appendInstructionBreakdown(container, node, "instruction_types");
+  }
+  if (node.instruction_classes?.stats) {
+    appendInstructionBreakdown(container, node, "instruction_classes");
+  }
+}
 
-    const chartHost = document.createElement("div");
-    chartHost.className = "mb-4";
-    container.appendChild(chartHost);
-    renderInstructionChart(chartHost, node.instruction_types);
+/** @typedef {'instruction_types' | 'instruction_classes'} InstructionBreakdownKind */
 
-    const list = document.createElement("div");
-    list.className = "space-y-2";
-    const insnStats = node.instruction_types.stats;
-    const sorted = Object.entries(insnStats).sort(
-      (a, b) => (b[1].score ?? 0) - (a[1].score ?? 0)
-    );
-    for (const [insn, stat] of sorted) {
-      const score = stat.score ?? 0;
-      const row = document.createElement("div");
-      row.innerHTML = `
+/**
+ * @param {HTMLElement} container
+ * @param {object} node
+ * @param {InstructionBreakdownKind} kind
+ */
+function appendInstructionBreakdown(container, node, kind) {
+  const isTypes = kind === "instruction_types";
+  const breakdown = node[kind];
+  const nb = isTypes ? node.nb_insn_types : node.nb_insn_classes;
+  const label = isTypes ? "types" : "classes";
+  const heading = isTypes
+    ? "Instruction types (relative score)"
+    : "Instruction classes (relative score)";
+  const nameClass = isTypes ? "text-violet-300" : "text-emerald-300";
+  const barClass = isTypes ? "bg-violet-500/80" : "bg-emerald-500/80";
+
+  const title = document.createElement("h4");
+  title.className = `text-sm font-medium text-slate-300 mb-1${isTypes ? "" : " mt-6"}`;
+  title.textContent = heading;
+  container.appendChild(title);
+
+  if (Number.isFinite(breakdown.stddev_avg_duration)) {
+    const summary = document.createElement("p");
+    summary.className = "text-xs text-slate-500 mb-3 tabular-nums";
+    summary.textContent = `Across ${formatCount(nb ?? Object.keys(breakdown.stats).length)} ${label}: avg(avg) ${formatDurationNs(breakdown.avg_avg_duration)} · σ(avg) ${formatDurationNs(breakdown.stddev_avg_duration)}`;
+    container.appendChild(summary);
+  }
+
+  const chartHost = document.createElement("div");
+  chartHost.className = "mb-4";
+  container.appendChild(chartHost);
+  renderInstructionChart(chartHost, breakdown, {
+    ariaLabel: isTypes
+      ? "Instruction type breakdown by relative score"
+      : "Instruction class breakdown by relative score",
+  });
+
+  const list = document.createElement("div");
+  list.className = "space-y-2";
+  const sorted = Object.entries(breakdown.stats).sort(
+    (a, b) => (b[1].score ?? 0) - (a[1].score ?? 0)
+  );
+  for (const [insn, stat] of sorted) {
+    const score = stat.score ?? 0;
+    const row = document.createElement("div");
+    row.innerHTML = `
         <div class="flex justify-between text-xs mb-0.5">
-          <span class="font-mono text-violet-300">${escapeHtml(insn)}</span>
-          <span class="text-slate-400 tabular-nums">${formatPercent(score)} · ${formatDurationNs(stat.avg_duration)} · ${formatCount(stat.count)}×</span>
+          <span class="font-mono ${nameClass}">${escapeHtml(insn)}</span>
+          <span class="text-slate-400 tabular-nums">${formatPercent(score)} · avg ${formatDurationNs(stat.avg_duration)} · ${formatCount(stat.count)}×</span>
         </div>
         <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-          <div class="h-full rounded-full bg-violet-500/80" style="width:${Math.min(100, score)}%"></div>
+          <div class="h-full rounded-full ${barClass}" style="width:${Math.min(100, score)}%"></div>
         </div>`;
-      list.appendChild(row);
-    }
-    container.appendChild(list);
+    list.appendChild(row);
   }
+  container.appendChild(list);
 }
 
 function escapeHtml(s) {
