@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 
 from profiler_types import *
 from utils import find_block_start, find_call_name
-from disasm import disasm_program, disasm_insn_name
+from disasm import resolve_insn_name, resolve_insn_class_name
 from call_tree import SiteTree, RecordSite, CallTree
 from utils import stddev
 
@@ -93,7 +93,7 @@ class TraceAnalyser:
 		durations_per_insn: dict[BPFInsnCode, list[float]] = {}
 		insn_counts: dict[str, int] = {}
 		for insn in self.profiling_result.program:
-			insn_name = disasm_insn_name(insn)
+			insn_name = resolve_insn_name(insn)
 			if insn_name not in durations_per_insn:
 				durations_per_insn[insn_name] = []
 				insn_counts[insn_name] = 0
@@ -103,7 +103,7 @@ class TraceAnalyser:
 			for insn_idx, durations in site.durations.items():
 				if insn_idx == Record.NO_INSN_IDX:
 					continue
-				insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
+				insn_name = resolve_insn_name(self.profiling_result.program[insn_idx])
 				durations_per_insn[insn_name].extend(durations)
 			for child in site.children:
 				traverse_recordsite(child)
@@ -175,8 +175,8 @@ class TraceAnalyser:
 					]
 
 					slowest_elts: dict[type, float | int | dict[str, type]] = {
-						"avg_duration": sum(type_avgs) / float(len(type_avgs)),
-						"stddev_duration": stddev(type_avgs),
+						"avg_avg_duration": sum(type_avgs) / float(len(type_avgs)),
+						"stddev_avg_duration": stddev(type_avgs),
 						"count": sum(len(durations) for durations in durations.values()),
 						"stats": {}
 					}
@@ -202,7 +202,7 @@ class TraceAnalyser:
 				# compute average duration per instruction type for this site
 				durations_per_insn_type: dict[str, list[int]] = {}
 				for insn_idx, durations in site.durations.items():
-					insn_name = disasm_insn_name(self.profiling_result.program[insn_idx])
+					insn_name = resolve_insn_name(self.profiling_result.program[insn_idx])
 					if insn_name not in durations_per_insn_type:
 						durations_per_insn_type[insn_name] = []
 					durations_per_insn_type[insn_name].extend(durations)
@@ -211,6 +211,19 @@ class TraceAnalyser:
 				stats["nb_insn_types"] = len(durations_per_insn_type)
 				stats["avg_duration_per_insn_type"] = sum(avg.values()) / float(stats["nb_insn_types"])
 				stats["instruction_types"] = compute_stats(durations_per_insn_type, sum(avg.values()), True)
+
+				# compute average duration per instruction class for this site
+				durations_per_insn_class: dict[str, list[int]] = {}
+				for insn_idx, durations in site.durations.items():
+					insn_class = resolve_insn_class_name(self.profiling_result.program[insn_idx])
+					if insn_class not in durations_per_insn_class:
+						durations_per_insn_class[insn_class] = []
+					durations_per_insn_class[insn_class].extend(durations)
+
+				avg: dict[str, float] = {insn_class: sum(durations) / float(len(durations)) for insn_class, durations in durations_per_insn_class.items()}
+				stats["nb_insn_classes"] = len(durations_per_insn_class)
+				stats["avg_duration_per_insn_class"] = sum(avg.values()) / float(stats["nb_insn_classes"])
+				stats["instruction_classes"] = compute_stats(durations_per_insn_class, sum(avg.values()), True)
 
 			stats["children"] = dict(
 				sorted(

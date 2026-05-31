@@ -293,97 +293,112 @@ def _alu_name(insn: BPFInsn) -> str:
         return "movsx"
     return BPF_ALU_NAME[idx] or "?"
 
+def resolve_insn_class_name(insn: BPFInsn) -> str:
+    """Return the class name for a single BPF instruction."""
+    cls = BPF_CLASS(insn.code)
+    return BPF_CLASS_STRING[cls]
 
-def disasm_insn_name(insn: BPFInsn) -> str:
-    """Return the mnemonic name for a single BPF instruction."""
+def resolve_insn_name(insn: BPFInsn) -> str:
+    """Return a unique mnemonic for a single BPF instruction.
+
+    The returned string is prefixed with the BPF class to guarantee
+    uniqueness (e.g. "alu:mov32", "alu64:mov64", "jmp32:jeq32").
+    """
     code = insn.code
     cls = BPF_CLASS(code)
+    cls_name = BPF_CLASS_STRING[cls] or f"cls_{cls}"
+
+    mnemonic: str | None = None
 
     if _is_ldimm64(insn):
-        return "ldimm64"
-    if insn.code == 0 and not insn.dst_reg and not insn.src_reg and not insn.off:
-        return "ldimm64"
-
-    if cls == BPF_ALU or cls == BPF_ALU64:
+        mnemonic = "ldimm64"
+    elif insn.code == 0 and not insn.dst_reg and not insn.src_reg and not insn.off:
+        mnemonic = "ldimm64"
+    elif cls == BPF_ALU or cls == BPF_ALU64:
+        sfx = "64" if cls == BPF_ALU64 else "32"
         if BPF_OP(code) == BPF_END and cls == BPF_ALU64:
-            return "bswap"
-        if _is_addr_space_cast(insn):
-            return "addr_space_cast"
-        if _is_mov_percpu_addr(insn):
-            return "mov_percpu"
-        return _alu_name(insn)
-
-    if cls == BPF_STX:
+            mnemonic = f"bswap{sfx}"
+        elif _is_addr_space_cast(insn):
+            mnemonic = "addr_space_cast"
+        elif _is_mov_percpu_addr(insn):
+            mnemonic = "mov_percpu"
+        else:
+            mnemonic = f"{_alu_name(insn)}{sfx}"
+    elif cls == BPF_STX:
         if BPF_MODE(code) == BPF_MEM:
-            return "stx"
-        if BPF_MODE(code) == BPF_ATOMIC:
+            mnemonic = "stx"
+        elif BPF_MODE(code) == BPF_ATOMIC:
             if insn.imm in (BPF_ADD, BPF_AND, BPF_OR, BPF_XOR):
-                return f"atomic_{BPF_ATOMIC_ALU_STRING[BPF_OP(insn.imm) >> 4]}"
-            if insn.imm in (
+                mnemonic = f"atomic_{BPF_ATOMIC_ALU_STRING[BPF_OP(insn.imm) >> 4]}"
+            elif insn.imm in (
                 BPF_ADD | BPF_FETCH,
                 BPF_AND | BPF_FETCH,
                 BPF_OR | BPF_FETCH,
                 BPF_XOR | BPF_FETCH,
             ):
-                return f"atomic_fetch_{BPF_ATOMIC_ALU_STRING[BPF_OP(insn.imm) >> 4]}"
-            if insn.imm == BPF_CMPXCHG:
-                return "atomic_cmpxchg"
-            if insn.imm == BPF_XCHG:
-                return "atomic_xchg"
-            if insn.imm == BPF_LOAD_ACQ:
-                return "load_acquire"
-            if insn.imm == BPF_STORE_REL:
-                return "store_release"
-        return f"stx_0x{code:02x}"
-
-    if cls == BPF_ST:
+                mnemonic = f"atomic_fetch_{BPF_ATOMIC_ALU_STRING[BPF_OP(insn.imm) >> 4]}"
+            elif insn.imm == BPF_CMPXCHG:
+                mnemonic = "atomic_cmpxchg"
+            elif insn.imm == BPF_XCHG:
+                mnemonic = "atomic_xchg"
+            elif insn.imm == BPF_LOAD_ACQ:
+                mnemonic = "load_acquire"
+            elif insn.imm == BPF_STORE_REL:
+                mnemonic = "store_release"
+        else:
+            mnemonic = f"stx_0x{code:02x}"
+    elif cls == BPF_ST:
         if BPF_MODE(code) == BPF_MEM:
-            return "st"
-        if BPF_MODE(code) == BPF_NOSPEC:
-            return "nospec"
-        return f"st_0x{code:02x}"
-
-    if cls == BPF_LDX:
+            mnemonic = "st"
+        elif BPF_MODE(code) == BPF_NOSPEC:
+            mnemonic = "nospec"
+        else:
+            mnemonic = f"st_0x{code:02x}"
+    elif cls == BPF_LDX:
         if BPF_MODE(code) == BPF_MEMSX:
-            return "ldx_sx"
-        if BPF_MODE(code) == BPF_MEM:
-            return "ldx"
-        return f"ldx_0x{code:02x}"
-
-    if cls == BPF_LD:
+            mnemonic = "ldx_sx"
+        elif BPF_MODE(code) == BPF_MEM:
+            mnemonic = "ldx"
+        else:
+            mnemonic = f"ldx_0x{code:02x}"
+    elif cls == BPF_LD:
         if BPF_MODE(code) == BPF_ABS:
-            return "ld_abs"
-        if BPF_MODE(code) == BPF_IND:
-            return "ld_ind"
-        return f"ld_0x{code:02x}"
-
-    if cls in (BPF_JMP32, BPF_JMP):
+            mnemonic = "ld_abs"
+        elif BPF_MODE(code) == BPF_IND:
+            mnemonic = "ld_ind"
+        else:
+            mnemonic = f"ld_0x{code:02x}"
+    elif cls in (BPF_JMP32, BPF_JMP):
         sfx = "32" if cls == BPF_JMP32 else ""
         opcode = BPF_OP(code)
 
         if opcode == BPF_CALL:
             name = _func_get_name(insn)
             if insn.src_reg == BPF_PSEUDO_CALL:
-                return f"call pc{name}"
-            return f"call {name}"
+                mnemonic = f"call pc{name}"
+            else:
+                mnemonic = f"call {name}"
+        elif code == (BPF_JMP | BPF_JA):
+            mnemonic = "goto"
+        elif code == (BPF_JMP | BPF_JA | BPF_X):
+            mnemonic = "gotox"
+        elif code == (BPF_JMP | BPF_JCOND) and insn.src_reg == BPF_MAY_GOTO:
+            mnemonic = "may_goto"
+        elif code == (BPF_JMP32 | BPF_JA):
+            mnemonic = "gotol"
+        elif code == (BPF_JMP | BPF_EXIT):
+            mnemonic = "exit"
+        else:
+            jmp_name = BPF_JMP_NAME[opcode >> 4]
+            if jmp_name:
+                mnemonic = f"{jmp_name}{sfx}"
+            else:
+                mnemonic = f"jmp_0x{code:02x}"
 
-        if code == (BPF_JMP | BPF_JA):
-            return "goto"
-        if code == (BPF_JMP | BPF_JA | BPF_X):
-            return "gotox"
-        if code == (BPF_JMP | BPF_JCOND) and insn.src_reg == BPF_MAY_GOTO:
-            return "may_goto"
-        if code == (BPF_JMP32 | BPF_JA):
-            return "gotol"
-        if code == (BPF_JMP | BPF_EXIT):
-            return "exit"
+    if mnemonic is None:
+        mnemonic = BPF_CLASS_STRING[cls] or f"cls_{cls}"
 
-        jmp_name = BPF_JMP_NAME[opcode >> 4]
-        if jmp_name:
-            return f"{jmp_name}{sfx}"
-        return f"jmp_0x{code:02x}"
-
-    return BPF_CLASS_STRING[cls] or f"cls_{cls}"
+    return f"{cls_name}:{mnemonic}"
 
 
 def disasm_insn(
