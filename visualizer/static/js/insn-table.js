@@ -25,7 +25,6 @@ export function renderInsnTable(container, stats, options = {}) {
       percent: stat.percent ?? 0,
     }))
     .sort((a, b) => b.count - a.count);
-  const maxPercent = Math.max(...rows.map((r) => r.percent));
 
   const table = document.createElement("table");
   table.className = "w-full text-sm";
@@ -43,7 +42,7 @@ export function renderInsnTable(container, stats, options = {}) {
   for (const row of rows) {
     const tr = document.createElement("tr");
     tr.className = "hover:bg-slate-800/40";
-    const barPct = maxPercent > 0 ? (row.percent / maxPercent) * 100 : 0;
+    const barPct = Math.min(100, Math.max(0, row.percent));
     tr.innerHTML = `
       <td class="py-2 pr-2">
         <span class="font-mono text-emerald-300/90">${escapeHtml(row.name)}</span>

@@ -286,7 +286,7 @@ function renderInsnSection() {
   const group = getInsnGroup();
   const stats =
     group === "class"
-      ? currentReport?.stats?.insn_class
+      ? currentReport?.stats?.insn_classes
       : currentReport?.stats?.insn_types;
   const groupLabel =
     group === "class" ? "instruction class" : "instruction type";
