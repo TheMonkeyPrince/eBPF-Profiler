@@ -90,27 +90,30 @@ class TraceAnalyser:
 		return self.result
 
 	def _compute_bpf_insn_stats(self):
-		self.result.stats["insn_types"] = {}
-		self.result.stats["insn_class"] = {}
-		for insn in self.profiling_result.program:
-			insn_name = resolve_insn_name(insn)
-			insn_class_name = resolve_insn_class_name(insn)
-			if insn_name not in self.result.stats["insn_types"]:
-				self.result.stats["insn_types"][insn_name] = {
-					"count": 0,
-				}
-			self.result.stats["insn_types"][insn_name]["count"] += 1
-			
-			if insn_class_name not in self.result.stats["insn_class"]:
-				self.result.stats["insn_class"][insn_class_name] = {
-					"count": 0,
-				}
-			self.result.stats["insn_class"][insn_class_name]["count"] += 1
+		def compute_stats(resolve: callable) -> dict[type, dict[str, int | float]]:
+			items: dict[type, dict[str, int | float]] = {}
+			for insn in self.profiling_result.program:
+				item_name = resolve(insn)
+				if item_name not in items:
+					items[item_name] = {
+						"count": 0,
+					}
+				items[item_name]["count"] += 1
 
-		for insn_name, stats in self.result.stats["insn_types"].items():
-			stats["percent"] = stats["count"] / float(self.result.stats["program_length"]) * 100
-		for insn_class_name, stats in self.result.stats["insn_class"].items():
-			stats["percent"] = stats["count"] / float(self.result.stats["program_length"]) * 100
+			total_count = sum(stats["count"] for stats in items.values())
+			for item_name, stats in items.items():
+				stats["percent"] = stats["count"] / float(total_count) * 100
+
+			total_percent = sum(stats["percent"] for stats in items.values())
+			if abs(total_percent - 100.0) > 1e-2:
+				raise ValueError(
+					f"Total percent is {total_percent:.2f} which is not close enough to 100. This should be impossible since the percent of each item is computed as a percentage of the total count."
+				)
+			return items
+
+		self.result.stats["insn_types"] = compute_stats(resolve_insn_name)
+		self.result.stats["insn_class"] = compute_stats(resolve_insn_class_name)
+		
 
 	def _compute_site_tree_stats(self):
 		def to_json_dict(site: RecordSite, parent_duration: float) -> tuple[str, dict]:
