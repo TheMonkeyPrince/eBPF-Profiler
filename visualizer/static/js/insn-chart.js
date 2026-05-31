@@ -114,3 +114,141 @@ export function destroyInstructionChart() {
     activeCharts.pop()?.destroy();
   }
 }
+
+/** @type {import('chart.js').Chart | null} */
+let programInsnChart = null;
+
+const OTHER_SLICE_COLOR = "rgba(100, 116, 139, 0.45)";
+const MAX_PROGRAM_INSN_SLICES = 10;
+
+/**
+ * @param {HTMLElement} container
+ * @param {Record<string, { count?: number, percent?: number }>} stats
+ * @param {{ ariaLabel?: string, maxSlices?: number }} [options]
+ */
+export function renderProgramInsnChart(container, stats, options = {}) {
+  if (programInsnChart) {
+    programInsnChart.destroy();
+    programInsnChart = null;
+  }
+
+  container.replaceChildren();
+
+  if (!stats || !Object.keys(stats).length) {
+    container.innerHTML =
+      '<p class="text-xs text-slate-500 py-2">No instruction data for chart.</p>';
+    return;
+  }
+
+  const Chart = window.Chart;
+  if (!Chart) {
+    container.innerHTML =
+      '<p class="text-xs text-rose-400">Chart.js failed to load.</p>';
+    return;
+  }
+
+  const maxSlices = options.maxSlices ?? MAX_PROGRAM_INSN_SLICES;
+  const sorted = Object.entries(stats)
+    .map(([name, stat]) => ({
+      name,
+      count: stat.count ?? 0,
+      percent: stat.percent ?? 0,
+    }))
+    .sort((a, b) => b.percent - a.percent);
+
+  /** @type {typeof sorted} */
+  const chartEntries = sorted.slice(0, maxSlices);
+  const otherEntries = sorted.slice(maxSlices);
+  if (otherEntries.length) {
+    chartEntries.push({
+      name: "Other",
+      count: otherEntries.reduce((sum, e) => sum + e.count, 0),
+      percent: otherEntries.reduce((sum, e) => sum + e.percent, 0),
+    });
+  }
+
+  const labels = chartEntries.map((e) => e.name);
+  const data = chartEntries.map((e) => e.percent);
+  let colorIdx = 0;
+  const backgroundColor = chartEntries.map((e) => {
+    if (e.name === "Other") return OTHER_SLICE_COLOR;
+    return SLICE_COLORS[colorIdx++ % SLICE_COLORS.length];
+  });
+
+  const entryByLabel = Object.fromEntries(
+    chartEntries.map((e) => [e.name, e])
+  );
+
+  const wrap = document.createElement("div");
+  wrap.className = "relative w-full max-w-[280px] mx-auto aspect-square";
+  const canvas = document.createElement("canvas");
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute(
+    "aria-label",
+    options.ariaLabel ?? "Program instruction mix by share of program length"
+  );
+  wrap.appendChild(canvas);
+  container.appendChild(wrap);
+
+  programInsnChart = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "% of program",
+          data,
+          backgroundColor,
+          borderColor: "rgb(15, 23, 42)",
+          borderWidth: 2,
+          hoverOffset: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: "58%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            color: "#94a3b8",
+            font: {
+              family: "'IBM Plex Mono', ui-monospace, monospace",
+              size: 11,
+            },
+            boxWidth: 12,
+            padding: 10,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label(context) {
+              const label = context.label ?? "";
+              const entry = entryByLabel[label];
+              if (!entry) return label;
+              if (entry.name === "Other") {
+                return [
+                  `Other: ${formatPercent(entry.percent)}`,
+                  `${formatCount(entry.count)} instructions`,
+                ];
+              }
+              return [
+                `${label}: ${formatPercent(entry.percent)}`,
+                `${formatCount(entry.count)} instructions`,
+              ];
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export function destroyProgramInsnChart() {
+  if (programInsnChart) {
+    programInsnChart.destroy();
+    programInsnChart = null;
+  }
+}

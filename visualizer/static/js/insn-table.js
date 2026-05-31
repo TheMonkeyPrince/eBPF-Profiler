@@ -1,23 +1,31 @@
-import { formatDurationNs, formatCount } from "./format.js";
+import { formatCount, formatPercent } from "./format.js";
 
 /**
- * durations_per_insn_type: { name: [count, total_ns, avg_ns] }
- * @param {HTMLElement} container
- * @param {Record<string, [number, number, number]>} durations
+ * @typedef {{ count: number, percent: number }} InsnStat
  */
-export function renderInsnTable(container, durations) {
+
+/**
+ * @param {HTMLElement} container
+ * @param {Record<string, InsnStat>} stats
+ * @param {{ emptyMessage?: string }} [options]
+ */
+export function renderInsnTable(container, stats, options = {}) {
   container.replaceChildren();
-  if (!durations || !Object.keys(durations).length) {
-    container.innerHTML =
-      '<p class="text-slate-500 text-sm">No per-instruction timing data.</p>';
+  if (!stats || !Object.keys(stats).length) {
+    container.innerHTML = `<p class="text-slate-500 text-sm">${
+      options.emptyMessage ?? "No instruction data."
+    }</p>`;
     return;
   }
 
-  const rows = Object.entries(durations).map(([name, tuple]) => {
-    const [count, total, avg] = tuple;
-    return { name, count, total, avg };
-  });
-  const maxAvg = Math.max(...rows.map((r) => r.avg));
+  const rows = Object.entries(stats)
+    .map(([name, stat]) => ({
+      name,
+      count: stat.count ?? 0,
+      percent: stat.percent ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+  const maxPercent = Math.max(...rows.map((r) => r.percent));
 
   const table = document.createElement("table");
   table.className = "w-full text-sm";
@@ -26,8 +34,7 @@ export function renderInsnTable(container, durations) {
       <tr>
         <th class="py-2 font-medium">Instruction</th>
         <th class="py-2 px-2 font-medium text-right w-24">Count</th>
-        <th class="py-2 px-2 font-medium text-right w-32">Total</th>
-        <th class="py-2 pl-2 font-medium text-right w-32">Avg</th>
+        <th class="py-2 pl-2 font-medium text-right w-32">% of program</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-800/80"></tbody>`;
@@ -36,7 +43,7 @@ export function renderInsnTable(container, durations) {
   for (const row of rows) {
     const tr = document.createElement("tr");
     tr.className = "hover:bg-slate-800/40";
-    const barPct = maxAvg > 0 ? (row.avg / maxAvg) * 100 : 0;
+    const barPct = maxPercent > 0 ? (row.percent / maxPercent) * 100 : 0;
     tr.innerHTML = `
       <td class="py-2 pr-2">
         <span class="font-mono text-emerald-300/90">${escapeHtml(row.name)}</span>
@@ -45,8 +52,7 @@ export function renderInsnTable(container, durations) {
         </div>
       </td>
       <td class="py-2 px-2 text-right tabular-nums text-slate-400">${formatCount(row.count)}</td>
-      <td class="py-2 px-2 text-right tabular-nums text-slate-300">${formatDurationNs(row.total)}</td>
-      <td class="py-2 pl-2 text-right tabular-nums text-slate-200">${formatDurationNs(row.avg)}</td>`;
+      <td class="py-2 pl-2 text-right tabular-nums text-slate-200">${formatPercent(row.percent)}</td>`;
     tbody.appendChild(tr);
   }
 

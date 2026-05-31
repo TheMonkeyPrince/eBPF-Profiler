@@ -165,13 +165,30 @@
         </section>
 
         <section class="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-          <h3 class="text-sm font-medium text-slate-300 mb-1">
-            BPF instruction timings
-          </h3>
-          <p class="text-xs text-slate-500 mb-4">
-            Program-wide aggregate: count, total time, average per static instruction occurrence.
-          </p>
-          <div id="insn-table" class="overflow-x-auto"></div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h3 class="text-sm font-medium text-slate-300 mb-1">
+                BPF instructions
+              </h3>
+              <p class="text-xs text-slate-500">
+                Program-wide static instruction mix by count and share of program length.
+              </p>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
+              Group by
+              <select
+                id="insn-group"
+                class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+              >
+                <option value="types">Instruction type</option>
+                <option value="class">Instruction class</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid lg:grid-cols-[minmax(220px,280px)_1fr] gap-6 items-start">
+            <div id="insn-chart" class="min-h-[200px]"></div>
+            <div id="insn-table" class="overflow-x-auto min-w-0"></div>
+          </div>
         </section>
       </div>
     </main>

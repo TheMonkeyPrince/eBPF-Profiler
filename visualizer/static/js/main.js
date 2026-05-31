@@ -9,6 +9,7 @@ import {
 } from "./format.js";
 import { renderSiteTree, renderSiteDetail } from "./tree.js";
 import { renderInsnTable } from "./insn-table.js";
+import { renderProgramInsnChart } from "./insn-chart.js";
 import { createSourceEditor } from "./editor.js";
 import { renderChildrenChart } from "./children-chart.js";
 
@@ -27,6 +28,8 @@ const els = {
   childrenChart: document.getElementById("children-chart"),
   childrenChartTitle: document.getElementById("children-chart-title"),
   siteDetail: document.getElementById("site-detail"),
+  insnGroup: document.getElementById("insn-group"),
+  insnChart: document.getElementById("insn-chart"),
   insnTable: document.getElementById("insn-table"),
   monacoContainer: document.getElementById("monaco-container"),
   sourcePath: document.getElementById("source-path"),
@@ -275,6 +278,29 @@ function renderOverview(report) {
   }
 }
 
+function getInsnGroup() {
+  return /** @type {'types' | 'class'} */ (els.insnGroup?.value ?? "types");
+}
+
+function renderInsnSection() {
+  const group = getInsnGroup();
+  const stats =
+    group === "class"
+      ? currentReport?.stats?.insn_class
+      : currentReport?.stats?.insn_types;
+  const groupLabel =
+    group === "class" ? "instruction class" : "instruction type";
+  renderProgramInsnChart(els.insnChart, stats ?? {}, {
+    ariaLabel: `Program ${groupLabel} mix by share of program length`,
+  });
+  renderInsnTable(els.insnTable, stats ?? {}, {
+    emptyMessage:
+      group === "class"
+        ? "No instruction class data."
+        : "No instruction type data.",
+  });
+}
+
 function renderReport(report) {
   currentReport = report;
   const siteTree = report.stats?.site_tree ?? {};
@@ -288,16 +314,17 @@ function renderReport(report) {
     (key, node) => handleSiteSelect(key, node),
     { percentScale: getPercentScale() }
   );
-  renderInsnTable(
-    els.insnTable,
-    report.stats?.durations_per_insn_type ?? {}
-  );
+  renderInsnSection();
   selectedSite = null;
   renderSiteDetail(els.siteDetail, "", null);
   updateChildrenChart();
   syncClearSelectionButton();
   setStatus("Report loaded");
 }
+
+els.insnGroup?.addEventListener("change", () => {
+  renderInsnSection();
+});
 
 els.clearSelectionBtn.addEventListener("click", clearSiteSelection);
 
