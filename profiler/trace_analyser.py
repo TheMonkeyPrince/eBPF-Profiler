@@ -112,7 +112,7 @@ class TraceAnalyser:
 			return dict(sorted(items.items(), key=lambda item: item[1]["percent"], reverse=True))
 
 		self.result.stats["insn_types"] = compute_stats(resolve_insn_name)
-		self.result.stats["insn_class"] = compute_stats(resolve_insn_class_name)
+		self.result.stats["insn_classes"] = compute_stats(resolve_insn_class_name)
 		
 
 	def _compute_site_tree_stats(self):
