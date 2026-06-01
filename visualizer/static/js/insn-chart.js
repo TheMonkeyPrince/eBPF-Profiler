@@ -4,6 +4,7 @@ import {
   getChartType,
   wrapClassName,
 } from "./chart-type.js";
+import { mountChartExportButton } from "./chart-export.js";
 
 /** @type {import('chart.js').Chart[]} */
 const activeCharts = [];
@@ -89,6 +90,14 @@ export function renderInstructionChart(container, instructionTypes, options = {}
     })
   );
   activeCharts.push(chart);
+
+  if (options.exportFilename) {
+    mountChartExportButton(container, chart, options.exportFilename);
+  }
+}
+
+export function getProgramInsnChart() {
+  return programInsnChart;
 }
 
 export function destroyInstructionChart() {
@@ -200,6 +209,10 @@ export function renderProgramInsnChart(container, stats, options = {}) {
       },
     })
   );
+
+  if (options.exportFilename) {
+    mountChartExportButton(container, programInsnChart, options.exportFilename);
+  }
 }
 
 export function destroyProgramInsnChart() {

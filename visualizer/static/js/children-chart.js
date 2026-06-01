@@ -5,6 +5,7 @@ import {
   getChartType,
   wrapClassName,
 } from "./chart-type.js";
+import { mountChartExportButton } from "./chart-export.js";
 
 /** @type {import('chart.js').Chart | null} */
 let activeChart = null;
@@ -172,4 +173,12 @@ export function renderChildrenChart(
       },
     })
   );
+
+  if (options.exportFilename) {
+    mountChartExportButton(container, activeChart, options.exportFilename);
+  }
+}
+
+export function getActiveChildrenChart() {
+  return activeChart;
 }

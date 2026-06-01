@@ -13,6 +13,7 @@ import { renderProgramInsnChart } from "./insn-chart.js";
 import { createSourceEditor } from "./editor.js";
 import { renderChildrenChart } from "./children-chart.js";
 import { initChartTypeSelects } from "./chart-type.js";
+import { sanitizeFilename } from "./chart-export.js";
 
 const PERCENT_SCALE_KEY = "visualizer-percent-scale";
 
@@ -89,6 +90,22 @@ function refreshChartsForTypeChange() {
   }
 }
 
+function childrenChartExportFilename(scale) {
+  if (selectedSite) {
+    const { symbol } = parseSiteKey(selectedSite.key);
+    const slug = sanitizeFilename(symbol || selectedSite.key);
+    return `children-${slug}-${scale}.png`;
+  }
+  return `root-sites-${scale}.png`;
+}
+
+function programInsnChartExportFilename() {
+  const group = getInsnGroup();
+  const view = getInsnView();
+  const program = sanitizeFilename(currentReport?.program_name ?? "program");
+  return `program-instructions-${program}-${group}-${view}.png`;
+}
+
 function updateChildrenChart() {
   const scale = getPercentScale();
   const scaleLabel = scale === "parent" ? "% of parent" : "% of total";
@@ -97,6 +114,7 @@ function updateChildrenChart() {
   const chartOptions = {
     onSelect: (key, node) =>
       handleSiteSelect(key, node, { scrollTree: false }),
+    exportFilename: childrenChartExportFilename(scale),
   };
 
   if (selectedSite) {
@@ -415,6 +433,7 @@ function renderInsnSection() {
       view === "combined" && aggregated
         ? `Combined program ${groupLabel} mix`
         : `Program ${groupLabel} mix by share of program length`,
+    exportFilename: programInsnChartExportFilename(),
   });
   renderInsnTable(els.insnTable, stats, {
     emptyMessage:

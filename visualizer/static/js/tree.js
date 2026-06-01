@@ -281,10 +281,10 @@ export function renderSiteDetail(container, siteKey, node, activeScale) {
   container.appendChild(statsGrid);
 
   if (node.instruction_types?.stats) {
-    appendInstructionBreakdown(container, node, "instruction_types");
+    appendInstructionBreakdown(container, siteKey, node, "instruction_types");
   }
   if (node.instruction_classes?.stats) {
-    appendInstructionBreakdown(container, node, "instruction_classes");
+    appendInstructionBreakdown(container, siteKey, node, "instruction_classes");
   }
 }
 
@@ -292,10 +292,11 @@ export function renderSiteDetail(container, siteKey, node, activeScale) {
 
 /**
  * @param {HTMLElement} container
+ * @param {string} siteKey
  * @param {object} node
  * @param {InstructionBreakdownKind} kind
  */
-function appendInstructionBreakdown(container, node, kind) {
+function appendInstructionBreakdown(container, siteKey, node, kind) {
   const isTypes = kind === "instruction_types";
   const breakdown = node[kind];
   const nb = isTypes ? node.nb_insn_types : node.nb_insn_classes;
@@ -321,10 +322,13 @@ function appendInstructionBreakdown(container, node, kind) {
   const chartHost = document.createElement("div");
   chartHost.className = "mb-4";
   container.appendChild(chartHost);
+  const { symbol } = parseSiteKey(siteKey);
+  const slug = symbol || siteKey || "site";
   renderInstructionChart(chartHost, breakdown, {
     ariaLabel: isTypes
       ? "Instruction type breakdown by relative score"
       : "Instruction class breakdown by relative score",
+    exportFilename: `site-${slug}-${isTypes ? "insn-types" : "insn-classes"}.png`,
   });
 
   const list = document.createElement("div");
