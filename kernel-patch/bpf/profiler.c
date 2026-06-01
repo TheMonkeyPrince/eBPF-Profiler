@@ -11,7 +11,7 @@ static DEFINE_SPINLOCK(bpf_profiler_lock);
 static bpf_profile_record_list_t *bpf_profile_records = NULL;
 
 void bpf_profiler_add_record(
-    bpf_profile_record_type_t type, unsigned char file_id, int line, u32 arg, u64 start_time, u64 end_time)
+    bpf_profile_record_type_t type, unsigned char file_id, int line, u32 insn_idx, u64 start_time, u64 end_time)
 {
     unsigned long flags;
     u32 idx;
@@ -23,7 +23,7 @@ void bpf_profiler_add_record(
         bpf_profile_records->records[idx].type = type;
         bpf_profile_records->records[idx].file_id = file_id;
         bpf_profile_records->records[idx].line = line;
-        bpf_profile_records->records[idx].arg = arg;
+        bpf_profile_records->records[idx].insn_idx = insn_idx;
         bpf_profile_records->records[idx].start_time = start_time;
         bpf_profile_records->records[idx].end_time = end_time;
         bpf_profile_records->count = idx + 1;

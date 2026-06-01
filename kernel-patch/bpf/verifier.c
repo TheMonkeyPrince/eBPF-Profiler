@@ -17566,7 +17566,7 @@ static int check_indirect_jump(struct bpf_verifier_env *env, struct bpf_insn *in
 	return INSN_IDX_UPDATED;
 }
 
-static int (struct bpf_verifier_env *env, bool *do_print_state)
+static int do_check_insn(struct bpf_verifier_env *env, bool *do_print_state)
 {
 	int err;
 	struct bpf_insn *insn = &env->prog->insnsi[env->insn_idx];
@@ -17575,28 +17575,28 @@ static int (struct bpf_verifier_env *env, bool *do_print_state)
 	switch (class) {
 	case BPF_ALU:
 	case BPF_ALU64:
-		return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_alu_op, env, insn);
+		return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_alu_op, env, insn);
 
 	case BPF_LDX:
-		return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_load_mem, env, insn, false,
+		return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_load_mem, env, insn, false,
 				      BPF_MODE(insn->code) == BPF_MEMSX,
 				      true, "ldx");
 
 	case BPF_STX:
 		if (BPF_MODE(insn->code) == BPF_ATOMIC)
-			return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_atomic, env, insn);
-		return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_store_reg, env, insn, false);
+			return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_atomic, env, insn);
+		return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_store_reg, env, insn, false);
 
 	case BPF_ST: {
 		enum bpf_reg_type dst_reg_type;
 
-		err = BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_reg_arg, env, insn->dst_reg, SRC_OP);
+		err = BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_reg_arg, env, insn->dst_reg, SRC_OP);
 		if (err)
 			return err;
 
 		dst_reg_type = cur_regs(env)[insn->dst_reg].type;
 
-		err = BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_mem_access, env, env->insn_idx, insn->dst_reg,
+		err = BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_mem_access, env, env->insn_idx, insn->dst_reg,
 				       insn->off, BPF_SIZE(insn->code),
 				       BPF_WRITE, -1, false, false);
 		if (err)
@@ -17623,13 +17623,13 @@ static int (struct bpf_verifier_env *env, bool *do_print_state)
 			}
 			mark_reg_scratched(env, BPF_REG_0);
 			if (insn->src_reg == BPF_PSEUDO_CALL)
-				return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_func_call, env, insn, &env->insn_idx);
+				return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_func_call, env, insn, &env->insn_idx);
 			if (insn->src_reg == BPF_PSEUDO_KFUNC_CALL)
-				return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_kfunc_call, env, insn, &env->insn_idx);
-			return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_helper_call, env, insn, &env->insn_idx);
+				return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_kfunc_call, env, insn, &env->insn_idx);
+			return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_helper_call, env, insn, &env->insn_idx);
 		} else if (opcode == BPF_JA) {
 			if (BPF_SRC(insn->code) == BPF_X)
-				return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_indirect_jump, env, insn);
+				return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_indirect_jump, env, insn);
 
 			if (class == BPF_JMP)
 				env->insn_idx += insn->off + 1;
@@ -17637,18 +17637,18 @@ static int (struct bpf_verifier_env *env, bool *do_print_state)
 				env->insn_idx += insn->imm + 1;
 			return INSN_IDX_UPDATED;
 		} else if (opcode == BPF_EXIT) {
-			return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, process_bpf_exit_full, env, do_print_state, false);
+			return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, process_bpf_exit_full, env, do_print_state, false);
 		}
-		return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_cond_jmp_op, env, insn, &env->insn_idx);
+		return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_cond_jmp_op, env, insn, &env->insn_idx);
 	}
 	case BPF_LD: {
 		u8 mode = BPF_MODE(insn->code);
 
 		if (mode == BPF_ABS || mode == BPF_IND)
-			return BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_ld_abs, env, insn);
+			return BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_ld_abs, env, insn);
 
 		if (mode == BPF_IMM) {
-			err = BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_ld_imm, env, insn);
+			err = BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, check_ld_imm, env, insn);
 			if (err)
 				return err;
 
@@ -17700,7 +17700,7 @@ static int do_check(struct bpf_verifier_env *env)
 		state->insn_idx = env->insn_idx;
 
 		if (bpf_is_prune_point(env, env->insn_idx)) {
-			err = BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, bpf_is_state_visited, env, env->insn_idx);
+			err = BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, bpf_is_state_visited, env, env->insn_idx);
 			if (err < 0)
 				return err;
 			if (err == 1) {
@@ -17787,7 +17787,7 @@ static int do_check(struct bpf_verifier_env *env)
 		if (state->speculative && insn_aux->nospec)
 			goto process_bpf_exit;
 
-		err = BPF_PROFILE_CALL_ARG(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, do_check_insn, env, &do_print_state);
+		err = BPF_PROFILE_CALL_INSN(BPF_PROFILE_VERIFIER_FILE_ID, env->insn_idx, do_check_insn, env, &do_print_state);
 		if (error_recoverable_with_nospec(err) && state->speculative) {
 			/* Prevent this speculative path from ever reaching the
 			 * insn that would have been unsafe to execute.

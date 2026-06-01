@@ -1,4 +1,4 @@
-"""Merge analysis reports by recursively combining site trees (Mode B)."""
+"""Merge analysis reports by recursively combining site trees"""
 
 from __future__ import annotations
 

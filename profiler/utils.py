@@ -130,7 +130,7 @@ def find_call_name(filename, line):
     result = text.split("BPF_PROFILE_CALL", 1)[1]
     if result.startswith('(') or result.startswith('_VOID('):
         arg_index = 1
-    elif result.startswith('_ARG(') or result.startswith('_VOID_ARG('):
+    elif result.startswith('_INSN(') or result.startswith('_VOID_INSN('):
         arg_index = 2
     else:
         raise ValueError(f"Unexpected format for BPF_PROFILE_CALL on line {filename}:{line}")
