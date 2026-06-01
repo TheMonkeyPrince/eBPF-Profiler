@@ -81,7 +81,24 @@
       <div class="w-full p-4 space-y-6 flex-1 overflow-auto min-h-0">
         <section>
           <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Program</p>
-          <h2 id="program-name" class="text-2xl font-semibold text-cyan-100">—</h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 id="program-name" class="text-2xl font-semibold text-cyan-100">—</h2>
+            <span
+              id="aggregated-badge"
+              class="hidden rounded-full border border-violet-500/40 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-violet-300"
+            >
+              Aggregated
+            </span>
+          </div>
+          <div id="program-meta" class="hidden mt-2 space-y-1">
+            <p class="text-xs text-slate-500">
+              <span id="source-programs-count">0</span> source program(s):
+            </p>
+            <ul
+              id="source-programs"
+              class="text-sm text-slate-300 list-disc list-inside space-y-0.5 max-h-32 overflow-auto"
+            ></ul>
+          </div>
         </section>
 
         <section
@@ -170,11 +187,24 @@
               <h3 class="text-sm font-medium text-slate-300 mb-1">
                 BPF instructions
               </h3>
-              <p class="text-xs text-slate-500">
+              <p id="insn-section-desc" class="text-xs text-slate-500">
                 Program-wide static instruction mix by count and share of program length.
               </p>
             </div>
-            <label class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <label
+                id="insn-view-label"
+                class="hidden items-center gap-2 text-xs text-slate-400"
+              >
+                View
+                <select
+                  id="insn-view"
+                  class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+                >
+                  <option value="combined">Combined</option>
+                </select>
+              </label>
+              <label class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
               Group by
               <select
                 id="insn-group"
@@ -184,6 +214,7 @@
                 <option value="class">Instruction class</option>
               </select>
             </label>
+            </div>
           </div>
           <div class="grid lg:grid-cols-[minmax(220px,280px)_1fr] gap-6 items-start">
             <div id="insn-chart" class="min-h-[200px]"></div>
