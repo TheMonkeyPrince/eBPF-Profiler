@@ -12,6 +12,7 @@ import { renderInsnTable } from "./insn-table.js";
 import { renderProgramInsnChart } from "./insn-chart.js";
 import { createSourceEditor } from "./editor.js";
 import { renderChildrenChart } from "./children-chart.js";
+import { initChartTypeSelects } from "./chart-type.js";
 
 const PERCENT_SCALE_KEY = "visualizer-percent-scale";
 
@@ -73,6 +74,19 @@ function clearSiteSelection() {
   updateChildrenChart();
   sourceEditor?.clearSelection();
   syncClearSelectionButton();
+}
+
+function refreshChartsForTypeChange() {
+  updateChildrenChart();
+  renderInsnSection();
+  if (selectedSite) {
+    renderSiteDetail(
+      els.siteDetail,
+      selectedSite.key,
+      selectedSite.node,
+      getPercentScale()
+    );
+  }
 }
 
 function updateChildrenChart() {
@@ -167,6 +181,11 @@ function getPercentScale() {
 
 els.percentScale.value = loadPercentScale();
 
+initChartTypeSelects(
+  document.querySelectorAll("[data-chart-type-select]"),
+  () => refreshChartsForTypeChange()
+);
+
 els.percentScale.addEventListener("change", () => {
   const scale = getPercentScale();
   savePercentScale(scale);
@@ -178,8 +197,8 @@ els.percentScale.addEventListener("change", () => {
       selectedSite.node,
       scale
     );
-    updateChildrenChart();
   }
+  updateChildrenChart();
 });
 
 function setStatus(message, isError = false) {

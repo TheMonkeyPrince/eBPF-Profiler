@@ -139,6 +139,16 @@
               </div>
               <div class="flex flex-wrap items-center gap-2 shrink-0">
                 <label class="flex items-center gap-2 text-xs text-slate-400">
+                  Chart
+                  <select
+                    data-chart-type-select
+                    class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+                  >
+                    <option value="doughnut">Doughnut</option>
+                    <option value="bar">Bar</option>
+                  </select>
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-400">
                   Bar scale
                   <select
                     id="percent-scale"
@@ -161,12 +171,11 @@
               id="children-chart-panel"
               class="shrink-0 px-4 py-3 border-b border-slate-800"
             >
-              <p
-                id="children-chart-title"
-                class="text-xs font-medium text-slate-400 mb-2"
-              >
-                Child sites
-              </p>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <p id="children-chart-title" class="text-xs font-medium text-slate-400">
+                  Child sites
+                </p>
+              </div>
               <div id="children-chart"></div>
             </div>
             <div id="site-tree" class="flex-1 overflow-auto p-2 min-h-0"></div>
@@ -205,6 +214,16 @@
                 </select>
               </label>
               <label class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
+                Chart
+                <select
+                  data-chart-type-select
+                  class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
+                >
+                  <option value="doughnut">Doughnut</option>
+                  <option value="bar">Bar</option>
+                </select>
+              </label>
+              <label class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
               Group by
               <select
                 id="insn-group"
@@ -216,7 +235,7 @@
             </label>
             </div>
           </div>
-          <div class="grid lg:grid-cols-[minmax(220px,280px)_1fr] gap-6 items-start">
+          <div class="grid lg:grid-cols-[minmax(240px,1fr)_1.2fr] gap-6 items-start">
             <div id="insn-chart" class="min-h-[200px]"></div>
             <div id="insn-table" class="overflow-x-auto min-w-0"></div>
           </div>

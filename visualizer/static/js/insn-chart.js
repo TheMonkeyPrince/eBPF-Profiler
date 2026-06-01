@@ -1,4 +1,9 @@
 import { formatDurationNs, formatCount, formatPercent } from "./format.js";
+import {
+  buildChartJsConfig,
+  getChartType,
+  wrapClassName,
+} from "./chart-type.js";
 
 /** @type {import('chart.js').Chart[]} */
 const activeCharts = [];
@@ -49,8 +54,10 @@ export function renderInstructionChart(container, instructionTypes, options = {}
     (_, i) => SLICE_COLORS[i % SLICE_COLORS.length]
   );
 
+  const chartType = options.chartType ?? getChartType();
+
   const wrap = document.createElement("div");
-  wrap.className = "relative w-full max-w-[280px] mx-auto aspect-square";
+  wrap.className = wrapClassName(chartType);
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
   canvas.setAttribute(
@@ -60,52 +67,27 @@ export function renderInstructionChart(container, instructionTypes, options = {}
   wrap.appendChild(canvas);
   container.appendChild(wrap);
 
-  const chart = new Chart(canvas, {
-    type: "doughnut",
-    data: {
+  const chart = new Chart(
+    canvas,
+    buildChartJsConfig(chartType, {
       labels,
-      datasets: [
-        {
-          label: "Relative score",
-          data,
-          backgroundColor,
-          borderColor: "rgb(15, 23, 42)",
-          borderWidth: 2,
-          hoverOffset: 6,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      cutout: "58%",
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: {
-            color: "#94a3b8",
-            font: { family: "'IBM Plex Mono', ui-monospace, monospace", size: 11 },
-            boxWidth: 12,
-            padding: 10,
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label(context) {
-              const insn = context.label ?? "";
-              const stat = stats[insn];
-              if (!stat) return insn;
-              return [
-                `${insn}: ${formatPercent(stat.score ?? 0)}`,
-                `avg / sample ${formatDurationNs(stat.avg_duration)}`,
-                `${formatCount(stat.count)} samples`,
-              ];
-            },
-          },
+      datasetLabel: "Relative score",
+      data,
+      backgroundColor,
+      tooltipCallbacks: {
+        label(context) {
+          const insn = context.label ?? "";
+          const stat = stats[insn];
+          if (!stat) return insn;
+          return [
+            `${insn}: ${formatPercent(stat.score ?? 0)}`,
+            `avg / sample ${formatDurationNs(stat.avg_duration)}`,
+            `${formatCount(stat.count)} samples`,
+          ];
         },
       },
-    },
-  });
+    })
+  );
   activeCharts.push(chart);
 }
 
@@ -179,8 +161,10 @@ export function renderProgramInsnChart(container, stats, options = {}) {
     chartEntries.map((e) => [e.name, e])
   );
 
+  const chartType = options.chartType ?? getChartType();
+
   const wrap = document.createElement("div");
-  wrap.className = "relative w-full max-w-[280px] mx-auto aspect-square";
+  wrap.className = wrapClassName(chartType);
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
   canvas.setAttribute(
@@ -190,60 +174,32 @@ export function renderProgramInsnChart(container, stats, options = {}) {
   wrap.appendChild(canvas);
   container.appendChild(wrap);
 
-  programInsnChart = new Chart(canvas, {
-    type: "doughnut",
-    data: {
+  programInsnChart = new Chart(
+    canvas,
+    buildChartJsConfig(chartType, {
       labels,
-      datasets: [
-        {
-          label: "% of program",
-          data,
-          backgroundColor,
-          borderColor: "rgb(15, 23, 42)",
-          borderWidth: 2,
-          hoverOffset: 6,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      cutout: "58%",
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: {
-            color: "#94a3b8",
-            font: {
-              family: "'IBM Plex Mono', ui-monospace, monospace",
-              size: 11,
-            },
-            boxWidth: 12,
-            padding: 10,
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label(context) {
-              const label = context.label ?? "";
-              const entry = entryByLabel[label];
-              if (!entry) return label;
-              if (entry.name === "Other") {
-                return [
-                  `Other: ${formatPercent(entry.percent)}`,
-                  `${formatCount(entry.count)} instructions`,
-                ];
-              }
-              return [
-                `${label}: ${formatPercent(entry.percent)}`,
-                `${formatCount(entry.count)} instructions`,
-              ];
-            },
-          },
+      datasetLabel: "% of program",
+      data,
+      backgroundColor,
+      tooltipCallbacks: {
+        label(context) {
+          const label = context.label ?? "";
+          const entry = entryByLabel[label];
+          if (!entry) return label;
+          if (entry.name === "Other") {
+            return [
+              `Other: ${formatPercent(entry.percent)}`,
+              `${formatCount(entry.count)} instructions`,
+            ];
+          }
+          return [
+            `${label}: ${formatPercent(entry.percent)}`,
+            `${formatCount(entry.count)} instructions`,
+          ];
         },
       },
-    },
-  });
+    })
+  );
 }
 
 export function destroyProgramInsnChart() {

@@ -1,5 +1,10 @@
 import { formatDurationNs, formatPercent, parseSiteKey } from "./format.js";
 import { getSitePercent } from "./tree.js";
+import {
+  buildChartJsConfig,
+  getChartType,
+  wrapClassName,
+} from "./chart-type.js";
 
 /** @type {import('chart.js').Chart | null} */
 let activeChart = null;
@@ -99,9 +104,10 @@ export function renderChildrenChart(
     return SLICE_COLORS[colorIdx++ % SLICE_COLORS.length];
   });
 
+  const chartType = options.chartType ?? getChartType();
+
   const wrap = document.createElement("div");
-  wrap.className =
-    "relative w-full max-w-[220px] sm:max-w-[260px] mx-auto aspect-[2/1] sm:aspect-square";
+  wrap.className = wrapClassName(chartType, "children");
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
   canvas.setAttribute(
@@ -115,30 +121,28 @@ export function renderChildrenChart(
     chartEntries.map((c) => [c.isOther ? "Other" : c.symbol || c.key, c])
   );
 
-  activeChart = new Chart(canvas, {
-    type: "doughnut",
-    data: {
+  function handleSelect(index) {
+    if (!onSelect || index === undefined) return;
+    const entry = chartEntries[index];
+    if (!entry || entry.isOther) return;
+    onSelect(entry.key, entry.node);
+  }
+
+  activeChart = new Chart(
+    canvas,
+    buildChartJsConfig(chartType, {
       labels,
-      datasets: [
-        {
-          label: scaleLabel,
-          data,
-          backgroundColor,
-          borderColor: "rgb(15, 23, 42)",
-          borderWidth: 2,
-          hoverOffset: 6,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
+      datasetLabel: scaleLabel,
+      data,
+      backgroundColor,
       cutout: "55%",
+      legendPosition: "right",
+      legendOnClick(_event, legendItem) {
+        handleSelect(legendItem.index);
+      },
       onClick(_event, elements) {
-        if (!onSelect || !elements.length) return;
-        const entry = chartEntries[elements[0].index];
-        if (!entry || entry.isOther) return;
-        onSelect(entry.key, entry.node);
+        if (!elements.length) return;
+        handleSelect(elements[0].index);
       },
       onHover(event, elements) {
         const target = event.native?.target;
@@ -148,46 +152,24 @@ export function renderChildrenChart(
         target.style.cursor =
           onSelect && entry && !entry.isOther ? "pointer" : "default";
       },
-      plugins: {
-        legend: {
-          position: "right",
-          onClick(_event, legendItem) {
-            if (!onSelect || legendItem.index === undefined) return;
-            const entry = chartEntries[legendItem.index];
-            if (!entry || entry.isOther) return;
-            onSelect(entry.key, entry.node);
-          },
-          labels: {
-            color: "#94a3b8",
-            font: {
-              family: "'IBM Plex Mono', ui-monospace, monospace",
-              size: 10,
-            },
-            boxWidth: 10,
-            padding: 6,
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label(context) {
-              const label = context.label ?? "";
-              const entry = entryByLabel[label];
-              if (!entry) return label;
-              if (entry.isOther) {
-                return [
-                  `Other: ${formatPercent(entry.pct)} ${scaleLabel}`,
-                  "unattributed in child breakdown",
-                ];
-              }
-              return [
-                `${label}: ${formatPercent(entry.pct)} ${scaleLabel}`,
-                `inclusive ${formatDurationNs(entry.node.inclusive_duration)}`,
-                `exclusive ${formatDurationNs(entry.node.exclusive_duration)}`,
-              ];
-            },
-          },
+      tooltipCallbacks: {
+        label(context) {
+          const label = context.label ?? "";
+          const entry = entryByLabel[label];
+          if (!entry) return label;
+          if (entry.isOther) {
+            return [
+              `Other: ${formatPercent(entry.pct)} ${scaleLabel}`,
+              "unattributed in child breakdown",
+            ];
+          }
+          return [
+            `${label}: ${formatPercent(entry.pct)} ${scaleLabel}`,
+            `inclusive ${formatDurationNs(entry.node.inclusive_duration)}`,
+            `exclusive ${formatDurationNs(entry.node.exclusive_duration)}`,
+          ];
         },
       },
-    },
-  });
+    })
+  );
 }
